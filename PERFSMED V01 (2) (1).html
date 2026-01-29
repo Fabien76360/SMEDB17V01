@@ -292,6 +292,11 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
   text-overflow:ellipsis;
   cursor:pointer;
 }
+.gantt-row .bar.disabled {
+  pointer-events:none;
+  opacity:0.45;
+  cursor:not-allowed;
+}
 .gantt-row .bar.std { background:rgba(61,220,151,.65); color:#021221; }
 .gantt-row .bar.real { background:rgba(255,183,3,.7); color:#051933; }
 .gantt-row .bar.both { box-shadow:0 0 0 1px rgba(255,255,255,.2) inset; }
@@ -413,12 +418,12 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
           </div>
           <div class="grid-two">
             <div class="field">
-              <label>IPC First (min)</label>
-              <input type="number" min="0" step="0.1" id="ipcFirst" />
-            </div>
-            <div class="field">
-              <label>IPC Last (min)</label>
-              <input type="number" min="0" step="0.1" id="ipcLast" />
+              <label>Dernier IPC (date/heure)</label>
+              <input type="text" id="lastIpcInput" placeholder="JJ/MM/AA HH:MM" />
+              <div class="actions-row" style="margin-top:10px;">
+                <button type="button" class="secondary" id="validateLastIpc">Valider</button>
+              </div>
+              <div class="small-note" id="lastIpcError" style="color:var(--danger); margin-top:8px;"></div>
             </div>
           </div>
           <div style="margin-top:16px" class="chip-row" role="tablist">
@@ -441,8 +446,8 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
               <strong id="kpiReal">0</strong>
             </div>
             <div class="kpi-card">
-              <span class="small-note">Inter-PO (IPC Last - IPC First)</span>
-              <strong id="kpiInter">0</strong>
+              <span class="small-note">Top départ (Dernier IPC)</span>
+              <strong id="kpiInter">Non validé</strong>
             </div>
           </div>
         </div>
@@ -455,6 +460,7 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
         <span class="small-note" id="ganttHint"></span>
       </div>
       <div class="gantt-axis" id="ganttAxis"></div>
+      <div class="small-note" id="ganttStatus"></div>
       <div class="gantt-grid" id="ganttGrid"></div>
     </section>
 
@@ -508,14 +514,16 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
   ];
 
   const els = {
-    ipcFirst: document.getElementById('ipcFirst'),
-    ipcLast: document.getElementById('ipcLast'),
+    lastIpcInput: document.getElementById('lastIpcInput'),
+    validateLastIpc: document.getElementById('validateLastIpc'),
+    lastIpcError: document.getElementById('lastIpcError'),
     kpiStd: document.getElementById('kpiStd'),
     kpiReal: document.getElementById('kpiReal'),
     kpiInter: document.getElementById('kpiInter'),
     ganttAxis: document.getElementById('ganttAxis'),
     ganttGrid: document.getElementById('ganttGrid'),
     ganttHint: document.getElementById('ganttHint'),
+    ganttStatus: document.getElementById('ganttStatus'),
     actionsTable: document.getElementById('actionsTable'),
     addAction: document.getElementById('addAction'),
     exportJson: document.getElementById('exportJson'),
@@ -536,6 +544,9 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
     viewMode: 'both',
     ipcFirst: 0,
     ipcLast: 0,
+    lastIpcDt: '',
+    lastIpcValidated: false,
+    lastIpcIso: '',
     lanes: [...DEFAULT_LANES],
     actions: [
       { id: 'A1', name: 'Sécuriser ligne', stdMin: 8, realMin: 9, notes: '', order: 1, laneId: 'Z1', status: 'pending', justification: '', startedAt: null, finishedAt: null },
@@ -579,6 +590,9 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
       startedAt: action.startedAt || null,
       finishedAt: action.finishedAt || null
     })) : [];
+    if (typeof migrated.lastIpcDt !== 'string') migrated.lastIpcDt = '';
+    migrated.lastIpcValidated = migrated.lastIpcValidated === true;
+    if (typeof migrated.lastIpcIso !== 'string') migrated.lastIpcIso = '';
     return migrated;
   }
 
@@ -645,7 +659,9 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
     els.ganttGrid.innerHTML = '';
 
     const viewMode = state.viewMode || 'both';
+    const isReady = state.lastIpcValidated === true;
     els.ganttHint.textContent = `Mode: ${viewMode === 'both' ? 'Std + Réel' : viewMode === 'std' ? 'Std' : 'Réel'}`;
+    els.ganttStatus.textContent = isReady ? '' : 'En attente de validation du dernier IPC pour démarrer.';
 
     lanes.forEach(lane => {
       const laneId = lane.id;
@@ -694,26 +710,30 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
 
         if (viewMode === 'std' || viewMode === 'both') {
           const bar = document.createElement('div');
-          bar.className = `bar std ${statusClass} ${viewMode === 'both' ? 'both' : ''}`;
+          bar.className = `bar std ${statusClass} ${viewMode === 'both' ? 'both' : ''} ${isReady ? '' : 'disabled'}`.trim();
           bar.style.left = `${(stdCursor / maxDuration) * 100}%`;
           bar.style.width = `${(stdMin / maxDuration) * 100}%`;
           bar.innerHTML = `<span class="label">${escapeHtml(action.name)}</span><span class="time">${stdMin} min</span>`;
           bar.dataset.actionId = action.id;
           bar.dataset.barType = 'std';
-          bar.addEventListener('click', () => openModal(action.id));
+          if (isReady) {
+            bar.addEventListener('click', () => openModal(action.id));
+          }
           row.appendChild(bar);
         }
 
         if (viewMode === 'real' || viewMode === 'both') {
           const bar = document.createElement('div');
-          bar.className = `bar real ${statusClass} ${viewMode === 'both' ? 'both' : ''}`;
+          bar.className = `bar real ${statusClass} ${viewMode === 'both' ? 'both' : ''} ${isReady ? '' : 'disabled'}`.trim();
           bar.style.left = `${(realCursor / maxDuration) * 100}%`;
           bar.style.width = `${(realValue / maxDuration) * 100}%`;
           bar.style.top = viewMode === 'both' ? '18px' : '6px';
           bar.innerHTML = `<span class="label">${escapeHtml(action.name)}</span><span class="time">${realValue} min</span>`;
           bar.dataset.actionId = action.id;
           bar.dataset.barType = 'real';
-          bar.addEventListener('click', () => openModal(action.id));
+          if (isReady) {
+            bar.addEventListener('click', () => openModal(action.id));
+          }
           row.appendChild(bar);
         }
 
@@ -755,16 +775,14 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
     const totals = getLaneTotals(state.actions, state.lanes);
     const maxStd = Math.max(0, ...Object.values(totals).map(item => item.std));
     const maxReal = Math.max(0, ...Object.values(totals).map(item => item.real));
-    const inter = Math.max(0, (Number(state.ipcLast) || 0) - (Number(state.ipcFirst) || 0));
 
     els.kpiStd.textContent = formatMinutes(maxStd);
     els.kpiReal.textContent = formatMinutes(maxReal);
-    els.kpiInter.textContent = formatMinutes(inter);
+    els.kpiInter.textContent = state.lastIpcValidated ? (state.lastIpcDt || 'Validé') : 'Non validé';
   }
 
   function refreshUI() {
-    els.ipcFirst.value = state.ipcFirst || 0;
-    els.ipcLast.value = state.ipcLast || 0;
+    els.lastIpcInput.value = state.lastIpcDt || '';
     els.viewButtons.forEach(btn => {
       btn.classList.toggle('active', btn.dataset.view === state.viewMode);
     });
@@ -832,7 +850,7 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
   }
 
   function exportCsv() {
-    const headers = ['id', 'name', 'laneId', 'stdMin', 'realMin', 'notes', 'order', 'status', 'justification', 'startedAt', 'finishedAt'];
+    const headers = ['id', 'name', 'laneId', 'stdMin', 'realMin', 'notes', 'order', 'status', 'justification', 'startedAt', 'finishedAt', 'lastIpcDt', 'lastIpcValidated', 'lastIpcIso'];
     const rows = state.actions.map(action => [
       action.id,
       action.name,
@@ -844,7 +862,10 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
       action.status || 'pending',
       action.justification || '',
       action.startedAt || '',
-      action.finishedAt || ''
+      action.finishedAt || '',
+      state.lastIpcDt || '',
+      state.lastIpcValidated === true ? 'true' : 'false',
+      state.lastIpcIso || ''
     ]);
     const lines = [headers.join(';'), ...rows.map(row => row.map(escapeCsv).join(';'))].join('\n');
     downloadBlob(lines, 'PERFSMED_V02.csv', 'text/csv');
@@ -883,6 +904,48 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
   function saveAndRefresh() {
     saveState();
     refreshUI();
+  }
+
+  function parseLastIpc(value) {
+    const match = String(value || '').trim().match(/^(\d{2})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2})$/);
+    if (!match) return { valid: false };
+    const day = Number(match[1]);
+    const month = Number(match[2]);
+    const year = Number(match[3]) + 2000;
+    const hour = Number(match[4]);
+    const minute = Number(match[5]);
+    if (month < 1 || month > 12 || day < 1 || day > 31 || hour > 23 || minute > 59) {
+      return { valid: false };
+    }
+    const candidate = new Date(year, month - 1, day, hour, minute);
+    if (
+      candidate.getFullYear() !== year ||
+      candidate.getMonth() !== month - 1 ||
+      candidate.getDate() !== day ||
+      candidate.getHours() !== hour ||
+      candidate.getMinutes() !== minute
+    ) {
+      return { valid: false };
+    }
+    return { valid: true, iso: candidate.toISOString() };
+  }
+
+  function validateLastIpc() {
+    const inputValue = els.lastIpcInput.value.trim();
+    const parsed = parseLastIpc(inputValue);
+    if (!parsed.valid) {
+      els.lastIpcError.textContent = 'Format invalide. Utilisez JJ/MM/AA HH:MM (ex: 29/01/26 14:05).';
+      state.lastIpcValidated = false;
+      state.lastIpcDt = '';
+      state.lastIpcIso = '';
+      saveAndRefresh();
+      return;
+    }
+    state.lastIpcDt = inputValue;
+    state.lastIpcIso = parsed.iso;
+    state.lastIpcValidated = true;
+    els.lastIpcError.textContent = '';
+    saveAndRefresh();
   }
 
   function getActionRealValue(action) {
@@ -934,6 +997,10 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
   }
 
   function openModal(actionId) {
+    if (state.lastIpcValidated !== true) {
+      els.ganttStatus.textContent = 'En attente de validation du dernier IPC pour démarrer.';
+      return;
+    }
     const action = state.actions.find(item => item.id === actionId);
     if (!action) return;
     els.actionModal.dataset.actionId = actionId;
@@ -987,13 +1054,12 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
   }
 
   function bindEvents() {
-    els.ipcFirst.addEventListener('input', () => {
-      state.ipcFirst = Number(els.ipcFirst.value) || 0;
-      saveAndRefresh();
-    });
-    els.ipcLast.addEventListener('input', () => {
-      state.ipcLast = Number(els.ipcLast.value) || 0;
-      saveAndRefresh();
+    els.validateLastIpc.addEventListener('click', validateLastIpc);
+    els.lastIpcInput.addEventListener('keydown', event => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        validateLastIpc();
+      }
     });
     els.viewButtons.forEach(btn => {
       btn.addEventListener('click', () => {
