@@ -290,10 +290,22 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
+  cursor:pointer;
 }
 .gantt-row .bar.std { background:rgba(61,220,151,.65); color:#021221; }
 .gantt-row .bar.real { background:rgba(255,183,3,.7); color:#051933; }
 .gantt-row .bar.both { box-shadow:0 0 0 1px rgba(255,255,255,.2) inset; }
+.gantt-row .bar.status-pending {
+  opacity:0.6;
+  border:1px dashed rgba(255,255,255,.35);
+}
+.gantt-row .bar.status-progress {
+  box-shadow:0 0 0 2px rgba(61,220,151,.6) inset, 0 0 12px rgba(61,220,151,.2);
+}
+.gantt-row .bar.status-done {
+  box-shadow:0 0 0 2px rgba(61,220,151,.9) inset;
+  filter:saturate(1.15);
+}
 .gantt-row .bar .label {
   font-weight:600;
 }
@@ -307,6 +319,67 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
   width:1px;
   height:100%;
   background:rgba(255,255,255,.08);
+}
+.gantt-lane-body {
+  overflow-x:auto;
+  padding-bottom:6px;
+}
+.gantt-lane-content {
+  min-width:100%;
+  display:grid;
+  gap:10px;
+}
+.modal-backdrop {
+  position:fixed;
+  inset:0;
+  background:rgba(5,10,24,.65);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  z-index:50;
+}
+.modal-backdrop.active { display:flex; }
+.modal {
+  background:rgba(15,26,52,.95);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:var(--radius-lg);
+  padding:24px;
+  width:min(520px, 92vw);
+  box-shadow:var(--shadow);
+  position:relative;
+  display:grid;
+  gap:16px;
+}
+.modal h3 {
+  margin:0;
+  font-size:1.05rem;
+}
+.modal-meta {
+  display:grid;
+  gap:6px;
+  color:var(--muted);
+  font-size:0.85rem;
+}
+.modal-actions {
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.modal-close {
+  position:absolute;
+  top:14px;
+  right:16px;
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.12);
+  font-size:1.1rem;
+}
+.modal-message {
+  font-size:0.85rem;
+  color:var(--warn);
 }
 .small-note { color:var(--muted); font-size:0.8rem; }
 </style>
@@ -412,6 +485,20 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
   </main>
 </div>
 
+<div class="modal-backdrop" id="actionModal" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button type="button" class="modal-close" id="modalClose" aria-label="Fermer">×</button>
+    <h3 id="modalTitle">Action</h3>
+    <div class="modal-meta" id="modalMeta"></div>
+    <div class="field" id="modalJustificationField" style="display:none;">
+      <label>Justification (obligatoire en cas de dépassement)</label>
+      <textarea id="modalJustification" rows="4" placeholder="Expliquez la raison du dépassement..."></textarea>
+    </div>
+    <div class="modal-message" id="modalMessage"></div>
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
 <script>
 (() => {
   const STORAGE_KEY = 'PERFSMED_V01_STATE';
@@ -434,7 +521,15 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
     exportJson: document.getElementById('exportJson'),
     exportCsv: document.getElementById('exportCsv'),
     resetState: document.getElementById('resetState'),
-    viewButtons: Array.from(document.querySelectorAll('[data-view]'))
+    viewButtons: Array.from(document.querySelectorAll('[data-view]')),
+    actionModal: document.getElementById('actionModal'),
+    modalTitle: document.getElementById('modalTitle'),
+    modalMeta: document.getElementById('modalMeta'),
+    modalJustificationField: document.getElementById('modalJustificationField'),
+    modalJustification: document.getElementById('modalJustification'),
+    modalMessage: document.getElementById('modalMessage'),
+    modalActions: document.getElementById('modalActions'),
+    modalClose: document.getElementById('modalClose')
   };
 
   const defaultState = () => ({
@@ -443,10 +538,10 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
     ipcLast: 0,
     lanes: [...DEFAULT_LANES],
     actions: [
-      { id: 'A1', name: 'Sécuriser ligne', stdMin: 8, realMin: 9, notes: '', order: 1, laneId: 'Z1' },
-      { id: 'A2', name: 'Nettoyage rapide', stdMin: 12, realMin: 11, notes: '', order: 2, laneId: 'Z2' },
-      { id: 'A3', name: 'Changement format', stdMin: 15, realMin: 14, notes: '', order: 3, laneId: 'Z1' },
-      { id: 'A4', name: 'Redémarrage convoyeur', stdMin: 6, realMin: '', notes: '', order: 4, laneId: 'Z2' }
+      { id: 'A1', name: 'Sécuriser ligne', stdMin: 8, realMin: 9, notes: '', order: 1, laneId: 'Z1', status: 'pending', justification: '', startedAt: null, finishedAt: null },
+      { id: 'A2', name: 'Nettoyage rapide', stdMin: 12, realMin: 11, notes: '', order: 2, laneId: 'Z2', status: 'pending', justification: '', startedAt: null, finishedAt: null },
+      { id: 'A3', name: 'Changement format', stdMin: 15, realMin: 14, notes: '', order: 3, laneId: 'Z1', status: 'pending', justification: '', startedAt: null, finishedAt: null },
+      { id: 'A4', name: 'Redémarrage convoyeur', stdMin: 6, realMin: '', notes: '', order: 4, laneId: 'Z2', status: 'pending', justification: '', startedAt: null, finishedAt: null }
     ]
   });
 
@@ -477,7 +572,12 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
       realMin: action.realMin === '' || action.realMin == null ? '' : Number(action.realMin) || 0,
       notes: action.notes || '',
       order: Number(action.order) || 0,
-      laneId: action.laneId && String(action.laneId).trim() ? String(action.laneId).trim() : 'Z1'
+      laneId: action.laneId && String(action.laneId).trim() ? String(action.laneId).trim() : 'Z1',
+      // Champs interactifs (migration rétrocompatible)
+      status: ['pending', 'in_progress', 'done'].includes(action.status) ? action.status : 'pending',
+      justification: action.justification || '',
+      startedAt: action.startedAt || null,
+      finishedAt: action.finishedAt || null
     })) : [];
     return migrated;
   }
@@ -559,6 +659,12 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
       header.innerHTML = `<span>${lane.name} (${lane.id})</span><span>${totalsLabel}</span>`;
       laneEl.appendChild(header);
 
+      const laneBody = document.createElement('div');
+      laneBody.className = 'gantt-lane-body';
+      const laneContent = document.createElement('div');
+      laneContent.className = 'gantt-lane-content';
+      laneContent.style.width = `${Math.max(100, maxDuration * 14)}px`;
+
       let stdCursor = 0;
       let realCursor = 0;
 
@@ -566,13 +672,14 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
         const empty = document.createElement('div');
         empty.className = 'gantt-row';
         empty.innerHTML = '<span class="small-note" style="padding:8px 10px; display:inline-block;">Aucune action</span>';
-        laneEl.appendChild(empty);
+        laneContent.appendChild(empty);
       }
 
       laneActions.forEach(action => {
         const stdMin = Number(action.stdMin) || 0;
         const realMin = action.realMin === '' || action.realMin == null ? null : Number(action.realMin) || 0;
         const realValue = realMin == null ? stdMin : realMin;
+        const statusClass = `status-${action.status || 'pending'}`;
 
         const row = document.createElement('div');
         row.className = 'gantt-row';
@@ -587,28 +694,36 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
 
         if (viewMode === 'std' || viewMode === 'both') {
           const bar = document.createElement('div');
-          bar.className = `bar std ${viewMode === 'both' ? 'both' : ''}`;
+          bar.className = `bar std ${statusClass} ${viewMode === 'both' ? 'both' : ''}`;
           bar.style.left = `${(stdCursor / maxDuration) * 100}%`;
           bar.style.width = `${(stdMin / maxDuration) * 100}%`;
           bar.innerHTML = `<span class="label">${escapeHtml(action.name)}</span><span class="time">${stdMin} min</span>`;
+          bar.dataset.actionId = action.id;
+          bar.dataset.barType = 'std';
+          bar.addEventListener('click', () => openModal(action.id));
           row.appendChild(bar);
         }
 
         if (viewMode === 'real' || viewMode === 'both') {
           const bar = document.createElement('div');
-          bar.className = `bar real ${viewMode === 'both' ? 'both' : ''}`;
+          bar.className = `bar real ${statusClass} ${viewMode === 'both' ? 'both' : ''}`;
           bar.style.left = `${(realCursor / maxDuration) * 100}%`;
           bar.style.width = `${(realValue / maxDuration) * 100}%`;
           bar.style.top = viewMode === 'both' ? '18px' : '6px';
           bar.innerHTML = `<span class="label">${escapeHtml(action.name)}</span><span class="time">${realValue} min</span>`;
+          bar.dataset.actionId = action.id;
+          bar.dataset.barType = 'real';
+          bar.addEventListener('click', () => openModal(action.id));
           row.appendChild(bar);
         }
 
         stdCursor += stdMin;
         realCursor += realValue;
-        laneEl.appendChild(row);
+        laneContent.appendChild(row);
       });
 
+      laneBody.appendChild(laneContent);
+      laneEl.appendChild(laneBody);
       els.ganttGrid.appendChild(laneEl);
     });
   }
@@ -675,7 +790,11 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
       realMin,
       notes: notes.trim(),
       order,
-      laneId
+      laneId,
+      status: 'pending',
+      justification: '',
+      startedAt: null,
+      finishedAt: null
     });
     saveAndRefresh();
   }
@@ -713,7 +832,7 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
   }
 
   function exportCsv() {
-    const headers = ['id', 'name', 'laneId', 'stdMin', 'realMin', 'notes', 'order'];
+    const headers = ['id', 'name', 'laneId', 'stdMin', 'realMin', 'notes', 'order', 'status', 'justification', 'startedAt', 'finishedAt'];
     const rows = state.actions.map(action => [
       action.id,
       action.name,
@@ -721,7 +840,11 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
       Number(action.stdMin) || 0,
       action.realMin === '' || action.realMin == null ? '' : Number(action.realMin) || 0,
       action.notes || '',
-      action.order || 0
+      action.order || 0,
+      action.status || 'pending',
+      action.justification || '',
+      action.startedAt || '',
+      action.finishedAt || ''
     ]);
     const lines = [headers.join(';'), ...rows.map(row => row.map(escapeCsv).join(';'))].join('\n');
     downloadBlob(lines, 'PERFSMED_V02.csv', 'text/csv');
@@ -762,6 +885,101 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
     refreshUI();
   }
 
+  function getActionRealValue(action) {
+    return action.realMin === '' || action.realMin == null ? Number(action.stdMin) || 0 : Number(action.realMin) || 0;
+  }
+
+  function requiresJustification(action) {
+    const std = Number(action.stdMin) || 0;
+    const real = getActionRealValue(action);
+    return real > std;
+  }
+
+  function renderModal(action) {
+    const lane = state.lanes.find(item => item.id === (action.laneId || 'Z1'));
+    const laneLabel = lane ? `${lane.name} (${lane.id})` : action.laneId || 'Z1';
+    const std = Number(action.stdMin) || 0;
+    const real = getActionRealValue(action);
+
+    els.modalTitle.textContent = `${action.name || 'Action'} — ${laneLabel}`;
+    els.modalMeta.innerHTML = `
+      <div>Statut: <strong>${action.status || 'pending'}</strong></div>
+      <div>Std: ${std} min · Réel: ${real} min</div>
+    `;
+    els.modalMessage.textContent = '';
+    els.modalJustification.value = action.justification || '';
+
+    const showJustification = action.status === 'done' || Boolean(action.justification);
+    els.modalJustificationField.style.display = showJustification ? 'grid' : 'none';
+
+    els.modalActions.innerHTML = '';
+    if (action.status === 'pending') {
+      addModalButton('Démarrer', 'secondary', () => updateActionStatus(action.id, 'in_progress'));
+      addModalButton('Marquer terminé', 'primary', () => updateActionStatus(action.id, 'done'));
+    } else if (action.status === 'in_progress') {
+      addModalButton('Marquer terminé', 'primary', () => updateActionStatus(action.id, 'done'));
+    } else {
+      addModalButton('Repasser en cours', 'secondary', () => updateActionStatus(action.id, 'in_progress'));
+      addModalButton('Réinitialiser', 'ghost', () => updateActionStatus(action.id, 'pending'));
+    }
+  }
+
+  function addModalButton(label, styleClass, handler) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = styleClass;
+    button.textContent = label;
+    button.addEventListener('click', handler);
+    els.modalActions.appendChild(button);
+  }
+
+  function openModal(actionId) {
+    const action = state.actions.find(item => item.id === actionId);
+    if (!action) return;
+    els.actionModal.dataset.actionId = actionId;
+    renderModal(action);
+    els.actionModal.classList.add('active');
+    els.actionModal.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeModal() {
+    els.actionModal.classList.remove('active');
+    els.actionModal.setAttribute('aria-hidden', 'true');
+    els.modalMessage.textContent = '';
+    els.modalJustification.value = '';
+  }
+
+  function updateActionStatus(actionId, nextStatus) {
+    const action = state.actions.find(item => item.id === actionId);
+    if (!action) return;
+
+    if (nextStatus === 'done') {
+      if (requiresJustification(action)) {
+        const justification = els.modalJustification.value.trim();
+        if (!justification) {
+          els.modalMessage.textContent = 'Justification obligatoire : merci de préciser la raison du dépassement.';
+          els.modalJustificationField.style.display = 'grid';
+          return;
+        }
+        action.justification = justification;
+      }
+      action.status = 'done';
+      action.finishedAt = new Date().toISOString();
+    } else if (nextStatus === 'in_progress') {
+      action.status = 'in_progress';
+      action.startedAt = action.startedAt || new Date().toISOString();
+      action.finishedAt = null;
+    } else {
+      action.status = 'pending';
+      action.startedAt = null;
+      action.finishedAt = null;
+      action.justification = '';
+    }
+
+    saveAndRefresh();
+    renderModal(action);
+  }
+
   function resetAll() {
     if (!confirm('Réinitialiser toutes les données ?')) return;
     state = defaultState();
@@ -787,6 +1005,15 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
     els.exportJson.addEventListener('click', exportJson);
     els.exportCsv.addEventListener('click', exportCsv);
     els.resetState.addEventListener('click', resetAll);
+    els.modalClose.addEventListener('click', closeModal);
+    els.actionModal.addEventListener('click', event => {
+      if (event.target === els.actionModal) closeModal();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && els.actionModal.classList.contains('active')) {
+        closeModal();
+      }
+    });
   }
 
   bindEvents();
