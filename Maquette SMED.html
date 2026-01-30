@@ -160,6 +160,11 @@
       font-size: 16px;
     }
 
+    .field input[type="date"],
+    .field input[type="time"] {
+      font-variant-numeric: tabular-nums;
+    }
+
     .field input::placeholder {
       color: var(--text-muted);
     }
@@ -167,6 +172,30 @@
     .field input:focus-visible {
       outline: 3px solid var(--focus);
       outline-offset: 2px;
+    }
+
+    .inline-status {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface-muted);
+      color: var(--text);
+      font-size: 14px;
+      max-width: 360px;
+    }
+
+    .inline-status.visible {
+      display: inline-flex;
+    }
+
+    .inline-status .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--primary);
     }
 
     .tab-bar {
@@ -379,6 +408,23 @@
           <label for="po-input">PO</label>
           <input id="po-input" type="text" placeholder="Saisir le PO">
         </div>
+        <div class="field">
+          <label>Dernier IPC</label>
+          <div class="id-block">
+            <div class="field">
+              <label for="ipc-date">Date</label>
+              <input id="ipc-date" type="date" aria-label="Dernier IPC - date">
+            </div>
+            <div class="field">
+              <label for="ipc-time">Heure</label>
+              <input id="ipc-time" type="time" aria-label="Dernier IPC - heure" step="1">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="smed-started" class="inline-status" role="status" aria-live="polite">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Le changement de production a démarré</span>
       </div>
     </section>
 
@@ -404,6 +450,9 @@
     const pages = document.querySelectorAll(".page");
     const contrastToggle = document.querySelector("#contrast-toggle");
     const headerDateTime = document.querySelector("#header-datetime");
+    const ipcDate = document.querySelector("#ipc-date");
+    const ipcTime = document.querySelector("#ipc-time");
+    const smedStarted = document.querySelector("#smed-started");
 
     const setActiveTab = (target) => {
       buttons.forEach((button) => {
@@ -454,6 +503,22 @@
       });
     }
 
+    // Démarrage SMED: date + heure du "Dernier IPC" renseignées.
+    let isSmedStarted = false;
+    const updateSmedStarted = () => {
+      const hasDate = Boolean(ipcDate && ipcDate.value);
+      const hasTime = Boolean(ipcTime && ipcTime.value);
+      isSmedStarted = hasDate && hasTime;
+      if (smedStarted) {
+        smedStarted.classList.toggle("visible", isSmedStarted);
+      }
+    };
+
+    if (ipcDate && ipcTime) {
+      ipcDate.addEventListener("input", updateSmedStarted);
+      ipcTime.addEventListener("input", updateSmedStarted);
+    }
+
     // Date/heure en direct (locale fr-FR, mise à jour chaque seconde).
     const updateDateTime = () => {
       if (!headerDateTime) {
@@ -467,6 +532,7 @@
 
     updateDateTime();
     setInterval(updateDateTime, 1000);
+    updateSmedStarted();
   </script>
 </body>
 </html>
