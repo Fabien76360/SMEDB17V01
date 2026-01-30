@@ -53,11 +53,18 @@
       height: var(--header-height);
       padding: 10px 24px;
       display: flex;
-      flex-direction: column;
-      justify-content: center;
+      align-items: center;
+      justify-content: space-between;
       border-bottom: 1px solid var(--border);
       box-shadow: var(--shadow);
       z-index: 20;
+    }
+
+    .header-text {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
     }
 
     header h1 {
@@ -67,9 +74,29 @@
     }
 
     header p {
-      margin: 4px 0 0;
+      margin: 0;
       color: var(--text-muted);
       font-size: 14px;
+    }
+
+    .datetime-badge {
+      display: grid;
+      gap: 4px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface-muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 13px;
+      line-height: 1.2;
+      color: var(--text);
+      min-width: 112px;
+      text-align: right;
+    }
+
+    .datetime-badge span {
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.4px;
     }
 
     main {
@@ -89,6 +116,11 @@
 
       header h1 {
         font-size: 20px;
+      }
+
+      .datetime-badge {
+        padding: 6px 10px;
+        font-size: 12px;
       }
 
       main {
@@ -332,8 +364,15 @@
 </head>
 <body>
   <header>
-    <h1>Maquette SMED</h1>
-    <p>Offline, tactile, V1</p>
+    <div class="header-text">
+      <h1>Maquette SMED</h1>
+      <p>Offline, tactile, V1</p>
+    </div>
+    <!-- Date & heure (mise à jour toutes les secondes). -->
+    <div class="datetime-badge" aria-live="polite">
+      <span id="header-time">--:--:--</span>
+      <span id="header-date">--/--/----</span>
+    </div>
   </header>
 
   <nav class="tab-bar" aria-label="Navigation des pages">
@@ -378,6 +417,8 @@
     const buttons = document.querySelectorAll(".tab-button");
     const pages = document.querySelectorAll(".page");
     const contrastToggle = document.querySelector("#contrast-toggle");
+    const headerTime = document.querySelector("#header-time");
+    const headerDate = document.querySelector("#header-date");
 
     const setActiveTab = (target) => {
       buttons.forEach((button) => {
@@ -427,6 +468,19 @@
         document.body.dataset.theme = event.target.checked ? "high-contrast" : "";
       });
     }
+
+    // Date/heure en direct (locale fr-FR, mise à jour chaque seconde).
+    const updateDateTime = () => {
+      if (!headerTime || !headerDate) {
+        return;
+      }
+      const now = new Date();
+      headerTime.textContent = now.toLocaleTimeString("fr-FR", { hour12: false });
+      headerDate.textContent = now.toLocaleDateString("fr-FR");
+    };
+
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
   </script>
 </body>
 </html>
