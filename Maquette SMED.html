@@ -13,6 +13,9 @@
       --text: #152033;
       --text-muted: #5b6a82;
       --primary: #1f4b99;
+      --reset-bg: #fdeeee;
+      --reset-border: rgba(161, 72, 72, 0.35);
+      --reset-text: #7b2b2b;
       --border: rgba(21, 32, 51, 0.16);
       --shadow: 0 8px 24px rgba(21, 32, 51, 0.08);
       --radius: 18px;
@@ -28,6 +31,9 @@
       --text: #ffffff;
       --text-muted: #d5d5d5;
       --primary: #ffd84a;
+      --reset-bg: #2a1212;
+      --reset-border: rgba(255, 216, 74, 0.7);
+      --reset-text: #ffd84a;
       --border: rgba(255, 255, 255, 0.5);
       --shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
       --focus: #ffd84a;
@@ -182,6 +188,28 @@
     }
 
     .field input:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .reset-button {
+      height: 44px;
+      min-height: 44px;
+      border-radius: 12px;
+      border: 1px solid var(--reset-border);
+      background: var(--reset-bg);
+      color: var(--reset-text);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.15s ease;
+    }
+
+    .reset-button:active {
+      transform: scale(0.98);
+    }
+
+    .reset-button:focus-visible {
       outline: 3px solid var(--focus);
       outline-offset: 2px;
     }
@@ -428,6 +456,10 @@
           <label for="ipc-time">Heure IPC</label>
           <input id="ipc-time" type="time" aria-label="Dernier IPC - heure" step="1">
         </div>
+        <div class="field">
+          <label for="reset-smed">Reset</label>
+          <button id="reset-smed" class="reset-button" type="button">Reset</button>
+        </div>
       </div>
       <div id="smed-started" class="inline-status" role="status" aria-live="polite">
         <span class="dot" aria-hidden="true"></span>
@@ -459,6 +491,7 @@
     const headerDateTime = document.querySelector("#header-datetime");
     const ipcDate = document.querySelector("#ipc-date");
     const ipcTime = document.querySelector("#ipc-time");
+    const resetSmedButton = document.querySelector("#reset-smed");
     const smedStarted = document.querySelector("#smed-started");
 
     const setActiveTab = (target) => {
@@ -524,6 +557,34 @@
     if (ipcDate && ipcTime) {
       ipcDate.addEventListener("input", updateSmedStarted);
       ipcTime.addEventListener("input", updateSmedStarted);
+    }
+
+    if (resetSmedButton) {
+      resetSmedButton.addEventListener("click", () => {
+        const shouldReset = window.confirm("Confirmer la remise à zéro du SMED ?");
+        if (!shouldReset) {
+          return;
+        }
+        if (ipcDate) {
+          ipcDate.value = "";
+        }
+        if (ipcTime) {
+          ipcTime.value = "";
+        }
+        const ligneInput = document.querySelector("#ligne-input");
+        const poInput = document.querySelector("#po-input");
+        if (ligneInput) {
+          ligneInput.value = "";
+        }
+        if (poInput) {
+          poInput.value = "";
+        }
+        isSmedStarted = false;
+        if (smedStarted) {
+          smedStarted.classList.remove("visible");
+        }
+        updateSmedStarted();
+      });
     }
 
     // Date/heure en direct (locale fr-FR, mise à jour chaque seconde).
