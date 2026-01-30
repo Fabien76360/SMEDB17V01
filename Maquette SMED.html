@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Maquette SMED</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-muted: #eef2f7;
+      --text: #152033;
+      --text-muted: #5b6a82;
+      --primary: #1f4b99;
+      --primary-soft: #e3ecff;
+      --shadow: 0 8px 24px rgba(21, 32, 51, 0.08);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Roboto, system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      padding: 20px 24px 16px;
+      box-shadow: var(--shadow);
+      z-index: 10;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 0.4px;
+    }
+
+    header p {
+      margin: 6px 0 0;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    main {
+      padding: 118px 20px 120px;
+      min-height: 100vh;
+    }
+
+    .page {
+      display: none;
+      animation: fadeIn 0.2s ease-in;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .page h2 {
+      font-size: 24px;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    .placeholder {
+      background: var(--surface-muted);
+      border-radius: 12px;
+      padding: 18px;
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+    }
+
+    .tab-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 12px 16px 20px;
+      box-shadow: 0 -8px 24px rgba(21, 32, 51, 0.12);
+      z-index: 10;
+    }
+
+    .tab-button {
+      height: 56px;
+      border-radius: 16px;
+      border: none;
+      font-size: 16px;
+      font-weight: 600;
+      background: var(--surface-muted);
+      color: var(--text);
+      transition: transform 0.1s ease, background 0.15s ease;
+    }
+
+    .tab-button:active,
+    .tab-button.pressed {
+      transform: scale(0.98);
+    }
+
+    .tab-button.active {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 6px 16px rgba(31, 75, 153, 0.3);
+    }
+
+    .accordion {
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+
+    .accordion summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 18px;
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .accordion summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .accordion .content {
+      padding: 0 18px 18px;
+      color: var(--text-muted);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Maquette SMED</h1>
+    <p>Offline, tactile, V1</p>
+  </header>
+
+  <main>
+    <section class="page active" id="page-smed" data-tab="smed">
+      <h2>SMED (Opérateur)</h2>
+      <div class="card">
+        <h3>Session</h3>
+        <div class="placeholder">Contenu de session (à venir).</div>
+      </div>
+      <div class="card">
+        <h3>Étapes / Gantt</h3>
+        <div class="placeholder">Structure des étapes SMED (à venir).</div>
+      </div>
+      <div class="card">
+        <h3>Validation / Justifications</h3>
+        <div class="placeholder">Justifications et validations opérateur (à venir).</div>
+      </div>
+    </section>
+
+    <section class="page" id="page-analyse" data-tab="analyse">
+      <h2>Analyse</h2>
+      <div class="card">
+        <div class="placeholder">
+          Analyse (à venir). Cette page capitalisera les informations issues de SMED.
+        </div>
+      </div>
+      <div class="card">
+        <h3>KPIs</h3>
+        <div class="kpi-grid">
+          <div class="placeholder">KPI 1 (à venir)</div>
+          <div class="placeholder">KPI 2 (à venir)</div>
+          <div class="placeholder">KPI 3 (à venir)</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" id="page-parametres" data-tab="parametres">
+      <h2>Paramètres</h2>
+      <details class="accordion">
+        <summary>Zones &amp; opérateurs (à venir)</summary>
+        <div class="content">Définition des zones et gestion des opérateurs (placeholder).</div>
+      </details>
+      <details class="accordion">
+        <summary>Templates étapes SMED (à venir)</summary>
+        <div class="content">Modèles des étapes SMED et bibliothèques (placeholder).</div>
+      </details>
+      <details class="accordion">
+        <summary>Standards &amp; seuils (à venir)</summary>
+        <div class="content">Référentiels et seuils de validation (placeholder).</div>
+      </details>
+    </section>
+  </main>
+
+  <nav class="tab-bar" aria-label="Navigation des pages">
+    <button class="tab-button active" type="button" data-target="smed">SMED</button>
+    <button class="tab-button" type="button" data-target="analyse">Analyse</button>
+    <button class="tab-button" type="button" data-target="parametres">Paramètres</button>
+  </nav>
+
+  <script>
+    const buttons = document.querySelectorAll(".tab-button");
+    const pages = document.querySelectorAll(".page");
+
+    const setActiveTab = (target) => {
+      buttons.forEach((button) => {
+        button.classList.toggle("active", button.dataset.target === target);
+      });
+      pages.forEach((page) => {
+        page.classList.toggle("active", page.dataset.tab === target);
+      });
+    };
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        setActiveTab(button.dataset.target);
+      });
+
+      button.addEventListener("pointerdown", () => {
+        button.classList.add("pressed");
+      });
+
+      const clearPress = () => button.classList.remove("pressed");
+      button.addEventListener("pointerup", clearPress);
+      button.addEventListener("pointerleave", clearPress);
+      button.addEventListener("pointercancel", clearPress);
+    });
+  </script>
+</body>
+</html>
