@@ -334,7 +334,11 @@
       buttons.forEach((button) => {
         const isActive = button.dataset.target === target;
         button.classList.toggle("active", isActive);
-        button.setAttribute("aria-current", isActive ? "page" : "false");
+        if (isActive) {
+          button.setAttribute("aria-current", "page");
+        } else {
+          button.removeAttribute("aria-current");
+        }
       });
       pages.forEach((page) => {
         page.classList.toggle("active", page.dataset.tab === target);
