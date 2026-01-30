@@ -53,18 +53,12 @@
       height: var(--header-height);
       padding: 10px 24px;
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid var(--border);
-      box-shadow: var(--shadow);
-      z-index: 20;
-    }
-
-    .header-text {
-      display: flex;
       flex-direction: column;
       justify-content: center;
       gap: 4px;
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      z-index: 20;
     }
 
     header h1 {
@@ -79,24 +73,19 @@
       font-size: 14px;
     }
 
-    .datetime-badge {
-      display: grid;
-      gap: 4px;
-      padding: 8px 12px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: var(--surface-muted);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-      font-size: 13px;
-      line-height: 1.2;
-      color: var(--text);
-      min-width: 112px;
-      text-align: right;
+    .subtitle-line {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: baseline;
     }
 
-    .datetime-badge span {
+    .datetime-inline {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
       font-variant-numeric: tabular-nums;
       letter-spacing: 0.4px;
+      min-width: 170px;
+      display: inline-block;
     }
 
     main {
@@ -118,9 +107,8 @@
         font-size: 20px;
       }
 
-      .datetime-badge {
-        padding: 6px 10px;
-        font-size: 12px;
+      .datetime-inline {
+        min-width: 160px;
       }
 
       main {
@@ -364,15 +352,13 @@
 </head>
 <body>
   <header>
-    <div class="header-text">
-      <h1>Maquette SMED</h1>
-      <p>Offline, tactile, V1</p>
-    </div>
-    <!-- Date & heure (mise à jour toutes les secondes). -->
-    <div class="datetime-badge" aria-live="polite">
-      <span id="header-time">--:--:--</span>
-      <span id="header-date">--/--/----</span>
-    </div>
+    <h1>Maquette SMED</h1>
+    <p class="subtitle-line">
+      <span>Offline, tactile, V1 |</span>
+      <span class="datetime-inline" aria-live="polite">
+        <span id="header-datetime">--:--:-- – --/--/----</span>
+      </span>
+    </p>
   </header>
 
   <nav class="tab-bar" aria-label="Navigation des pages">
@@ -417,8 +403,7 @@
     const buttons = document.querySelectorAll(".tab-button");
     const pages = document.querySelectorAll(".page");
     const contrastToggle = document.querySelector("#contrast-toggle");
-    const headerTime = document.querySelector("#header-time");
-    const headerDate = document.querySelector("#header-date");
+    const headerDateTime = document.querySelector("#header-datetime");
 
     const setActiveTab = (target) => {
       buttons.forEach((button) => {
@@ -471,12 +456,13 @@
 
     // Date/heure en direct (locale fr-FR, mise à jour chaque seconde).
     const updateDateTime = () => {
-      if (!headerTime || !headerDate) {
+      if (!headerDateTime) {
         return;
       }
       const now = new Date();
-      headerTime.textContent = now.toLocaleTimeString("fr-FR", { hour12: false });
-      headerDate.textContent = now.toLocaleDateString("fr-FR");
+      const time = now.toLocaleTimeString("fr-FR", { hour12: false });
+      const date = now.toLocaleDateString("fr-FR");
+      headerDateTime.textContent = `${time} – ${date}`;
     };
 
     updateDateTime();
