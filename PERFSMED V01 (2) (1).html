@@ -297,6 +297,9 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
   opacity:0.45;
   cursor:not-allowed;
 }
+.gantt-row .bar.next-action {
+  box-shadow:0 0 0 2px rgba(255,183,3,.85) inset;
+}
 .gantt-row .bar.std { background:rgba(61,220,151,.65); color:#021221; }
 .gantt-row .bar.real { background:rgba(255,183,3,.7); color:#051933; }
 .gantt-row .bar.both { box-shadow:0 0 0 1px rgba(255,255,255,.2) inset; }
@@ -449,6 +452,10 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
               <span class="small-note">Top départ (Dernier IPC)</span>
               <strong id="kpiInter">Non validé</strong>
             </div>
+            <div class="kpi-card">
+              <span class="small-note">Chrono SMED</span>
+              <strong id="smedChrono">Non démarré</strong>
+            </div>
           </div>
         </div>
       </div>
@@ -520,6 +527,7 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
     kpiStd: document.getElementById('kpiStd'),
     kpiReal: document.getElementById('kpiReal'),
     kpiInter: document.getElementById('kpiInter'),
+    smedChrono: document.getElementById('smedChrono'),
     ganttAxis: document.getElementById('ganttAxis'),
     ganttGrid: document.getElementById('ganttGrid'),
     ganttHint: document.getElementById('ganttHint'),
@@ -547,6 +555,7 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
     lastIpcDt: '',
     lastIpcValidated: false,
     lastIpcIso: '',
+    smedStartIso: '',
     lanes: [...DEFAULT_LANES],
     actions: [
       { id: 'A1', name: 'Sécuriser ligne', stdMin: 8, realMin: 9, notes: '', order: 1, laneId: 'Z1', status: 'pending', justification: '', startedAt: null, finishedAt: null },
@@ -557,6 +566,8 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
   });
 
   let state = loadState();
+  let smedTimerId = null;
+  let plannedTimesByAction = {};
 
   function loadState() {
     try {
@@ -593,6 +604,10 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
     if (typeof migrated.lastIpcDt !== 'string') migrated.lastIpcDt = '';
     migrated.lastIpcValidated = migrated.lastIpcValidated === true;
     if (typeof migrated.lastIpcIso !== 'string') migrated.lastIpcIso = '';
+    if (typeof migrated.smedStartIso !== 'string') migrated.smedStartIso = '';
+    if (migrated.lastIpcValidated && !migrated.smedStartIso && migrated.lastIpcIso) {
+      migrated.smedStartIso = migrated.lastIpcIso;
+    }
     return migrated;
   }
 
@@ -655,6 +670,7 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
     const lanes = state.lanes.length ? state.lanes : DEFAULT_LANES;
     const totals = getLaneTotals(actions, lanes);
     const maxDuration = computeMaxDuration(totals);
+    plannedTimesByAction = computePlannedTimesByLane(actions, lanes);
     renderAxis(maxDuration);
     els.ganttGrid.innerHTML = '';
 
@@ -666,6 +682,7 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
     lanes.forEach(lane => {
       const laneId = lane.id;
       const laneActions = actions.filter(action => (action.laneId || 'Z1') === laneId);
+      const laneActionsSorted = [...laneActions].sort((a, b) => (a.order || 0) - (b.order || 0));
       const laneEl = document.createElement('div');
       laneEl.className = 'gantt-lane';
 
@@ -696,6 +713,8 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
         const realMin = action.realMin === '' || action.realMin == null ? null : Number(action.realMin) || 0;
         const realValue = realMin == null ? stdMin : realMin;
         const statusClass = `status-${action.status || 'pending'}`;
+        const isClickable = isActionClickable(action, laneActionsSorted);
+        const isNextAction = isNextPendingAction(action, laneActionsSorted);
 
         const row = document.createElement('div');
         row.className = 'gantt-row';
@@ -710,13 +729,13 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
 
         if (viewMode === 'std' || viewMode === 'both') {
           const bar = document.createElement('div');
-          bar.className = `bar std ${statusClass} ${viewMode === 'both' ? 'both' : ''} ${isReady ? '' : 'disabled'}`.trim();
+          bar.className = `bar std ${statusClass} ${viewMode === 'both' ? 'both' : ''} ${isReady && isClickable ? '' : 'disabled'} ${isNextAction ? 'next-action' : ''}`.trim();
           bar.style.left = `${(stdCursor / maxDuration) * 100}%`;
           bar.style.width = `${(stdMin / maxDuration) * 100}%`;
           bar.innerHTML = `<span class="label">${escapeHtml(action.name)}</span><span class="time">${stdMin} min</span>`;
           bar.dataset.actionId = action.id;
           bar.dataset.barType = 'std';
-          if (isReady) {
+          if (isReady && isClickable) {
             bar.addEventListener('click', () => openModal(action.id));
           }
           row.appendChild(bar);
@@ -724,14 +743,14 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
 
         if (viewMode === 'real' || viewMode === 'both') {
           const bar = document.createElement('div');
-          bar.className = `bar real ${statusClass} ${viewMode === 'both' ? 'both' : ''} ${isReady ? '' : 'disabled'}`.trim();
+          bar.className = `bar real ${statusClass} ${viewMode === 'both' ? 'both' : ''} ${isReady && isClickable ? '' : 'disabled'} ${isNextAction ? 'next-action' : ''}`.trim();
           bar.style.left = `${(realCursor / maxDuration) * 100}%`;
           bar.style.width = `${(realValue / maxDuration) * 100}%`;
           bar.style.top = viewMode === 'both' ? '18px' : '6px';
           bar.innerHTML = `<span class="label">${escapeHtml(action.name)}</span><span class="time">${realValue} min</span>`;
           bar.dataset.actionId = action.id;
           bar.dataset.barType = 'real';
-          if (isReady) {
+          if (isReady && isClickable) {
             bar.addEventListener('click', () => openModal(action.id));
           }
           row.appendChild(bar);
@@ -789,6 +808,8 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
     renderGantt();
     renderTable();
     updateKpis();
+    updateChronoUI();
+    startSmedTimerIfNeeded();
   }
 
   function addAction() {
@@ -850,7 +871,7 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
   }
 
   function exportCsv() {
-    const headers = ['id', 'name', 'laneId', 'stdMin', 'realMin', 'notes', 'order', 'status', 'justification', 'startedAt', 'finishedAt', 'lastIpcDt', 'lastIpcValidated', 'lastIpcIso'];
+    const headers = ['id', 'name', 'laneId', 'stdMin', 'realMin', 'notes', 'order', 'status', 'justification', 'startedAt', 'finishedAt', 'lastIpcDt', 'lastIpcValidated', 'lastIpcIso', 'smedStartIso'];
     const rows = state.actions.map(action => [
       action.id,
       action.name,
@@ -865,7 +886,8 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
       action.finishedAt || '',
       state.lastIpcDt || '',
       state.lastIpcValidated === true ? 'true' : 'false',
-      state.lastIpcIso || ''
+      state.lastIpcIso || '',
+      state.smedStartIso || ''
     ]);
     const lines = [headers.join(';'), ...rows.map(row => row.map(escapeCsv).join(';'))].join('\n');
     downloadBlob(lines, 'PERFSMED_V02.csv', 'text/csv');
@@ -944,8 +966,78 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
     state.lastIpcDt = inputValue;
     state.lastIpcIso = parsed.iso;
     state.lastIpcValidated = true;
+    state.smedStartIso = parsed.iso;
     els.lastIpcError.textContent = '';
     saveAndRefresh();
+    startSmedTimerIfNeeded();
+  }
+
+  function formatIsoToDDMMYY_HHMM(iso) {
+    if (!iso) return '';
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return '';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = String(date.getFullYear()).slice(-2);
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
+  }
+
+  function computePlannedTimesByLane(actions, lanes) {
+    if (!state.lastIpcValidated || !state.smedStartIso) return {};
+    const viewMode = state.viewMode || 'both';
+    const result = {};
+    lanes.forEach(lane => {
+      const laneActions = actions
+        .filter(action => (action.laneId || 'Z1') === lane.id)
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
+      let cursor = new Date(state.smedStartIso);
+      laneActions.forEach(action => {
+        const durationMin = viewMode === 'real'
+          ? getActionRealValue(action)
+          : Number(action.stdMin) || 0;
+        const plannedStartIso = cursor.toISOString();
+        const plannedEnd = new Date(cursor.getTime() + durationMin * 60000);
+        const plannedEndIso = plannedEnd.toISOString();
+        result[action.id] = { plannedStartIso, plannedEndIso };
+        cursor = plannedEnd;
+      });
+    });
+    return result;
+  }
+
+  function isNextPendingAction(action, laneActionsSorted) {
+    const nextPending = laneActionsSorted.find(item => item.status === 'pending');
+    return nextPending ? nextPending.id === action.id : false;
+  }
+
+  function isActionClickable(action, laneActionsSorted) {
+    if (state.lastIpcValidated !== true) return false;
+    if (action.status === 'in_progress' || action.status === 'done') return true;
+    return isNextPendingAction(action, laneActionsSorted);
+  }
+
+  function updateChronoUI() {
+    if (!state.lastIpcValidated || !state.smedStartIso) {
+      els.smedChrono.textContent = 'Non démarré';
+      return;
+    }
+    const start = new Date(state.smedStartIso);
+    const now = new Date();
+    const elapsedMs = Math.max(0, now - start);
+    const totalSeconds = Math.floor(elapsedMs / 1000);
+    const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+    const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+    const seconds = String(totalSeconds % 60).padStart(2, '0');
+    els.smedChrono.textContent = `${hours}:${minutes}:${seconds}`;
+  }
+
+  function startSmedTimerIfNeeded() {
+    if (!state.lastIpcValidated || !state.smedStartIso) return;
+    if (smedTimerId) return;
+    updateChronoUI();
+    smedTimerId = setInterval(updateChronoUI, 1000);
   }
 
   function getActionRealValue(action) {
@@ -963,11 +1055,14 @@ tbody tr:hover { background:rgba(255,255,255,.04); }
     const laneLabel = lane ? `${lane.name} (${lane.id})` : action.laneId || 'Z1';
     const std = Number(action.stdMin) || 0;
     const real = getActionRealValue(action);
+    const planned = plannedTimesByAction[action.id] || {};
 
     els.modalTitle.textContent = `${action.name || 'Action'} — ${laneLabel}`;
     els.modalMeta.innerHTML = `
       <div>Statut: <strong>${action.status || 'pending'}</strong></div>
       <div>Std: ${std} min · Réel: ${real} min</div>
+      <div>Début planifié: ${planned.plannedStartIso ? formatIsoToDDMMYY_HHMM(planned.plannedStartIso) : '—'}</div>
+      <div>Fin planifiée: ${planned.plannedEndIso ? formatIsoToDDMMYY_HHMM(planned.plannedEndIso) : '—'}</div>
     `;
     els.modalMessage.textContent = '';
     els.modalJustification.value = action.justification || '';
