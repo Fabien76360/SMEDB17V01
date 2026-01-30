@@ -110,6 +110,43 @@
       margin-bottom: 12px;
     }
 
+    .id-block {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 16px;
+      max-width: 520px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field label {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .field input {
+      height: 48px;
+      padding: 0 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 16px;
+    }
+
+    .field input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .field input:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
     .tab-bar {
       position: fixed;
       top: var(--header-height);
@@ -306,6 +343,17 @@
   <main>
     <section class="page active" id="page-smed" data-tab="smed">
       <h2>SMED</h2>
+      <!-- Bloc d’identification (affichage uniquement). -->
+      <div class="id-block">
+        <div class="field">
+          <label for="ligne-input">Ligne</label>
+          <input id="ligne-input" type="text" placeholder="Saisir la ligne">
+        </div>
+        <div class="field">
+          <label for="po-input">PO</label>
+          <input id="po-input" type="text" placeholder="Saisir le PO">
+        </div>
+      </div>
     </section>
 
     <section class="page" id="page-analyse" data-tab="analyse">
