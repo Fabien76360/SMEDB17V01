@@ -113,8 +113,9 @@
     .id-block {
       display: grid;
       gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       margin-bottom: 16px;
-      max-width: 520px;
+      max-width: 640px;
     }
 
     .field {
@@ -129,8 +130,9 @@
     }
 
     .field input {
-      height: 48px;
-      padding: 0 14px;
+      height: 44px;
+      min-height: 44px;
+      padding: 0 12px;
       border-radius: 12px;
       border: 1px solid var(--border);
       background: var(--surface);
@@ -342,7 +344,6 @@
 
   <main>
     <section class="page active" id="page-smed" data-tab="smed">
-      <h2>SMED</h2>
       <!-- Bloc d’identification (affichage uniquement). -->
       <div class="id-block">
         <div class="field">
