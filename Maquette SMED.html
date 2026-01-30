@@ -13,9 +13,22 @@
       --text: #152033;
       --text-muted: #5b6a82;
       --primary: #1f4b99;
-      --primary-soft: #e3ecff;
+      --border: rgba(21, 32, 51, 0.16);
       --shadow: 0 8px 24px rgba(21, 32, 51, 0.08);
       --radius: 18px;
+      --focus: #ffbf3f;
+    }
+
+    body[data-theme="high-contrast"] {
+      --bg: #0b0b0b;
+      --surface: #111111;
+      --surface-muted: #1f1f1f;
+      --text: #ffffff;
+      --text-muted: #d5d5d5;
+      --primary: #ffd84a;
+      --border: rgba(255, 255, 255, 0.5);
+      --shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
+      --focus: #ffd84a;
     }
 
     * {
@@ -35,7 +48,8 @@
       left: 0;
       right: 0;
       background: var(--surface);
-      padding: 20px 24px 16px;
+      padding: 18px 24px 14px;
+      border-bottom: 1px solid var(--border);
       box-shadow: var(--shadow);
       z-index: 10;
     }
@@ -53,8 +67,22 @@
     }
 
     main {
-      padding: 118px 20px 120px;
+      padding: 108px 20px 118px;
       min-height: 100vh;
+    }
+
+    @media (max-height: 700px) {
+      header {
+        padding: 12px 20px 10px;
+      }
+
+      header h1 {
+        font-size: 20px;
+      }
+
+      main {
+        padding: 86px 16px 104px;
+      }
     }
 
     .page {
@@ -68,34 +96,7 @@
 
     .page h2 {
       font-size: 24px;
-      margin-bottom: 16px;
-    }
-
-    .card {
-      background: var(--surface);
-      border-radius: var(--radius);
-      padding: 18px;
-      box-shadow: var(--shadow);
-      margin-bottom: 16px;
-    }
-
-    .card h3 {
-      margin: 0 0 10px;
-      font-size: 18px;
-    }
-
-    .placeholder {
-      background: var(--surface-muted);
-      border-radius: 12px;
-      padding: 18px;
-      color: var(--text-muted);
-      font-size: 15px;
-    }
-
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 14px;
+      margin-bottom: 12px;
     }
 
     .tab-bar {
@@ -107,20 +108,23 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 10px;
-      padding: 12px 16px 20px;
+      padding: 12px 16px 18px;
+      border-top: 1px solid var(--border);
       box-shadow: 0 -8px 24px rgba(21, 32, 51, 0.12);
       z-index: 10;
     }
 
     .tab-button {
+      position: relative;
       height: 56px;
       border-radius: 16px;
-      border: none;
+      border: 1px solid transparent;
       font-size: 16px;
       font-weight: 600;
       background: var(--surface-muted);
       color: var(--text);
-      transition: transform 0.1s ease, background 0.15s ease;
+      transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease;
+      overflow: hidden;
     }
 
     .tab-button:active,
@@ -130,33 +134,112 @@
 
     .tab-button.active {
       background: var(--primary);
-      color: #fff;
+      color: #000;
+      border-color: transparent;
       box-shadow: 0 6px 16px rgba(31, 75, 153, 0.3);
     }
 
-    .accordion {
+    body[data-theme="high-contrast"] .tab-button.active {
+      color: #111;
+      box-shadow: 0 0 0 3px rgba(255, 216, 74, 0.45);
+    }
+
+    .tab-button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+    }
+
+    .tab-button.halo::after {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border-radius: 12px;
+      border: 2px solid var(--focus);
+      opacity: 0.9;
+      animation: halo 0.35s ease-out;
+      pointer-events: none;
+    }
+
+    .tab-button .ripple {
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 70%);
+      transform: translate(-50%, -50%);
+      animation: ripple 0.45s ease-out;
+      pointer-events: none;
+      opacity: 0.9;
+    }
+
+    body[data-theme="high-contrast"] .tab-button .ripple {
+      background: radial-gradient(circle, rgba(255, 216, 74, 0.7) 0%, rgba(255, 216, 74, 0) 70%);
+    }
+
+    .toggle {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      max-width: 420px;
+    }
+
+    .toggle span {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .switch {
+      position: relative;
+      width: 60px;
+      height: 32px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      inset: 0;
+      background: var(--surface-muted);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .slider::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
       background: var(--surface);
       box-shadow: var(--shadow);
-      margin-bottom: 14px;
-      overflow: hidden;
+      transition: transform 0.2s ease;
     }
 
-    .accordion summary {
-      list-style: none;
-      cursor: pointer;
-      padding: 18px;
-      font-weight: 600;
-      font-size: 16px;
+    .switch input:checked + .slider {
+      background: var(--primary);
+      border-color: transparent;
     }
 
-    .accordion summary::-webkit-details-marker {
-      display: none;
+    .switch input:checked + .slider::after {
+      transform: translateX(26px);
     }
 
-    .accordion .content {
-      padding: 0 18px 18px;
-      color: var(--text-muted);
+    .switch input:focus-visible + .slider {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
     }
 
     @keyframes fadeIn {
@@ -169,6 +252,28 @@
         transform: translateY(0);
       }
     }
+
+    @keyframes halo {
+      from {
+        opacity: 0.9;
+        transform: scale(0.96);
+      }
+      to {
+        opacity: 0;
+        transform: scale(1.04);
+      }
+    }
+
+    @keyframes ripple {
+      from {
+        transform: translate(-50%, -50%) scale(0.2);
+        opacity: 0.8;
+      }
+      to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -179,72 +284,57 @@
 
   <main>
     <section class="page active" id="page-smed" data-tab="smed">
-      <h2>SMED (Opérateur)</h2>
-      <div class="card">
-        <h3>Session</h3>
-        <div class="placeholder">Contenu de session (à venir).</div>
-      </div>
-      <div class="card">
-        <h3>Étapes / Gantt</h3>
-        <div class="placeholder">Structure des étapes SMED (à venir).</div>
-      </div>
-      <div class="card">
-        <h3>Validation / Justifications</h3>
-        <div class="placeholder">Justifications et validations opérateur (à venir).</div>
-      </div>
+      <h2>SMED</h2>
     </section>
 
     <section class="page" id="page-analyse" data-tab="analyse">
       <h2>Analyse</h2>
-      <div class="card">
-        <div class="placeholder">
-          Analyse (à venir). Cette page capitalisera les informations issues de SMED.
-        </div>
-      </div>
-      <div class="card">
-        <h3>KPIs</h3>
-        <div class="kpi-grid">
-          <div class="placeholder">KPI 1 (à venir)</div>
-          <div class="placeholder">KPI 2 (à venir)</div>
-          <div class="placeholder">KPI 3 (à venir)</div>
-        </div>
-      </div>
     </section>
 
     <section class="page" id="page-parametres" data-tab="parametres">
       <h2>Paramètres</h2>
-      <details class="accordion">
-        <summary>Zones &amp; opérateurs (à venir)</summary>
-        <div class="content">Définition des zones et gestion des opérateurs (placeholder).</div>
-      </details>
-      <details class="accordion">
-        <summary>Templates étapes SMED (à venir)</summary>
-        <div class="content">Modèles des étapes SMED et bibliothèques (placeholder).</div>
-      </details>
-      <details class="accordion">
-        <summary>Standards &amp; seuils (à venir)</summary>
-        <div class="content">Référentiels et seuils de validation (placeholder).</div>
-      </details>
+      <div class="toggle" aria-live="polite">
+        <span>Contraste élevé</span>
+        <label class="switch">
+          <input id="contrast-toggle" type="checkbox" aria-label="Activer le contraste élevé">
+          <span class="slider"></span>
+        </label>
+      </div>
     </section>
   </main>
 
   <nav class="tab-bar" aria-label="Navigation des pages">
-    <button class="tab-button active" type="button" data-target="smed">SMED</button>
+    <button class="tab-button active" type="button" data-target="smed" aria-current="page">SMED</button>
     <button class="tab-button" type="button" data-target="analyse">Analyse</button>
     <button class="tab-button" type="button" data-target="parametres">Paramètres</button>
   </nav>
 
   <script>
+    // Navigation par onglets + état actif.
     const buttons = document.querySelectorAll(".tab-button");
     const pages = document.querySelectorAll(".page");
+    const contrastToggle = document.querySelector("#contrast-toggle");
 
     const setActiveTab = (target) => {
       buttons.forEach((button) => {
-        button.classList.toggle("active", button.dataset.target === target);
+        const isActive = button.dataset.target === target;
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-current", isActive ? "page" : "false");
       });
       pages.forEach((page) => {
         page.classList.toggle("active", page.dataset.tab === target);
       });
+    };
+
+    // Retour visuel tactile renforcé (pressed + halo + ripple).
+    const addRipple = (button, event) => {
+      const rect = button.getBoundingClientRect();
+      const ripple = document.createElement("span");
+      ripple.className = "ripple";
+      ripple.style.left = `${event.clientX - rect.left}px`;
+      ripple.style.top = `${event.clientY - rect.top}px`;
+      button.appendChild(ripple);
+      ripple.addEventListener("animationend", () => ripple.remove());
     };
 
     buttons.forEach((button) => {
@@ -252,15 +342,23 @@
         setActiveTab(button.dataset.target);
       });
 
-      button.addEventListener("pointerdown", () => {
-        button.classList.add("pressed");
+      button.addEventListener("pointerdown", (event) => {
+        button.classList.add("pressed", "halo");
+        addRipple(button, event);
       });
 
-      const clearPress = () => button.classList.remove("pressed");
+      const clearPress = () => button.classList.remove("pressed", "halo");
       button.addEventListener("pointerup", clearPress);
       button.addEventListener("pointerleave", clearPress);
       button.addEventListener("pointercancel", clearPress);
     });
+
+    // Contraste élevé (mémoire uniquement, sans stockage).
+    if (contrastToggle) {
+      contrastToggle.addEventListener("change", (event) => {
+        document.body.dataset.theme = event.target.checked ? "high-contrast" : "";
+      });
+    }
   </script>
 </body>
 </html>
