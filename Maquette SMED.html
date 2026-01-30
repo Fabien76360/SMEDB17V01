@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Maquette SMED</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-muted: #eef2f7;
+      --text: #152033;
+      --text-muted: #5b6a82;
+      --primary: #1f4b99;
+      --reset-bg: #fdeeee;
+      --reset-border: rgba(161, 72, 72, 0.35);
+      --reset-text: #7b2b2b;
+      --border: rgba(21, 32, 51, 0.16);
+      --shadow: 0 8px 24px rgba(21, 32, 51, 0.08);
+      --radius: 18px;
+      --focus: #ffbf3f;
+      --header-height: 72px;
+      --tabbar-height: 64px;
+    }
+
+    body[data-theme="high-contrast"] {
+      --bg: #0b0b0b;
+      --surface: #111111;
+      --surface-muted: #1f1f1f;
+      --text: #ffffff;
+      --text-muted: #d5d5d5;
+      --primary: #ffd84a;
+      --reset-bg: #2a1212;
+      --reset-border: rgba(255, 216, 74, 0.7);
+      --reset-text: #ffd84a;
+      --border: rgba(255, 255, 255, 0.5);
+      --shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
+      --focus: #ffd84a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Roboto, system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      height: var(--header-height);
+      padding: 10px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      z-index: 20;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 0.4px;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .subtitle-line {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: baseline;
+    }
+
+    .datetime-inline {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.4px;
+      min-width: 170px;
+      display: inline-block;
+    }
+
+    main {
+      padding: calc(var(--header-height) + var(--tabbar-height) + 16px) 20px 32px;
+      min-height: 100vh;
+    }
+
+    @media (max-height: 700px) {
+      :root {
+        --header-height: 60px;
+        --tabbar-height: 56px;
+      }
+
+      header {
+        padding: 8px 20px;
+      }
+
+      header h1 {
+        font-size: 20px;
+      }
+
+      .datetime-inline {
+        min-width: 160px;
+      }
+
+      main {
+        padding: calc(var(--header-height) + var(--tabbar-height) + 12px) 16px 24px;
+      }
+    }
+
+    .page {
+      display: none;
+      animation: fadeIn 0.2s ease-in;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .page h2 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    .id-block {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: minmax(180px, 1.2fr) minmax(220px, 2fr) minmax(160px, 1fr) minmax(130px, 0.8fr) minmax(110px, 0.8fr);
+      margin-bottom: 16px;
+      max-width: 900px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field label {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .field input {
+      height: 44px;
+      min-height: 44px;
+      padding: 0 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 16px;
+    }
+
+    .field input[type="date"],
+    .field input[type="time"] {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .field.wide,
+    .field.date,
+    .field.time {
+      width: 100%;
+    }
+
+    .field input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .field input:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .reset-button {
+      height: 44px;
+      min-height: 44px;
+      border-radius: 12px;
+      border: 1px solid var(--reset-border);
+      background: var(--reset-bg);
+      color: var(--reset-text);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.15s ease;
+    }
+
+    .reset-button:active {
+      transform: scale(0.98);
+    }
+
+    .reset-button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    @media (max-width: 980px) {
+      .id-block {
+        grid-template-columns: minmax(180px, 1.2fr) minmax(220px, 2fr) minmax(110px, 0.8fr);
+      }
+    }
+
+    @media (max-width: 620px) {
+      .id-block {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .inline-status {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface-muted);
+      color: var(--text);
+      font-size: 14px;
+      max-width: 360px;
+    }
+
+    .inline-status.visible {
+      display: inline-flex;
+    }
+
+    .inline-status .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+
+    .tab-bar {
+      position: fixed;
+      top: var(--header-height);
+      left: 0;
+      right: 0;
+      height: var(--tabbar-height);
+      background: var(--surface);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 6px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 8px 20px rgba(21, 32, 51, 0.1);
+      z-index: 15;
+      align-items: center;
+    }
+
+    .tab-button {
+      position: relative;
+      height: 44px;
+      min-height: 44px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      font-size: 14px;
+      font-weight: 600;
+      background: var(--surface-muted);
+      color: var(--text);
+      transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease;
+      overflow: hidden;
+      padding: 0 8px;
+    }
+
+    .tab-button:active,
+    .tab-button.pressed {
+      transform: scale(0.98);
+    }
+
+    .tab-button.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 6px 16px rgba(31, 75, 153, 0.3);
+    }
+
+    body[data-theme="high-contrast"] .tab-button.active {
+      color: #111;
+      box-shadow: 0 0 0 3px rgba(255, 216, 74, 0.45);
+    }
+
+    .tab-button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+    }
+
+    .tab-button.halo::after {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border-radius: 12px;
+      border: 2px solid var(--focus);
+      opacity: 0.9;
+      animation: halo 0.35s ease-out;
+      pointer-events: none;
+    }
+
+    .tab-button .ripple {
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 70%);
+      transform: translate(-50%, -50%);
+      animation: ripple 0.45s ease-out;
+      pointer-events: none;
+      opacity: 0.9;
+    }
+
+    body[data-theme="high-contrast"] .tab-button .ripple {
+      background: radial-gradient(circle, rgba(255, 216, 74, 0.7) 0%, rgba(255, 216, 74, 0) 70%);
+    }
+
+    .toggle {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      max-width: 420px;
+    }
+
+    .toggle span {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .switch {
+      position: relative;
+      width: 60px;
+      height: 32px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      inset: 0;
+      background: var(--surface-muted);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .slider::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      transition: transform 0.2s ease;
+    }
+
+    .switch input:checked + .slider {
+      background: var(--primary);
+      border-color: transparent;
+    }
+
+    .switch input:checked + .slider::after {
+      transform: translateX(26px);
+    }
+
+    .switch input:focus-visible + .slider {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes halo {
+      from {
+        opacity: 0.9;
+        transform: scale(0.96);
+      }
+      to {
+        opacity: 0;
+        transform: scale(1.04);
+      }
+    }
+
+    @keyframes ripple {
+      from {
+        transform: translate(-50%, -50%) scale(0.2);
+        opacity: 0.8;
+      }
+      to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Maquette SMED</h1>
+    <p class="subtitle-line">
+      <span>Offline, tactile, V1 |</span>
+      <span class="datetime-inline" aria-live="polite">
+        <span id="header-datetime">--:--:-- – --/--/----</span>
+      </span>
+    </p>
+  </header>
+
+  <nav class="tab-bar" aria-label="Navigation des pages">
+    <button class="tab-button active" type="button" data-target="smed" aria-current="page">SMED</button>
+    <button class="tab-button" type="button" data-target="analyse">Analyse</button>
+    <button class="tab-button" type="button" data-target="parametres">Paramètres</button>
+  </nav>
+
+  <main>
+    <section class="page active" id="page-smed" data-tab="smed">
+      <!-- Bloc d’identification (affichage uniquement). -->
+      <div class="id-block">
+        <div class="field wide">
+          <label for="ligne-input">Ligne</label>
+          <input id="ligne-input" type="text" placeholder="Saisir la ligne">
+        </div>
+        <div class="field wide">
+          <label for="po-input">PO</label>
+          <input id="po-input" type="text" placeholder="Saisir le PO">
+        </div>
+        <div class="field date">
+          <label for="ipc-date">Date IPC</label>
+          <input id="ipc-date" type="date" aria-label="Dernier IPC - date">
+        </div>
+        <div class="field time">
+          <label for="ipc-time">Heure IPC</label>
+          <input id="ipc-time" type="time" aria-label="Dernier IPC - heure" step="1">
+        </div>
+        <div class="field">
+          <label for="reset-smed">Reset</label>
+          <button id="reset-smed" class="reset-button" type="button">Reset</button>
+        </div>
+      </div>
+      <div id="smed-started" class="inline-status" role="status" aria-live="polite">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Le changement de production a démarré</span>
+      </div>
+    </section>
+
+    <section class="page" id="page-analyse" data-tab="analyse">
+      <h2>Analyse</h2>
+    </section>
+
+    <section class="page" id="page-parametres" data-tab="parametres">
+      <h2>Paramètres</h2>
+      <div class="toggle" aria-live="polite">
+        <span>Contraste élevé</span>
+        <label class="switch">
+          <input id="contrast-toggle" type="checkbox" aria-label="Activer le contraste élevé">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Navigation par onglets + état actif.
+    const buttons = document.querySelectorAll(".tab-button");
+    const pages = document.querySelectorAll(".page");
+    const contrastToggle = document.querySelector("#contrast-toggle");
+    const headerDateTime = document.querySelector("#header-datetime");
+    const ipcDate = document.querySelector("#ipc-date");
+    const ipcTime = document.querySelector("#ipc-time");
+    const resetSmedButton = document.querySelector("#reset-smed");
+    const smedStarted = document.querySelector("#smed-started");
+
+    const setActiveTab = (target) => {
+      buttons.forEach((button) => {
+        const isActive = button.dataset.target === target;
+        button.classList.toggle("active", isActive);
+        if (isActive) {
+          button.setAttribute("aria-current", "page");
+        } else {
+          button.removeAttribute("aria-current");
+        }
+      });
+      pages.forEach((page) => {
+        page.classList.toggle("active", page.dataset.tab === target);
+      });
+    };
+
+    // Retour visuel tactile renforcé (pressed + halo + ripple).
+    const addRipple = (button, event) => {
+      const rect = button.getBoundingClientRect();
+      const ripple = document.createElement("span");
+      ripple.className = "ripple";
+      ripple.style.left = `${event.clientX - rect.left}px`;
+      ripple.style.top = `${event.clientY - rect.top}px`;
+      button.appendChild(ripple);
+      ripple.addEventListener("animationend", () => ripple.remove());
+    };
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        setActiveTab(button.dataset.target);
+      });
+
+      button.addEventListener("pointerdown", (event) => {
+        button.classList.add("pressed", "halo");
+        addRipple(button, event);
+      });
+
+      const clearPress = () => button.classList.remove("pressed", "halo");
+      button.addEventListener("pointerup", clearPress);
+      button.addEventListener("pointerleave", clearPress);
+      button.addEventListener("pointercancel", clearPress);
+    });
+
+    // Contraste élevé (mémoire uniquement, sans stockage).
+    if (contrastToggle) {
+      contrastToggle.addEventListener("change", (event) => {
+        document.body.dataset.theme = event.target.checked ? "high-contrast" : "";
+      });
+    }
+
+    // Démarrage SMED: date + heure du "Dernier IPC" renseignées.
+    let isSmedStarted = false;
+    const updateSmedStarted = () => {
+      const hasDate = Boolean(ipcDate && ipcDate.value);
+      const hasTime = Boolean(ipcTime && ipcTime.value);
+      isSmedStarted = hasDate && hasTime;
+      if (smedStarted) {
+        smedStarted.classList.toggle("visible", isSmedStarted);
+      }
+    };
+
+    if (ipcDate && ipcTime) {
+      ipcDate.addEventListener("input", updateSmedStarted);
+      ipcTime.addEventListener("input", updateSmedStarted);
+    }
+
+    if (resetSmedButton) {
+      resetSmedButton.addEventListener("click", () => {
+        const shouldReset = window.confirm("Confirmer la remise à zéro du SMED ?");
+        if (!shouldReset) {
+          return;
+        }
+        if (ipcDate) {
+          ipcDate.value = "";
+        }
+        if (ipcTime) {
+          ipcTime.value = "";
+        }
+        const ligneInput = document.querySelector("#ligne-input");
+        const poInput = document.querySelector("#po-input");
+        if (ligneInput) {
+          ligneInput.value = "";
+        }
+        if (poInput) {
+          poInput.value = "";
+        }
+        isSmedStarted = false;
+        if (smedStarted) {
+          smedStarted.classList.remove("visible");
+        }
+        updateSmedStarted();
+      });
+    }
+
+    // Date/heure en direct (locale fr-FR, mise à jour chaque seconde).
+    const updateDateTime = () => {
+      if (!headerDateTime) {
+        return;
+      }
+      const now = new Date();
+      const time = now.toLocaleTimeString("fr-FR", { hour12: false });
+      const date = now.toLocaleDateString("fr-FR");
+      headerDateTime.textContent = `${time} – ${date}`;
+    };
+
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+    updateSmedStarted();
+  </script>
+</body>
+</html>
