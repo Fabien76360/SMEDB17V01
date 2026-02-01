@@ -147,7 +147,7 @@
     .id-block {
       display: grid;
       gap: 12px;
-      grid-template-columns: minmax(180px, 1.2fr) minmax(220px, 2fr) minmax(160px, 1fr) minmax(130px, 0.8fr) minmax(360px, 1.4fr);
+      grid-template-columns: minmax(180px, 1.2fr) minmax(220px, 2fr) minmax(160px, 1fr) minmax(130px, 0.8fr) minmax(520px, 1.8fr);
       grid-template-areas: "ligne po ipc-date ipc-time actions";
       margin-bottom: 16px;
       max-width: 1200px;
@@ -214,7 +214,7 @@
     .actions-wrap {
       display: flex;
       gap: 12px;
-      align-items: center;
+      align-items: stretch;
       flex-wrap: nowrap;
       width: 100%;
     }
@@ -267,7 +267,9 @@
       border: 1px solid var(--border);
       background: var(--surface-muted);
       min-height: 44px;
-      flex: 1 1 360px;
+      flex: 1 1 auto;
+      width: 100%;
+      min-width: 0;
       overflow: hidden;
       isolation: isolate;
     }
@@ -608,7 +610,7 @@
     <p class="subtitle-line">
       <span>Offline, tactile, V1 |</span>
       <span class="datetime-inline" aria-live="polite">
-        <span id="header-datetime">--:--:-- – --/--/----</span>
+        <span id="header-datetime">--:-- – --/--/----</span>
       </span>
     </p>
   </header>
@@ -750,6 +752,8 @@
 
     // Démarrage SMED: date + heure du "Dernier IPC" renseignées.
     let isSmedStarted = false;
+    let wasSmedStarted = false;
+    let startedToastTimeout = null;
     let chronoInterval = null;
     let chronoStartTimestamp = null;
     let elapsedSeconds = 0;
@@ -815,15 +819,32 @@
     const updateSmedStarted = () => {
       const hasDate = Boolean(ipcDate && ipcDate.value);
       const hasTime = Boolean(ipcTime && ipcTime.value);
-      isSmedStarted = hasDate && hasTime;
-      if (smedStarted) {
-        smedStarted.classList.toggle("visible", isSmedStarted);
+      const newIsSmedStarted = hasDate && hasTime;
+      isSmedStarted = newIsSmedStarted;
+      if (smedStarted && !newIsSmedStarted) {
+        smedStarted.classList.remove("visible");
+      }
+      if (!newIsSmedStarted && startedToastTimeout) {
+        clearTimeout(startedToastTimeout);
+        startedToastTimeout = null;
+      }
+      if (!wasSmedStarted && newIsSmedStarted && smedStarted) {
+        if (startedToastTimeout) {
+          clearTimeout(startedToastTimeout);
+          startedToastTimeout = null;
+        }
+        smedStarted.classList.add("visible");
+        startedToastTimeout = setTimeout(() => {
+          smedStarted.classList.remove("visible");
+          startedToastTimeout = null;
+        }, 5000);
       }
       if (isSmedStarted) {
         startChrono();
       } else {
         stopChrono(true);
       }
+      wasSmedStarted = newIsSmedStarted;
     };
 
     if (ipcDate && ipcTime) {
@@ -852,6 +873,11 @@
           poInput.value = "";
         }
         isSmedStarted = false;
+        wasSmedStarted = false;
+        if (startedToastTimeout) {
+          clearTimeout(startedToastTimeout);
+          startedToastTimeout = null;
+        }
         if (smedStarted) {
           smedStarted.classList.remove("visible");
         }
@@ -865,7 +891,11 @@
         return;
       }
       const now = new Date();
-      const time = now.toLocaleTimeString("fr-FR", { hour12: false });
+      const time = now.toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      });
       const date = now.toLocaleDateString("fr-FR");
       headerDateTime.textContent = `${time} – ${date}`;
     };
