@@ -556,6 +556,10 @@
       color: var(--text-muted);
     }
 
+    .chip.muted {
+      opacity: 0.6;
+    }
+
     .operator-card[data-status="running"] .chip {
       color: var(--text);
     }
@@ -1105,6 +1109,19 @@
       }, 1000);
     };
 
+    const startAllOperatorsOnSmedStart = () => {
+      operators.forEach((operator) => {
+        if (operator.currentStepIndex < operator.steps.length) {
+          operator.stepStatus = "running";
+          operator.stepStartTimestamp = Date.now();
+          operator.elapsedSeconds = 0;
+          operator.actualMin = null;
+        }
+      });
+      startOperatorTick();
+      renderOperators();
+    };
+
     const getOperatorStatusLabel = (operator) => {
       if (operator.currentStepIndex >= operator.steps.length) {
         return { label: "Terminé", className: "done" };
@@ -1134,7 +1151,7 @@
         const actualMin = operator.actualMin !== null ? operator.actualMin.toFixed(1) : "--";
         const disabled = !isSmedStarted || isDone;
 
-        const primaryLabel = isDone ? "Terminé" : operator.stepStatus === "running" ? "Valider" : "Démarrer étape";
+        const canValidate = isSmedStarted && operator.stepStatus === "running" && !isDone;
         const card = document.createElement("div");
         card.className = `operator-card ${!isSmedStarted ? "inactive" : ""}`;
         card.dataset.status = status.className;
@@ -1149,10 +1166,10 @@
           </div>
           <div class="operator-chips">
             <span class="chip">Cible: ${targetMin} min</span>
-            <span class="chip">Réel: ${actualMin} min</span>
+            <span class="chip ${actualMin === "--" ? "muted" : ""}">Réel: ${actualMin} min</span>
           </div>
           <div class="operator-actions">
-            <button class="primary" data-action="primary" data-op="${operator.id}" ${disabled ? "disabled" : ""}>${primaryLabel}</button>
+            <button class="primary" data-action="validate" data-op="${operator.id}" ${canValidate ? "" : "disabled"}>Valider</button>
           </div>
           <div class="operator-footer">Chrono étape: ${formatMinutes(operator.elapsedSeconds)} min</div>
         `;
@@ -1191,7 +1208,16 @@
       operator.stepStartTimestamp = null;
       operator.elapsedSeconds = 0;
       operator.currentStepIndex += 1;
-      operator.stepStatus = operator.currentStepIndex >= operator.steps.length ? "done" : "todo";
+      if (operator.currentStepIndex >= operator.steps.length) {
+        operator.stepStatus = "done";
+      } else if (isSmedStarted) {
+        operator.stepStatus = "running";
+        operator.stepStartTimestamp = Date.now();
+        operator.elapsedSeconds = 0;
+        operator.actualMin = null;
+      } else {
+        operator.stepStatus = "todo";
+      }
       renderOperators();
     };
 
@@ -1207,20 +1233,6 @@
         return;
       }
       completeStep(operator, actualMinValue, false);
-    };
-
-    const handlePrimary = (operator) => {
-      if (operator.currentStepIndex >= operator.steps.length) {
-        return;
-      }
-      if (operator.stepStatus !== "running") {
-        operator.stepStatus = "running";
-        operator.stepStartTimestamp = Date.now() - operator.elapsedSeconds * 1000;
-        startOperatorTick();
-        renderOperators();
-        return;
-      }
-      handleValidate(operator);
     };
 
     const initializeReasons = () => {
@@ -1315,6 +1327,7 @@
           smedStarted.classList.remove("visible");
           startedToastTimeout = null;
         }, 5000);
+        startAllOperatorsOnSmedStart();
       }
       if (isSmedStarted) {
         startChrono();
@@ -1346,8 +1359,8 @@
         if (!operator) {
           return;
         }
-        if (action === "primary") {
-          handlePrimary(operator);
+        if (action === "validate") {
+          handleValidate(operator);
         }
       });
     }
