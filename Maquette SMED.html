@@ -12,7 +12,11 @@
       --surface-muted: #f0f1f4;
       --text: #152033;
       --text-muted: #5a6472;
-      --primary: #2b3a8f;
+      --primary: #2a56ff;
+      --accent: #ff7a45;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warn: #f59e0b;
       --chrono-ok: #2f8a57;
       --chrono-warn: #d6a020;
       --chrono-over: #c75757;
@@ -276,7 +280,7 @@
       font-size: 15px;
       font-weight: 600;
       cursor: pointer;
-      transition: transform 0.1s ease, box-shadow 0.15s ease;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
       flex: 0 0 auto;
       white-space: nowrap;
     }
@@ -316,7 +320,7 @@
       border: 1px solid rgba(21, 32, 51, 0.08);
       border-radius: 18px;
       padding: 12px;
-      box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.6);
       margin-bottom: 16px;
       overflow: hidden;
       backdrop-filter: blur(8px) saturate(135%);
@@ -344,7 +348,7 @@
       position: absolute;
       inset: 0;
       background: var(--chrono-progress-color);
-      opacity: 0.35;
+      opacity: 0.22;
       transform-origin: left;
       transform: scaleX(var(--chrono-progress, 0));
       transition: transform 0.25s ease;
@@ -380,7 +384,7 @@
     }
 
     .chrono-time {
-      font-size: 30px;
+      font-size: 28px;
       font-weight: 700;
       font-variant-numeric: tabular-nums;
     }
@@ -518,7 +522,7 @@
 
     .operator-card {
       background: var(--surface);
-      border: 1px solid rgba(21, 32, 51, 0.1);
+      border: 1px solid rgba(21, 32, 51, 0.08);
       border-radius: 20px;
       padding: 14px;
       box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.7);
@@ -527,7 +531,7 @@
       gap: 12px;
       position: relative;
       overflow: hidden;
-      transition: transform 0.18s ease, box-shadow 0.18s ease;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease, border-color 0.14s ease;
     }
 
     .operator-card::before {
@@ -549,6 +553,7 @@
     .operator-card[data-status="done"] {
       opacity: 0.78;
       transform: scale(0.98);
+      background: linear-gradient(180deg, rgba(34, 197, 94, 0.1), rgba(255, 255, 255, 0) 55%), var(--surface);
     }
 
     .operator-card[data-status="done"] .operator-actions,
@@ -563,12 +568,15 @@
     .operator-card[data-status="running"] {
       opacity: 1;
       transform: none;
-      border-color: rgba(43, 58, 143, 0.22);
-      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.6), var(--glow);
+      border-color: rgba(255, 122, 69, 0.22);
+      border-left: 6px solid rgba(255, 122, 69, 0.85);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 1), rgba(255, 245, 238, 0.65));
+      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.65), 0 0 0 3px rgba(255, 122, 69, 0.08);
+      animation: breathe 2.2s ease-in-out infinite;
     }
 
     .operator-card[data-status="running"] .operator-actions .primary {
-      box-shadow: 0 8px 18px rgba(31, 75, 153, 0.35);
+      box-shadow: 0 10px 22px rgba(42, 86, 255, 0.24);
     }
 
     .operator-card.inactive {
@@ -601,15 +609,36 @@
     }
 
     .operator-status.running {
-      color: var(--primary);
+      color: #111;
+      background: rgba(255, 122, 69, 0.16);
+      border-color: rgba(255, 122, 69, 0.22);
     }
 
     .operator-status.done {
-      color: #2f8a57;
+      color: #0f5132;
+      background: rgba(34, 197, 94, 0.14);
+      border-color: rgba(34, 197, 94, 0.22);
     }
 
     .operator-status.over {
-      color: #c75757;
+      color: #7f1d1d;
+      background: rgba(239, 68, 68, 0.14);
+      border-color: rgba(239, 68, 68, 0.22);
+    }
+
+    .operator-status.running::before {
+      content: "▶";
+      margin-right: 6px;
+    }
+
+    .operator-status.done::before {
+      content: "✓";
+      margin-right: 6px;
+    }
+
+    .operator-status.over::before {
+      content: "!";
+      margin-right: 6px;
     }
 
     .operator-step {
@@ -629,16 +658,17 @@
     }
 
     .chip {
-      font-size: 12px;
-      padding: 6px 10px;
+      font-size: 11px;
+      padding: 5px 9px;
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.78);
       border: 1px solid rgba(21, 32, 51, 0.08);
       color: var(--text-muted);
+      opacity: 0.85;
     }
 
     .chip.muted {
-      opacity: 0.6;
+      opacity: 0.45;
     }
 
     .operator-card[data-status="running"] .chip {
@@ -662,7 +692,7 @@
       font-weight: 600;
       padding: 0 14px;
       cursor: pointer;
-      transition: transform 0.1s ease, box-shadow 0.15s ease;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
     }
 
     .operator-actions button:active {
@@ -675,12 +705,23 @@
     }
 
     .operator-actions button.primary {
-      background: var(--primary);
+      height: 48px;
+      min-height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(42, 86, 255, 1), rgba(35, 70, 230, 1));
       color: #fff;
       border-color: transparent;
-      box-shadow: 0 10px 22px rgba(31, 75, 153, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      box-shadow: 0 14px 28px rgba(42, 86, 255, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.35);
     }
 
+    .operator-actions button.primary:hover,
+    .operator-actions button.primary:focus-visible {
+      filter: brightness(1.02);
+    }
+
+    .operator-actions button.primary:active {
+      transform: scale(0.985);
+    }
     .operator-actions button:focus-visible {
       outline: 3px solid var(--focus);
       outline-offset: 2px;
@@ -809,7 +850,7 @@
       font-weight: 600;
       background: transparent;
       color: var(--text-muted);
-      transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease;
+      transition: transform 0.14s ease, background 0.16s ease, border-color 0.16s ease;
       overflow: hidden;
       padding: 0 8px;
     }
@@ -932,6 +973,25 @@
     .switch input:focus-visible + .slider {
       outline: 3px solid var(--focus);
       outline-offset: 3px;
+    }
+
+    @keyframes breathe {
+      0%,
+      100% {
+        box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.65), 0 0 0 3px rgba(255, 122, 69, 0.08);
+      }
+      50% {
+        box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.65), 0 0 0 5px rgba(255, 122, 69, 0.12);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .operator-card,
+      .operator-actions button,
+      .tab-button {
+        animation: none !important;
+        transition: none !important;
+      }
     }
 
     @keyframes fadeIn {
