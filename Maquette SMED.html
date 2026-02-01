@@ -26,6 +26,7 @@
       --focus: #ffbf3f;
       --header-height: 72px;
       --tabbar-height: 64px;
+      --sticky-top: calc(var(--header-height) + var(--tabbar-height) + 8px);
     }
 
     body[data-theme="high-contrast"] {
@@ -147,7 +148,7 @@
     .id-block {
       display: grid;
       gap: 12px;
-      grid-template-columns: minmax(180px, 1.2fr) minmax(220px, 2fr) minmax(160px, 1fr) minmax(130px, 0.8fr) minmax(520px, 1.8fr);
+      grid-template-columns: minmax(180px, 1.2fr) minmax(220px, 2fr) minmax(160px, 1fr) minmax(130px, 0.8fr) minmax(150px, 0.7fr);
       grid-template-areas: "ligne po ipc-date ipc-time actions";
       margin-bottom: 16px;
       max-width: 1200px;
@@ -214,8 +215,8 @@
     .actions-wrap {
       display: flex;
       gap: 12px;
-      align-items: stretch;
-      flex-wrap: nowrap;
+      align-items: center;
+      flex-wrap: wrap;
       width: 100%;
     }
 
@@ -272,6 +273,23 @@
       min-width: 0;
       overflow: hidden;
       isolation: isolate;
+    }
+
+    .chrono-bar {
+      position: sticky;
+      top: var(--sticky-top);
+      z-index: 50;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 12px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+
+    .chrono-bar .chrono-card {
+      flex: 1 1 auto;
+      width: 100%;
     }
 
     .chrono-card::before {
@@ -447,6 +465,29 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
+    }
+
+    .operator-card[data-status="done"] {
+      opacity: 0.78;
+      transform: scale(0.98);
+    }
+
+    .operator-card[data-status="done"] .operator-actions,
+    .operator-card[data-status="done"] .operator-metrics {
+      gap: 6px;
+    }
+
+    .operator-card[data-status="done"] .operator-footer {
+      margin-top: -2px;
+    }
+
+    .operator-card[data-status="running"] {
+      opacity: 1;
+      transform: none;
+    }
+
+    .operator-card[data-status="running"] .operator-actions .primary {
+      box-shadow: 0 8px 18px rgba(31, 75, 153, 0.35);
     }
 
     .operator-card.inactive {
@@ -858,26 +899,28 @@
           <label for="reset-smed">Reset</label>
           <div class="actions-wrap">
             <button id="reset-smed" class="reset-button" type="button">Reset</button>
-            <div class="chrono-card state-ok" id="chrono-card" aria-live="polite">
-              <div class="chrono-main">
-                <span class="chrono-label">Chronomètre</span>
-                <span class="chrono-time" id="chrono-time">00:00</span>
-                <span class="chrono-status" id="chrono-status">EN ATTENTE</span>
-              </div>
-              <div class="chrono-metrics">
-                <div class="chrono-metric">
-                  Cible
-                  <span>61.0 min</span>
-                </div>
-                <div class="chrono-metric">
-                  Alerte
-                  <span>12.0 min</span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
+      <section class="chrono-bar" id="global-chrono-bar">
+        <div class="chrono-card state-ok" id="chrono-card" aria-live="polite">
+          <div class="chrono-main">
+            <span class="chrono-label">Chronomètre</span>
+            <span class="chrono-time" id="chrono-time">00:00</span>
+            <span class="chrono-status" id="chrono-status">EN ATTENTE</span>
+          </div>
+          <div class="chrono-metrics">
+            <div class="chrono-metric">
+              Cible
+              <span>61.0 min</span>
+            </div>
+            <div class="chrono-metric">
+              Alerte
+              <span>12.0 min</span>
+            </div>
+          </div>
+        </div>
+      </section>
       <div id="smed-started" class="inline-status" role="status" aria-live="polite">
         <span class="dot" aria-hidden="true"></span>
         <span>Le changement de production a démarré</span>
@@ -1094,6 +1137,7 @@
 
         const card = document.createElement("div");
         card.className = `operator-card ${!isSmedStarted ? "inactive" : ""}`;
+        card.dataset.status = status.className;
         card.innerHTML = `
           <div class="operator-header">
             <div class="operator-name">${operator.name}</div>
