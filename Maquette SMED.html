@@ -215,7 +215,7 @@
       display: flex;
       gap: 12px;
       align-items: center;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       width: 100%;
     }
 
@@ -235,6 +235,7 @@
     .reset-button {
       height: 44px;
       min-height: 44px;
+      padding: 0 14px;
       border-radius: 12px;
       border: 1px solid var(--reset-border);
       background: var(--reset-bg);
@@ -244,6 +245,7 @@
       cursor: pointer;
       transition: transform 0.1s ease, box-shadow 0.15s ease;
       flex: 0 0 auto;
+      white-space: nowrap;
     }
 
     .reset-button:active {
@@ -265,7 +267,7 @@
       border: 1px solid var(--border);
       background: var(--surface-muted);
       min-height: 44px;
-      flex: 1 1 420px;
+      flex: 1 1 360px;
       overflow: hidden;
       isolation: isolate;
     }
@@ -358,6 +360,7 @@
 
       .actions-wrap {
         justify-content: flex-start;
+        flex-wrap: wrap;
       }
 
       .chrono-card {
@@ -634,7 +637,7 @@
         </div>
         <div class="field time">
           <label for="ipc-time">Heure IPC</label>
-          <input id="ipc-time" type="time" aria-label="Dernier IPC - heure" step="1">
+          <input id="ipc-time" type="time" aria-label="Dernier IPC - heure" step="60">
         </div>
         <div class="field actions-field">
           <label for="reset-smed">Reset</label>
@@ -643,7 +646,7 @@
             <div class="chrono-card state-ok" id="chrono-card" aria-live="polite">
               <div class="chrono-main">
                 <span class="chrono-label">Chronomètre</span>
-                <span class="chrono-time" id="chrono-time">00:00:00</span>
+                <span class="chrono-time" id="chrono-time">00:00</span>
                 <span class="chrono-status" id="chrono-status">EN ATTENTE</span>
               </div>
               <div class="chrono-metrics">
@@ -755,8 +758,7 @@
     const formatTime = (totalSeconds) => {
       const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
       const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
-      const seconds = String(totalSeconds % 60).padStart(2, "0");
-      return `${hours}:${minutes}:${seconds}`;
+      return `${hours}:${minutes}`;
     };
 
     const updateChronoDisplay = () => {
