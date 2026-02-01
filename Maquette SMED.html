@@ -13,6 +13,10 @@
       --text: #152033;
       --text-muted: #5b6a82;
       --primary: #1f4b99;
+      --chrono-ok: #2f8a57;
+      --chrono-warn: #d6a020;
+      --chrono-over: #c75757;
+      --chrono-over-base: #f8e9e9;
       --reset-bg: #fdeeee;
       --reset-border: rgba(161, 72, 72, 0.35);
       --reset-text: #7b2b2b;
@@ -31,6 +35,10 @@
       --text: #ffffff;
       --text-muted: #d5d5d5;
       --primary: #ffd84a;
+      --chrono-ok: #7df4a8;
+      --chrono-warn: #ffd84a;
+      --chrono-over: #ff8d8d;
+      --chrono-over-base: #2a1212;
       --reset-bg: #2a1212;
       --reset-border: rgba(255, 216, 74, 0.7);
       --reset-text: #ffd84a;
@@ -139,9 +147,34 @@
     .id-block {
       display: grid;
       gap: 12px;
-      grid-template-columns: minmax(180px, 1.2fr) minmax(220px, 2fr) minmax(160px, 1fr) minmax(130px, 0.8fr) minmax(110px, 0.8fr);
+      grid-template-columns: minmax(180px, 1.2fr) minmax(220px, 2fr) minmax(160px, 1fr) minmax(130px, 0.8fr) minmax(360px, 1.4fr);
+      grid-template-areas: "ligne po ipc-date ipc-time actions";
       margin-bottom: 16px;
-      max-width: 900px;
+      max-width: 1200px;
+    }
+
+    .id-block > * {
+      min-width: 0;
+    }
+
+    .field.ligne {
+      grid-area: ligne;
+    }
+
+    .field.po {
+      grid-area: po;
+    }
+
+    .field.date {
+      grid-area: ipc-date;
+    }
+
+    .field.time {
+      grid-area: ipc-time;
+    }
+
+    .field.actions-field {
+      grid-area: actions;
     }
 
     .field {
@@ -173,8 +206,21 @@
 
     .field.wide,
     .field.date,
-    .field.time {
+    .field.time,
+    .field.actions-field {
       width: 100%;
+    }
+
+    .actions-wrap {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+
+    .actions-wrap > * {
+      min-width: 0;
     }
 
     .field input::placeholder {
@@ -208,15 +254,142 @@
       outline-offset: 2px;
     }
 
+    .chrono-card {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 16px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: var(--surface-muted);
+      min-height: 44px;
+      flex: 1 1 260px;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .chrono-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: var(--chrono-progress-color);
+      opacity: 0.25;
+      transform-origin: left;
+      transform: scaleX(var(--chrono-progress, 0));
+      transition: transform 0.25s ease;
+      z-index: 0;
+    }
+
+    .chrono-card.state-ok {
+      --chrono-progress-color: var(--chrono-ok);
+    }
+
+    .chrono-card.state-warn {
+      --chrono-progress-color: var(--chrono-warn);
+    }
+
+    .chrono-card.state-over {
+      --chrono-progress-color: var(--chrono-over);
+      background: var(--chrono-over-base);
+    }
+
+    .chrono-main {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 1;
+    }
+
+    .chrono-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .chrono-time {
+      font-size: 22px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chrono-status {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.4px;
+    }
+
+    .chrono-metrics {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+      z-index: 1;
+    }
+
+    .chrono-metric {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px 8px;
+      min-width: 74px;
+      text-align: center;
+      font-size: 11px;
+    }
+
+    .chrono-metric span {
+      display: block;
+      font-weight: 600;
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
     @media (max-width: 980px) {
       .id-block {
-        grid-template-columns: minmax(180px, 1.2fr) minmax(220px, 2fr) minmax(110px, 0.8fr);
+        grid-template-columns: minmax(180px, 1.2fr) minmax(220px, 2fr) minmax(140px, 1fr);
+        grid-template-areas:
+          "ligne po actions"
+          "ipc-date ipc-time .";
+        max-width: none;
+      }
+
+      .actions-wrap {
+        justify-content: flex-start;
+      }
+
+      .chrono-card {
+        flex: 1 1 100%;
       }
     }
 
     @media (max-width: 620px) {
       .id-block {
         grid-template-columns: 1fr;
+        grid-template-areas:
+          "ligne"
+          "po"
+          "ipc-date"
+          "ipc-time"
+          "actions";
+      }
+
+      .actions-wrap {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .reset-button {
+        width: 100%;
+      }
+
+      .chrono-metrics {
+        margin-left: 0;
+      }
+
+      .chrono-card {
+        width: 100%;
       }
     }
 
@@ -446,11 +619,11 @@
     <section class="page active" id="page-smed" data-tab="smed">
       <!-- Bloc d’identification (affichage uniquement). -->
       <div class="id-block">
-        <div class="field wide">
+        <div class="field wide ligne">
           <label for="ligne-input">Ligne</label>
           <input id="ligne-input" type="text" placeholder="Saisir la ligne">
         </div>
-        <div class="field wide">
+        <div class="field wide po">
           <label for="po-input">PO</label>
           <input id="po-input" type="text" placeholder="Saisir le PO">
         </div>
@@ -462,9 +635,28 @@
           <label for="ipc-time">Heure IPC</label>
           <input id="ipc-time" type="time" aria-label="Dernier IPC - heure" step="1">
         </div>
-        <div class="field">
+        <div class="field actions-field">
           <label for="reset-smed">Reset</label>
-          <button id="reset-smed" class="reset-button" type="button">Reset</button>
+          <div class="actions-wrap">
+            <button id="reset-smed" class="reset-button" type="button">Reset</button>
+            <div class="chrono-card state-ok" id="chrono-card" aria-live="polite">
+              <div class="chrono-main">
+                <span class="chrono-label">Chronomètre</span>
+                <span class="chrono-time" id="chrono-time">00:00:00</span>
+                <span class="chrono-status" id="chrono-status">EN ATTENTE</span>
+              </div>
+              <div class="chrono-metrics">
+                <div class="chrono-metric">
+                  Cible
+                  <span>61.0 min</span>
+                </div>
+                <div class="chrono-metric">
+                  Alerte
+                  <span>12.0 min</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <div id="smed-started" class="inline-status" role="status" aria-live="polite">
@@ -498,6 +690,9 @@
     const ipcDate = document.querySelector("#ipc-date");
     const ipcTime = document.querySelector("#ipc-time");
     const resetSmedButton = document.querySelector("#reset-smed");
+    const chronoCard = document.querySelector("#chrono-card");
+    const chronoTime = document.querySelector("#chrono-time");
+    const chronoStatus = document.querySelector("#chrono-status");
     const smedStarted = document.querySelector("#smed-started");
 
     const setActiveTab = (target) => {
@@ -551,12 +746,80 @@
 
     // Démarrage SMED: date + heure du "Dernier IPC" renseignées.
     let isSmedStarted = false;
+    let chronoInterval = null;
+    let chronoStartTimestamp = null;
+    let elapsedSeconds = 0;
+    const targetSeconds = 61 * 60;
+
+    const formatTime = (totalSeconds) => {
+      const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+      const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+      const seconds = String(totalSeconds % 60).padStart(2, "0");
+      return `${hours}:${minutes}:${seconds}`;
+    };
+
+    const updateChronoDisplay = () => {
+      if (!chronoCard || !chronoTime || !chronoStatus) {
+        return;
+      }
+      const progress = Math.min(elapsedSeconds / targetSeconds, 1);
+      chronoCard.style.setProperty("--chrono-progress", progress);
+      chronoTime.textContent = formatTime(elapsedSeconds);
+
+      let stateClass = "state-ok";
+      if (progress >= 1) {
+        stateClass = "state-over";
+      } else if (progress >= 0.7) {
+        stateClass = "state-warn";
+      }
+
+      chronoCard.classList.remove("state-ok", "state-warn", "state-over");
+      chronoCard.classList.add(stateClass);
+
+      if (!isSmedStarted) {
+        chronoStatus.textContent = "EN ATTENTE";
+      } else if (elapsedSeconds >= targetSeconds) {
+        chronoStatus.textContent = "DEPASSEMENT";
+      } else {
+        chronoStatus.textContent = "EN COURS";
+      }
+    };
+
+    const startChrono = () => {
+      if (chronoInterval) {
+        return;
+      }
+      chronoStartTimestamp = Date.now() - elapsedSeconds * 1000;
+      chronoInterval = setInterval(() => {
+        elapsedSeconds = Math.floor((Date.now() - chronoStartTimestamp) / 1000);
+        updateChronoDisplay();
+      }, 1000);
+      updateChronoDisplay();
+    };
+
+    const stopChrono = (reset = false) => {
+      if (chronoInterval) {
+        clearInterval(chronoInterval);
+        chronoInterval = null;
+      }
+      if (reset) {
+        elapsedSeconds = 0;
+        chronoStartTimestamp = null;
+      }
+      updateChronoDisplay();
+    };
+
     const updateSmedStarted = () => {
       const hasDate = Boolean(ipcDate && ipcDate.value);
       const hasTime = Boolean(ipcTime && ipcTime.value);
       isSmedStarted = hasDate && hasTime;
       if (smedStarted) {
         smedStarted.classList.toggle("visible", isSmedStarted);
+      }
+      if (isSmedStarted) {
+        startChrono();
+      } else {
+        stopChrono(true);
       }
     };
 
