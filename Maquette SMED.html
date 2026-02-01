@@ -456,6 +456,18 @@
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     }
 
+    .operator-column {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .operator-column h4 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
     .operator-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -1152,12 +1164,14 @@
         const disabled = !isSmedStarted || isDone;
 
         const canValidate = isSmedStarted && operator.stepStatus === "running" && !isDone;
+        const column = document.createElement("div");
+        column.className = "operator-column";
+        column.innerHTML = `<h4>${operator.name}</h4>`;
         const card = document.createElement("div");
         card.className = `operator-card ${!isSmedStarted ? "inactive" : ""}`;
         card.dataset.status = status.className;
         card.innerHTML = `
           <div class="operator-header">
-            <div class="operator-name">${operator.name}</div>
             <div class="operator-status ${status.className}">${status.label}</div>
           </div>
           <div class="operator-step">
@@ -1173,7 +1187,8 @@
           </div>
           <div class="operator-footer">Chrono étape: ${formatMinutes(operator.elapsedSeconds)} min</div>
         `;
-        operatorsGrid.appendChild(card);
+        column.appendChild(card);
+        operatorsGrid.appendChild(column);
       });
     };
 
