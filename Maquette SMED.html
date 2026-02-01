@@ -7,12 +7,12 @@
   <style>
     :root {
       color-scheme: light;
-      --bg: #f5f7fb;
+      --bg: #f6f5f2;
       --surface: #ffffff;
-      --surface-muted: #eef2f7;
+      --surface-muted: #f0f1f4;
       --text: #152033;
-      --text-muted: #5b6a82;
-      --primary: #1f4b99;
+      --text-muted: #5a6472;
+      --primary: #2b3a8f;
       --chrono-ok: #2f8a57;
       --chrono-warn: #d6a020;
       --chrono-over: #c75757;
@@ -24,7 +24,7 @@
       --shadow-sm: 0 1px 2px rgba(21, 32, 51, 0.06), 0 4px 10px rgba(21, 32, 51, 0.06);
       --shadow-md: 0 8px 24px rgba(21, 32, 51, 0.1);
       --shadow-lg: 0 14px 40px rgba(21, 32, 51, 0.14);
-      --glow: 0 0 0 3px rgba(31, 75, 153, 0.12);
+      --glow: 0 0 0 3px rgba(43, 58, 143, 0.1);
       --radius: 18px;
       --focus: #ffbf3f;
       --header-height: 72px;
@@ -74,8 +74,9 @@
       margin: 0;
       font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
       background:
-        radial-gradient(1200px 600px at 20% -10%, rgba(31, 75, 153, 0.1), transparent 60%),
+        radial-gradient(1200px 600px at 20% -10%, rgba(31, 75, 153, 0.08), transparent 60%),
         radial-gradient(900px 500px at 90% 0%, rgba(214, 160, 32, 0.08), transparent 55%),
+        radial-gradient(1000px 600px at 50% 110%, rgba(255, 170, 90, 0.1), transparent 60%),
         var(--bg);
       color: var(--text);
     }
@@ -145,7 +146,7 @@
       }
 
       header {
-      padding: 8px 22px;
+        padding: 8px 22px;
       }
 
       header h1 {
@@ -298,7 +299,7 @@
       padding: 18px 16px;
       border-radius: 16px;
       border: 1px solid var(--border);
-      background: var(--surface-muted);
+      background: var(--surface);
       min-height: 44px;
       flex: 1 1 auto;
       width: 100%;
@@ -311,15 +312,15 @@
       position: sticky;
       top: var(--sticky-top);
       z-index: 50;
-      background: rgba(255, 255, 255, 0.72);
-      border: 1px solid rgba(21, 32, 51, 0.1);
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(21, 32, 51, 0.08);
       border-radius: 18px;
       padding: 12px;
       box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.6);
       margin-bottom: 16px;
       overflow: hidden;
-      backdrop-filter: blur(10px) saturate(140%);
-      -webkit-backdrop-filter: blur(10px) saturate(140%);
+      backdrop-filter: blur(8px) saturate(135%);
+      -webkit-backdrop-filter: blur(8px) saturate(135%);
     }
 
     .chrono-bar .chrono-card {
@@ -470,8 +471,8 @@
       padding: 10px 12px;
       border-radius: 12px;
       border: 1px solid var(--border);
-      background: var(--surface-muted);
-      color: var(--text);
+      background: var(--surface);
+      color: var(--text-muted);
       font-size: 14px;
       max-width: 360px;
     }
@@ -520,7 +521,7 @@
       border: 1px solid rgba(21, 32, 51, 0.1);
       border-radius: 20px;
       padding: 14px;
-      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.7);
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -562,7 +563,7 @@
     .operator-card[data-status="running"] {
       opacity: 1;
       transform: none;
-      border-color: rgba(31, 75, 153, 0.28);
+      border-color: rgba(43, 58, 143, 0.22);
       box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.6), var(--glow);
     }
 
@@ -591,8 +592,8 @@
       font-weight: 700;
       padding: 4px 10px;
       border-radius: 999px;
-      background: rgba(238, 242, 247, 0.65);
-      border: 1px solid rgba(21, 32, 51, 0.1);
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(21, 32, 51, 0.08);
     }
 
     .operator-status.todo {
@@ -631,8 +632,8 @@
       font-size: 12px;
       padding: 6px 10px;
       border-radius: 999px;
-      background: rgba(238, 242, 247, 0.65);
-      border: 1px solid rgba(21, 32, 51, 0.1);
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(21, 32, 51, 0.08);
       color: var(--text-muted);
     }
 
@@ -655,8 +656,8 @@
       min-height: 44px;
       border-radius: 12px;
       border: 1px solid var(--border);
-      background: var(--surface-muted);
-      color: var(--text);
+      background: var(--surface);
+      color: var(--text-muted);
       font-size: 14px;
       font-weight: 600;
       padding: 0 14px;
@@ -753,7 +754,7 @@
       min-height: 44px;
       border-radius: 12px;
       border: 1px solid var(--border);
-      background: var(--surface-muted);
+      background: var(--surface);
       color: var(--text);
       font-size: 14px;
       font-weight: 600;
@@ -773,12 +774,12 @@
       left: 16px;
       right: 16px;
       height: var(--tabbar-height);
-      background: var(--surface-muted);
+      background: var(--surface);
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 10px;
       padding: 6px 10px;
-      border: 1px solid var(--border);
+      border: 1px solid rgba(21, 32, 51, 0.1);
       box-shadow: var(--shadow-sm);
       z-index: 15;
       align-items: center;
@@ -794,7 +795,7 @@
       inset: 0;
       border-radius: inherit;
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0));
-      opacity: 0.35;
+      opacity: 0.22;
       pointer-events: none;
     }
 
@@ -807,7 +808,7 @@
       font-size: 14px;
       font-weight: 600;
       background: transparent;
-      color: var(--text);
+      color: var(--text-muted);
       transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease;
       overflow: hidden;
       padding: 0 8px;
@@ -819,10 +820,15 @@
     }
 
     .tab-button.active {
-      background: var(--surface);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(245, 246, 249, 0.95));
       color: var(--text);
-      border-color: rgba(31, 75, 153, 0.18);
-      box-shadow: inset 0 -2px 0 rgba(31, 75, 153, 0.35), var(--shadow-sm);
+      border-color: rgba(43, 58, 143, 0.18);
+      box-shadow: inset 0 -2px 0 rgba(43, 58, 143, 0.35), var(--shadow-sm);
+    }
+
+    .tab-button:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.6);
     }
 
     body[data-theme="high-contrast"] .tab-button.active {
@@ -895,8 +901,8 @@
     .slider {
       position: absolute;
       inset: 0;
-      background: var(--surface-muted);
-      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(21, 32, 51, 0.08);
       border-radius: 999px;
       transition: background 0.2s ease, border-color 0.2s ease;
     }
