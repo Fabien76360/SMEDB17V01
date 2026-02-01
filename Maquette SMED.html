@@ -24,6 +24,7 @@
       --shadow-sm: 0 1px 2px rgba(21, 32, 51, 0.06), 0 4px 10px rgba(21, 32, 51, 0.06);
       --shadow-md: 0 8px 24px rgba(21, 32, 51, 0.1);
       --shadow-lg: 0 14px 40px rgba(21, 32, 51, 0.14);
+      --glow: 0 0 0 3px rgba(31, 75, 153, 0.12);
       --radius: 18px;
       --focus: #ffbf3f;
       --header-height: 72px;
@@ -49,6 +50,7 @@
       --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.6);
       --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.6);
       --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.7);
+      --glow: 0 0 0 0 rgba(0, 0, 0, 0);
       --focus: #ffd84a;
     }
 
@@ -58,13 +60,19 @@
       opacity: 0;
     }
 
+    body[data-theme="high-contrast"] .chrono-bar {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background: var(--surface);
+    }
+
     * {
       box-sizing: border-box;
     }
 
     body {
       margin: 0;
-      font-family: "Segoe UI", Roboto, system-ui, -apple-system, sans-serif;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
       background:
         radial-gradient(1200px 600px at 20% -10%, rgba(31, 75, 153, 0.1), transparent 60%),
         radial-gradient(900px 500px at 90% 0%, rgba(214, 160, 32, 0.08), transparent 55%),
@@ -81,22 +89,27 @@
       top: 0;
       left: 0;
       right: 0;
-      background: var(--surface);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 1));
       height: var(--header-height);
-      padding: 10px 24px;
+      padding: 8px 22px;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 4px;
-      border-bottom: 1px solid var(--border);
+      gap: 2px;
+      border: 1px solid var(--border);
       box-shadow: var(--shadow-md);
       z-index: 20;
     }
 
+    body[data-theme="high-contrast"] header {
+      background: var(--surface);
+    }
+
     header h1 {
       margin: 0;
-      font-size: 22px;
-      letter-spacing: 0.4px;
+      font-size: 20px;
+      letter-spacing: 0.2px;
+      font-weight: 700;
     }
 
     header p {
@@ -132,7 +145,7 @@
       }
 
       header {
-        padding: 8px 20px;
+      padding: 8px 22px;
       }
 
       header h1 {
@@ -298,18 +311,21 @@
       position: sticky;
       top: var(--sticky-top);
       z-index: 50;
-      background: var(--surface);
-      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(21, 32, 51, 0.1);
       border-radius: 18px;
       padding: 12px;
       box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.6);
       margin-bottom: 16px;
       overflow: hidden;
+      backdrop-filter: blur(10px) saturate(140%);
+      -webkit-backdrop-filter: blur(10px) saturate(140%);
     }
 
     .chrono-bar .chrono-card {
       flex: 1 1 auto;
       width: 100%;
+      background: rgba(238, 242, 247, 0.72);
     }
 
     .chrono-bar::before {
@@ -350,7 +366,7 @@
     .chrono-main {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 2px;
       z-index: 1;
     }
 
@@ -383,7 +399,7 @@
     }
 
     .chrono-metric {
-      background: var(--surface);
+      background: rgba(255, 255, 255, 0.78);
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 6px 8px;
@@ -494,15 +510,16 @@
 
     .operator-column h4 {
       margin: 0;
-      font-size: 16px;
-      font-weight: 600;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-muted);
     }
 
     .operator-card {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 16px;
+      border: 1px solid rgba(21, 32, 51, 0.1);
+      border-radius: 20px;
+      padding: 14px;
       box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.6);
       display: flex;
       flex-direction: column;
@@ -545,6 +562,8 @@
     .operator-card[data-status="running"] {
       opacity: 1;
       transform: none;
+      border-color: rgba(31, 75, 153, 0.28);
+      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.6), var(--glow);
     }
 
     .operator-card[data-status="running"] .operator-actions .primary {
@@ -572,8 +591,8 @@
       font-weight: 700;
       padding: 4px 10px;
       border-radius: 999px;
-      background: var(--surface-muted);
-      border: 1px solid var(--border);
+      background: rgba(238, 242, 247, 0.65);
+      border: 1px solid rgba(21, 32, 51, 0.1);
     }
 
     .operator-status.todo {
@@ -612,8 +631,8 @@
       font-size: 12px;
       padding: 6px 10px;
       border-radius: 999px;
-      background: var(--surface-muted);
-      border: 1px solid var(--border);
+      background: rgba(238, 242, 247, 0.65);
+      border: 1px solid rgba(21, 32, 51, 0.1);
       color: var(--text-muted);
     }
 
@@ -658,7 +677,7 @@
       background: var(--primary);
       color: #fff;
       border-color: transparent;
-      box-shadow: 0 6px 14px rgba(31, 75, 153, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+      box-shadow: 0 10px 22px rgba(31, 75, 153, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.35);
     }
 
     .operator-actions button:focus-visible {
@@ -668,8 +687,9 @@
     }
 
     .operator-footer {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--text-muted);
+      opacity: 0.75;
     }
 
     .modal-overlay {
@@ -750,19 +770,22 @@
     .tab-bar {
       position: fixed;
       top: var(--header-height);
-      left: 0;
-      right: 0;
+      left: 16px;
+      right: 16px;
       height: var(--tabbar-height);
-      background: var(--surface);
+      background: var(--surface-muted);
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 10px;
-      padding: 6px 16px 10px;
-      border-bottom: 1px solid var(--border);
-      box-shadow: var(--shadow-md);
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
       z-index: 15;
       align-items: center;
       overflow: hidden;
+      border-radius: 16px;
+      margin: 10px auto 0;
+      max-width: 1100px;
     }
 
     .tab-bar::before {
@@ -783,7 +806,7 @@
       border: 1px solid transparent;
       font-size: 14px;
       font-weight: 600;
-      background: var(--surface-muted);
+      background: transparent;
       color: var(--text);
       transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease;
       overflow: hidden;
@@ -796,10 +819,10 @@
     }
 
     .tab-button.active {
-      background: var(--primary);
-      color: #fff;
-      border-color: transparent;
-      box-shadow: 0 6px 16px rgba(31, 75, 153, 0.3);
+      background: var(--surface);
+      color: var(--text);
+      border-color: rgba(31, 75, 153, 0.18);
+      box-shadow: inset 0 -2px 0 rgba(31, 75, 153, 0.35), var(--shadow-sm);
     }
 
     body[data-theme="high-contrast"] .tab-button.active {
