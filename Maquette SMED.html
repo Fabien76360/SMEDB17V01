@@ -473,7 +473,7 @@
     }
 
     .operator-card[data-status="done"] .operator-actions,
-    .operator-card[data-status="done"] .operator-metrics {
+    .operator-card[data-status="done"] .operator-chips {
       gap: 6px;
     }
 
@@ -541,24 +541,23 @@
       font-size: 15px;
     }
 
-    .operator-metrics {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+    .operator-chips {
+      display: flex;
       gap: 8px;
-      font-size: 13px;
+      flex-wrap: wrap;
     }
 
-    .metric-card {
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 8px 10px;
+    .chip {
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
       background: var(--surface-muted);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
     }
 
-    .metric-card span {
-      display: block;
-      font-weight: 700;
-      margin-top: 4px;
+    .operator-card[data-status="running"] .chip {
+      color: var(--text);
     }
 
     .operator-actions {
@@ -926,7 +925,7 @@
         <span>Le changement de production a démarré</span>
       </div>
       <div class="operators-section">
-        <h3>Tuiles opérateur</h3>
+        <h3>Étapes du changement</h3>
         <div id="operators-grid" class="operators-grid"></div>
       </div>
     </section>
@@ -1135,6 +1134,7 @@
         const actualMin = operator.actualMin !== null ? operator.actualMin.toFixed(1) : "--";
         const disabled = !isSmedStarted || isDone;
 
+        const primaryLabel = isDone ? "Terminé" : operator.stepStatus === "running" ? "Valider" : "Démarrer étape";
         const card = document.createElement("div");
         card.className = `operator-card ${!isSmedStarted ? "inactive" : ""}`;
         card.dataset.status = status.className;
@@ -1147,19 +1147,12 @@
             <strong>${stepLabel}</strong>
             <span>Étape ${Math.min(operator.currentStepIndex + 1, operator.steps.length)} / ${operator.steps.length}</span>
           </div>
-          <div class="operator-metrics">
-            <div class="metric-card">
-              Cible
-              <span>${targetMin} min</span>
-            </div>
-            <div class="metric-card">
-              Réel
-              <span>${actualMin} min</span>
-            </div>
+          <div class="operator-chips">
+            <span class="chip">Cible: ${targetMin} min</span>
+            <span class="chip">Réel: ${actualMin} min</span>
           </div>
           <div class="operator-actions">
-            <button class="primary" data-action="start" data-op="${operator.id}" ${disabled ? "disabled" : ""}>Démarrer</button>
-            <button data-action="validate" data-op="${operator.id}" ${disabled ? "disabled" : ""}>Valider</button>
+            <button class="primary" data-action="primary" data-op="${operator.id}" ${disabled ? "disabled" : ""}>${primaryLabel}</button>
           </div>
           <div class="operator-footer">Chrono étape: ${formatMinutes(operator.elapsedSeconds)} min</div>
         `;
@@ -1202,16 +1195,6 @@
       renderOperators();
     };
 
-    const handleStart = (operator) => {
-      if (operator.currentStepIndex >= operator.steps.length) {
-        return;
-      }
-      operator.stepStatus = "running";
-      operator.stepStartTimestamp = Date.now() - operator.elapsedSeconds * 1000;
-      startOperatorTick();
-      renderOperators();
-    };
-
     const handleValidate = (operator) => {
       if (operator.stepStatus !== "running") {
         return;
@@ -1224,6 +1207,20 @@
         return;
       }
       completeStep(operator, actualMinValue, false);
+    };
+
+    const handlePrimary = (operator) => {
+      if (operator.currentStepIndex >= operator.steps.length) {
+        return;
+      }
+      if (operator.stepStatus !== "running") {
+        operator.stepStatus = "running";
+        operator.stepStartTimestamp = Date.now() - operator.elapsedSeconds * 1000;
+        startOperatorTick();
+        renderOperators();
+        return;
+      }
+      handleValidate(operator);
     };
 
     const initializeReasons = () => {
@@ -1349,11 +1346,8 @@
         if (!operator) {
           return;
         }
-        if (action === "start") {
-          handleStart(operator);
-        }
-        if (action === "validate") {
-          handleValidate(operator);
+        if (action === "primary") {
+          handlePrimary(operator);
         }
       });
     }
