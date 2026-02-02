@@ -39,18 +39,22 @@
     body[data-theme="high-contrast"] {
       --bg: #0b0b0b;
       --surface: #111111;
-      --surface-muted: #1f1f1f;
+      --surface-muted: #1a1a1a;
       --text: #ffffff;
       --text-muted: #d5d5d5;
-      --primary: #ffd84a;
-      --chrono-ok: #7df4a8;
+      --primary: #00d4ff;
+      --accent: #ffd84a;
+      --success: #2cff9b;
+      --danger: #ff5c5c;
+      --warn: #ffd84a;
+      --chrono-ok: #2cff9b;
       --chrono-warn: #ffd84a;
-      --chrono-over: #ff8d8d;
-      --chrono-over-base: #2a1212;
-      --reset-bg: #2a1212;
-      --reset-border: rgba(255, 216, 74, 0.7);
-      --reset-text: #ffd84a;
-      --border: rgba(255, 255, 255, 0.5);
+      --chrono-over: #ff5c5c;
+      --chrono-over-base: #1a0f0f;
+      --reset-bg: #1a0f0f;
+      --reset-border: rgba(255, 92, 92, 0.75);
+      --reset-text: #ffb4b4;
+      --border: rgba(255, 255, 255, 0.55);
       --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.6);
       --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.6);
       --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.7);
@@ -64,10 +68,146 @@
       opacity: 0;
     }
 
+    body[data-theme="high-contrast"] .operator-card::after {
+      opacity: 0;
+    }
+
     body[data-theme="high-contrast"] .chrono-bar {
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
-      background: var(--surface);
+      background: #101010;
+      border-color: var(--border);
+      box-shadow: none;
+    }
+
+    body[data-theme="high-contrast"] .chrono-card {
+      background: #0f0f0f;
+      border-color: var(--border);
+    }
+
+    body[data-theme="high-contrast"] .chrono-card::before {
+      opacity: 0.25;
+    }
+
+    body[data-theme="high-contrast"] .tab-bar {
+      background: #121212;
+      border-color: var(--border);
+      box-shadow: none;
+    }
+
+    body[data-theme="high-contrast"] .tab-button {
+      color: #eaeaea;
+      background: transparent;
+    }
+
+    body[data-theme="high-contrast"] .tab-button.active {
+      background: #ffffff;
+      color: #111111;
+      border-color: #ffffff;
+      box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.45);
+    }
+
+    body[data-theme="high-contrast"] .subtitle-line span:first-child {
+      background: #1a1a1a;
+      color: #ffffff;
+      border-color: var(--border);
+    }
+
+    body[data-theme="high-contrast"] .field input {
+      background: #0f0f0f;
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      color: #ffffff;
+    }
+
+    body[data-theme="high-contrast"] .field input:focus-visible {
+      outline: 3px solid var(--focus);
+    }
+
+    body[data-theme="high-contrast"] .reset-button {
+      background: var(--reset-bg);
+      border-color: var(--reset-border);
+      color: var(--reset-text);
+    }
+
+    body[data-theme="high-contrast"] .reset-button:hover,
+    body[data-theme="high-contrast"] .reset-button:focus-visible {
+      filter: brightness(1.08);
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    body[data-theme="high-contrast"] .operator-card {
+      background: #0f0f0f;
+      border-color: var(--border);
+      box-shadow: none;
+    }
+
+    body[data-theme="high-contrast"] .operator-card[data-status="running"] {
+      border-left: 6px solid rgba(0, 212, 255, 0.95);
+      background: linear-gradient(180deg, rgba(0, 212, 255, 0.1), rgba(15, 15, 15, 1) 55%);
+      animation: none;
+      box-shadow: none;
+    }
+
+    body[data-theme="high-contrast"] .operator-card[data-status="done"] {
+      border-left: 6px solid rgba(44, 255, 155, 0.95);
+      opacity: 0.85;
+      box-shadow: none;
+    }
+
+    body[data-theme="high-contrast"] .operator-card[data-status="over"] {
+      border-left: 6px solid rgba(255, 92, 92, 0.95);
+      background: linear-gradient(180deg, rgba(255, 92, 92, 0.1), rgba(15, 15, 15, 1) 55%);
+      box-shadow: none;
+    }
+
+    body[data-theme="high-contrast"] .operator-actions button.primary {
+      background: #00d4ff;
+      color: #06222b;
+      box-shadow: none;
+      border-color: #00d4ff;
+    }
+
+    body[data-theme="high-contrast"] .operator-actions button.primary:disabled {
+      opacity: 0.45;
+      background: #2a2a2a;
+      color: #bdbdbd;
+      border-color: rgba(255, 255, 255, 0.35);
+    }
+
+    body[data-theme="high-contrast"] .operator-status {
+      background: #141414;
+      border-color: var(--border);
+      color: #ffffff;
+    }
+
+    body[data-theme="high-contrast"] .operator-status.running {
+      background: rgba(0, 212, 255, 0.18);
+      border-color: rgba(0, 212, 255, 0.55);
+      color: #eaffff;
+    }
+
+    body[data-theme="high-contrast"] .operator-status.done {
+      background: rgba(44, 255, 155, 0.16);
+      border-color: rgba(44, 255, 155, 0.55);
+      color: #eafff2;
+    }
+
+    body[data-theme="high-contrast"] .operator-status.over {
+      background: rgba(255, 92, 92, 0.16);
+      border-color: rgba(255, 92, 92, 0.55);
+      color: #ffecec;
+    }
+
+    body[data-theme="high-contrast"] .chip {
+      background: #141414;
+      border-color: rgba(255, 255, 255, 0.35);
+      color: #dcdcdc;
+      opacity: 0.75;
+    }
+
+    body[data-theme="high-contrast"] .chip.muted {
+      opacity: 0.45;
     }
 
     * {
@@ -517,7 +657,9 @@
 
     .operators-section h3 {
       margin: 0 0 12px;
-      font-size: 20px;
+      font-size: 18px;
+      letter-spacing: 0.2px;
+      font-weight: 700;
     }
 
     .operators-grid {
@@ -757,6 +899,7 @@
     .operator-actions button.primary:active {
       transform: scale(0.985);
     }
+
     .operator-actions button:focus-visible {
       outline: 3px solid var(--focus);
       outline-offset: 2px;
@@ -907,9 +1050,9 @@
       background: rgba(255, 255, 255, 0.6);
     }
 
-    body[data-theme="high-contrast"] .tab-button.active {
-      color: #111;
-      box-shadow: 0 0 0 3px rgba(255, 216, 74, 0.45);
+    .tab-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
     .tab-button:focus-visible {
@@ -944,70 +1087,127 @@
       background: radial-gradient(circle, rgba(255, 216, 74, 0.7) 0%, rgba(255, 216, 74, 0) 70%);
     }
 
-    .toggle {
-      margin-top: 16px;
+    .settings-page {
       display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: 16px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
-      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-      max-width: 420px;
+      max-width: 960px;
     }
 
-    .toggle span {
-      font-size: 16px;
+    .settings-lock {
+      display: none;
+      padding: 12px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--surface-muted);
+      color: var(--text-muted);
       font-weight: 600;
     }
 
-    .switch {
-      position: relative;
-      width: 60px;
-      height: 32px;
+    .settings-lock.visible {
+      display: block;
     }
 
-    .switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
-    .slider {
-      position: absolute;
-      inset: 0;
-      background: rgba(255, 255, 255, 0.78);
-      border: 1px solid rgba(21, 32, 51, 0.08);
-      border-radius: 999px;
-      transition: background 0.2s ease, border-color 0.2s ease;
-    }
-
-    .slider::after {
-      content: "";
-      position: absolute;
-      top: 3px;
-      left: 3px;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
+    .settings-group {
       background: var(--surface);
-      box-shadow: var(--shadow-sm);
-      transition: transform 0.2s ease;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 16px;
+      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
-    .switch input:checked + .slider {
-      background: var(--primary);
-      border-color: transparent;
+    .settings-group h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
     }
 
-    .switch input:checked + .slider::after {
-      transform: translateX(26px);
+    .settings-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }
 
-    .switch input:focus-visible + .slider {
+    .settings-field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .settings-field label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .settings-field input,
+    .settings-field select {
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 0 12px;
+      font-size: 15px;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .settings-field select {
+      appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+        linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+      background-position: calc(100% - 18px) 18px, calc(100% - 12px) 18px;
+      background-size: 6px 6px;
+      background-repeat: no-repeat;
+    }
+
+    .settings-field input:focus-visible,
+    .settings-field select:focus-visible {
       outline: 3px solid var(--focus);
-      outline-offset: 3px;
+      outline-offset: 2px;
+    }
+
+    .settings-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .settings-apply {
+      height: 48px;
+      min-height: 48px;
+      border-radius: 14px;
+      border: 1px solid transparent;
+      padding: 0 20px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(180deg, rgba(42, 86, 255, 1), rgba(35, 70, 230, 1));
+      box-shadow: 0 12px 22px rgba(42, 86, 255, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+    }
+
+    .settings-apply:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .settings-apply:active {
+      transform: scale(0.985);
+    }
+
+    .settings-disabled {
+      opacity: 0.65;
+      pointer-events: none;
+    }
+
+    body[data-intensity="dynamic"] .operator-card[data-status="running"] {
+      animation-duration: 1.8s;
+      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.65), 0 0 0 4px rgba(255, 122, 69, 0.1);
     }
 
     @keyframes breathe {
@@ -1117,11 +1317,11 @@
           <div class="chrono-metrics">
             <div class="chrono-metric">
               Cible
-              <span>61.0 min</span>
+              <span id="chrono-target">61.0 min</span>
             </div>
             <div class="chrono-metric">
               Alerte
-              <span>12.0 min</span>
+              <span id="chrono-alert">12.0 min</span>
             </div>
           </div>
         </div>
@@ -1142,12 +1342,53 @@
 
     <section class="page" id="page-parametres" data-tab="parametres">
       <h2>Paramètres</h2>
-      <div class="toggle" aria-live="polite">
-        <span>Contraste élevé</span>
-        <label class="switch">
-          <input id="contrast-toggle" type="checkbox" aria-label="Activer le contraste élevé">
-          <span class="slider"></span>
-        </label>
+      <div class="settings-page" id="settings-page">
+        <div id="settings-lock" class="settings-lock" role="status">
+          Paramètres verrouillés pendant un SMED.
+        </div>
+        <div id="settings-form">
+          <div class="settings-group">
+            <h3>Organisation</h3>
+            <div class="settings-grid">
+              <div class="settings-field">
+                <label for="settings-operators">Nombre d’opérateurs</label>
+                <input id="settings-operators" type="number" min="1" step="1" inputmode="numeric">
+              </div>
+              <div class="settings-field">
+                <label for="settings-steps">Nombre d’étapes</label>
+                <input id="settings-steps" type="number" min="1" step="1" inputmode="numeric">
+              </div>
+            </div>
+          </div>
+          <div class="settings-group">
+            <h3>Cadence SMED</h3>
+            <div class="settings-grid">
+              <div class="settings-field">
+                <label for="settings-target">Durée cible SMED (min)</label>
+                <input id="settings-target" type="number" min="1" step="0.1" inputmode="decimal">
+              </div>
+              <div class="settings-field">
+                <label for="settings-alert">Seuil d’alerte (min)</label>
+                <input id="settings-alert" type="number" min="0.1" step="0.1" inputmode="decimal">
+              </div>
+            </div>
+          </div>
+          <div class="settings-group">
+            <h3>Affichage</h3>
+            <div class="settings-grid">
+              <div class="settings-field">
+                <label for="settings-intensity">Intensité visuelle</label>
+                <select id="settings-intensity">
+                  <option value="normal">Normal</option>
+                  <option value="dynamic">Dynamique</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="settings-actions">
+            <button id="settings-apply" class="settings-apply" type="button" disabled>Appliquer</button>
+          </div>
+        </div>
       </div>
     </section>
   </main>
@@ -1174,7 +1415,6 @@
     // Navigation par onglets + état actif.
     const buttons = document.querySelectorAll(".tab-button");
     const pages = document.querySelectorAll(".page");
-    const contrastToggle = document.querySelector("#contrast-toggle");
     const headerDateTime = document.querySelector("#header-datetime");
     const ipcDate = document.querySelector("#ipc-date");
     const ipcTime = document.querySelector("#ipc-time");
@@ -1182,6 +1422,8 @@
     const chronoCard = document.querySelector("#chrono-card");
     const chronoTime = document.querySelector("#chrono-time");
     const chronoStatus = document.querySelector("#chrono-status");
+    const chronoTargetLabel = document.querySelector("#chrono-target");
+    const chronoAlertLabel = document.querySelector("#chrono-alert");
     const smedStarted = document.querySelector("#smed-started");
     const operatorsGrid = document.querySelector("#operators-grid");
     const justificationModal = document.querySelector("#justification-modal");
@@ -1190,8 +1432,20 @@
     const justificationOther = document.querySelector("#justification-other");
     const justificationCancel = document.querySelector("#justification-cancel");
     const justificationConfirm = document.querySelector("#justification-confirm");
+    const settingsOperators = document.querySelector("#settings-operators");
+    const settingsSteps = document.querySelector("#settings-steps");
+    const settingsTarget = document.querySelector("#settings-target");
+    const settingsAlert = document.querySelector("#settings-alert");
+    const settingsIntensity = document.querySelector("#settings-intensity");
+    const settingsApply = document.querySelector("#settings-apply");
+    const settingsLock = document.querySelector("#settings-lock");
+    const settingsForm = document.querySelector("#settings-form");
+    const paramTabButton = document.querySelector('.tab-button[data-target="parametres"]');
 
     const setActiveTab = (target) => {
+      if (target === "parametres" && paramTabButton?.disabled) {
+        return;
+      }
       buttons.forEach((button) => {
         const isActive = button.dataset.target === target;
         button.classList.toggle("active", isActive);
@@ -1233,13 +1487,6 @@
       button.addEventListener("pointercancel", clearPress);
     });
 
-    // Contraste élevé (mémoire uniquement, sans stockage).
-    if (contrastToggle) {
-      contrastToggle.addEventListener("change", (event) => {
-        document.body.dataset.theme = event.target.checked ? "high-contrast" : "";
-      });
-    }
-
     // Démarrage SMED: date + heure du "Dernier IPC" renseignées.
     let isSmedStarted = false;
     let wasSmedStarted = false;
@@ -1247,7 +1494,8 @@
     let chronoInterval = null;
     let chronoStartTimestamp = null;
     let elapsedSeconds = 0;
-    const targetSeconds = 61 * 60;
+    let targetSeconds = 61 * 60;
+    let alertSeconds = 12 * 60;
     const reasons = [
       "Manque de matière",
       "Problème machine",
@@ -1257,32 +1505,41 @@
       "Autre"
     ];
 
-    const operatorsTemplateSteps = [
-      { label: "Action 1", targetMin: 5.0 },
-      { label: "Action 2", targetMin: 5.0 },
-      { label: "Action 3", targetMin: 5.0 },
-      { label: "Action 4", targetMin: 5.0 },
-      { label: "Action 5", targetMin: 5.0 }
-    ];
+    const settings = {
+      operatorsCount: 3,
+      stepsCount: 5,
+      targetMinutes: 61.0,
+      alertMinutes: 12.0,
+      intensity: "normal"
+    };
 
-    let operators = [
-      { id: "op1", name: "Opérateur 1", currentStepIndex: 0, stepStatus: "todo", stepStartTimestamp: null, elapsedSeconds: 0, actualMin: null, steps: operatorsTemplateSteps },
-      { id: "op2", name: "Opérateur 2", currentStepIndex: 0, stepStatus: "todo", stepStartTimestamp: null, elapsedSeconds: 0, actualMin: null, steps: operatorsTemplateSteps },
-      { id: "op3", name: "Opérateur 3", currentStepIndex: 0, stepStatus: "todo", stepStartTimestamp: null, elapsedSeconds: 0, actualMin: null, steps: operatorsTemplateSteps }
-    ];
+    const buildSteps = (count) => (
+      Array.from({ length: count }, (_, index) => ({
+        label: `Action ${index + 1}`,
+        targetMin: 5.0
+      }))
+    );
+
+    const buildOperators = (count, steps) => (
+      Array.from({ length: count }, (_, index) => ({
+        id: `op${index + 1}`,
+        name: `Opérateur ${index + 1}`,
+        currentStepIndex: 0,
+        stepStatus: "todo",
+        stepStartTimestamp: null,
+        elapsedSeconds: 0,
+        actualMin: null,
+        steps
+      }))
+    );
+
+    let operators = buildOperators(settings.operatorsCount, buildSteps(settings.stepsCount));
 
     let operatorInterval = null;
     let pendingJustification = null;
 
     const resetOperators = () => {
-      operators = operators.map((operator) => ({
-        ...operator,
-        currentStepIndex: 0,
-        stepStatus: "todo",
-        stepStartTimestamp: null,
-        elapsedSeconds: 0,
-        actualMin: null
-      }));
+      operators = buildOperators(settings.operatorsCount, buildSteps(settings.stepsCount));
       if (operatorInterval) {
         clearInterval(operatorInterval);
         operatorInterval = null;
@@ -1459,6 +1716,15 @@
       return `${hours}:${minutes}`;
     };
 
+    const updateChronoLabels = () => {
+      if (chronoTargetLabel) {
+        chronoTargetLabel.textContent = `${settings.targetMinutes.toFixed(1)} min`;
+      }
+      if (chronoAlertLabel) {
+        chronoAlertLabel.textContent = `${settings.alertMinutes.toFixed(1)} min`;
+      }
+    };
+
     const updateChronoDisplay = () => {
       if (!chronoCard || !chronoTime || !chronoStatus) {
         return;
@@ -1468,9 +1734,9 @@
       chronoTime.textContent = formatTime(elapsedSeconds);
 
       let stateClass = "state-ok";
-      if (progress >= 1) {
+      if (elapsedSeconds >= targetSeconds) {
         stateClass = "state-over";
-      } else if (progress >= 0.7) {
+      } else if (elapsedSeconds >= alertSeconds) {
         stateClass = "state-warn";
       }
 
@@ -1515,6 +1781,27 @@
       const hasTime = Boolean(ipcTime && ipcTime.value);
       const newIsSmedStarted = hasDate && hasTime;
       isSmedStarted = newIsSmedStarted;
+      if (paramTabButton) {
+        paramTabButton.disabled = isSmedStarted;
+        paramTabButton.classList.toggle("disabled", isSmedStarted);
+      }
+      [settingsOperators, settingsSteps, settingsTarget, settingsAlert, settingsIntensity].forEach((field) => {
+        if (field) {
+          field.disabled = isSmedStarted;
+        }
+      });
+      if (settingsLock) {
+        settingsLock.classList.toggle("visible", isSmedStarted);
+      }
+      if (settingsForm) {
+        settingsForm.classList.toggle("settings-disabled", isSmedStarted);
+      }
+      if (settingsApply) {
+        settingsApply.disabled = isSmedStarted || !hasSettingsChanges();
+      }
+      if (isSmedStarted && document.querySelector(".page.active")?.dataset.tab === "parametres") {
+        setActiveTab("smed");
+      }
       if (smedStarted && !newIsSmedStarted) {
         smedStarted.classList.remove("visible");
       }
@@ -1544,9 +1831,110 @@
       renderOperators();
     };
 
+    const readSettingsValues = () => {
+      const operatorsCount = Math.max(1, Number(settingsOperators?.value || settings.operatorsCount));
+      const stepsCount = Math.max(1, Number(settingsSteps?.value || settings.stepsCount));
+      const targetMinutes = Math.max(1, Number(settingsTarget?.value || settings.targetMinutes));
+      const alertMinutes = Math.max(0.1, Number(settingsAlert?.value || settings.alertMinutes));
+      const intensity = settingsIntensity?.value || settings.intensity;
+      return {
+        operatorsCount,
+        stepsCount,
+        targetMinutes,
+        alertMinutes,
+        intensity
+      };
+    };
+
+    const hasSettingsChanges = () => {
+      const values = readSettingsValues();
+      return (
+        values.operatorsCount !== settings.operatorsCount ||
+        values.stepsCount !== settings.stepsCount ||
+        values.targetMinutes !== settings.targetMinutes ||
+        values.alertMinutes !== settings.alertMinutes ||
+        values.intensity !== settings.intensity
+      );
+    };
+
+    const syncSettingsForm = () => {
+      document.body.dataset.intensity = settings.intensity;
+      if (settingsOperators) {
+        settingsOperators.value = String(settings.operatorsCount);
+      }
+      if (settingsSteps) {
+        settingsSteps.value = String(settings.stepsCount);
+      }
+      if (settingsTarget) {
+        settingsTarget.value = settings.targetMinutes.toFixed(1);
+      }
+      if (settingsAlert) {
+        settingsAlert.value = settings.alertMinutes.toFixed(1);
+        settingsAlert.max = Math.max(settings.targetMinutes - 0.1, 0.1).toString();
+      }
+      if (settingsIntensity) {
+        settingsIntensity.value = settings.intensity;
+      }
+      updateChronoLabels();
+    };
+
+    const applySettings = () => {
+      if (isSmedStarted) {
+        return;
+      }
+      const values = readSettingsValues();
+      const safeAlert = Math.min(values.alertMinutes, Math.max(values.targetMinutes - 0.1, 0.1));
+      settings.operatorsCount = values.operatorsCount;
+      settings.stepsCount = values.stepsCount;
+      settings.targetMinutes = values.targetMinutes;
+      settings.alertMinutes = safeAlert;
+      settings.intensity = values.intensity;
+      targetSeconds = settings.targetMinutes * 60;
+      alertSeconds = settings.alertMinutes * 60;
+      document.body.dataset.intensity = settings.intensity;
+      syncSettingsForm();
+      resetOperators();
+      stopChrono(true);
+      updateChronoDisplay();
+      if (settingsApply) {
+        settingsApply.disabled = true;
+      }
+      setActiveTab("smed");
+    };
+
+    const handleSettingsInput = () => {
+      if (settingsAlert && settingsTarget) {
+        const targetValue = Math.max(1, Number(settingsTarget.value || settings.targetMinutes));
+        settingsAlert.max = Math.max(targetValue - 0.1, 0.1).toString();
+      }
+      if (settingsApply) {
+        settingsApply.disabled = isSmedStarted || !hasSettingsChanges();
+      }
+    };
+
     if (ipcDate && ipcTime) {
       ipcDate.addEventListener("input", updateSmedStarted);
       ipcTime.addEventListener("input", updateSmedStarted);
+    }
+
+    if (settingsOperators) {
+      settingsOperators.addEventListener("input", handleSettingsInput);
+    }
+    if (settingsSteps) {
+      settingsSteps.addEventListener("input", handleSettingsInput);
+    }
+    if (settingsTarget) {
+      settingsTarget.addEventListener("input", handleSettingsInput);
+    }
+    if (settingsAlert) {
+      settingsAlert.addEventListener("input", handleSettingsInput);
+    }
+    if (settingsIntensity) {
+      settingsIntensity.addEventListener("change", handleSettingsInput);
+    }
+
+    if (settingsApply) {
+      settingsApply.addEventListener("click", applySettings);
     }
 
     if (operatorsGrid) {
@@ -1664,6 +2052,7 @@
 
     updateDateTime();
     setInterval(updateDateTime, 1000);
+    syncSettingsForm();
     updateSmedStarted();
     initializeReasons();
     renderOperators();
