@@ -1214,6 +1214,45 @@
       flex-wrap: wrap;
     }
 
+    .standard-steps-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+
+    .standard-column {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .standard-column h4 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .action-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .action-item {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .action-item input[type="text"] {
+      flex: 1;
+    }
+
+    .inline-error {
+      color: var(--danger);
+      font-size: 13px;
+      margin-top: 6px;
+    }
+
     .warning-text {
       color: var(--warn);
       font-weight: 600;
@@ -1295,7 +1334,7 @@
               Réinitialiser
             </button>
             <button class="reset-button finish-smed-button hidden" id="finish-smed-button">
-              Terminer SMED
+              Terminer
             </button>
           </div>
         </div>
@@ -1417,7 +1456,7 @@
         </div>
         <div class="analysis-card">
           <h3>Étapes</h3>
-          <div id="standard-steps-list"></div>
+          <div class="standard-steps-grid" id="standard-steps-list"></div>
           <div class="analysis-export">
             <button class="analysis-button" type="button" id="add-standard-step">Ajouter une étape</button>
             <button class="analysis-button" type="button" id="reset-standard-steps">Réinitialiser le standard</button>
@@ -1471,6 +1510,13 @@
             <div id="consistency-alerts" class="analysis-muted"></div>
           </div>
         </div>
+        <div class="analysis-card">
+          <h3>Justifications</h3>
+          <div class="action-list" id="justification-list"></div>
+          <div class="analysis-export">
+            <button class="analysis-button" type="button" id="add-justification">Ajouter une raison</button>
+          </div>
+        </div>
         <div class="settings-actions">
           <button type="button" class="settings-button" id="settings-apply">Appliquer</button>
           <button type="button" class="settings-button" id="settings-cancel">Annuler</button>
@@ -1482,24 +1528,16 @@
     <div class="modal">
       <div class="modal-header">
         <h3 class="modal-title">Justification requise</h3>
-        <p class="modal-subtitle">L'étape a été réalisée en moins de temps que prévu.</p>
+        <p class="modal-subtitle">L’étape dépasse le standard. Une justification est requise.</p>
       </div>
       <div class="modal-body">
         <div class="modal-field">
           <label for="justification-reason">Raison</label>
           <select id="justification-reason">
             <option value="">-- Sélectionnez --</option>
-            <option value="Optimisation du procédé">Optimisation du procédé</option>
-            <option value="Expérience de l'opérateur">Expérience de l'opérateur</option>
-            <option value="Outils/équipements adaptés">Outils/équipements adaptés</option>
-            <option value="Conditions favorables">Conditions favorables</option>
-            <option value="Autre">Autre</option>
           </select>
         </div>
-        <div class="modal-field" id="justification-other-wrapper" hidden>
-          <label for="justification-other">Précisez</label>
-          <input type="text" id="justification-other" placeholder="Détails de la raison">
-        </div>
+        <div class="inline-error" id="justification-error" hidden>Veuillez sélectionner une raison.</div>
       </div>
       <div class="modal-actions">
         <button class="modal-button secondary" id="justification-cancel">Annuler</button>
@@ -1515,11 +1553,11 @@
       </div>
       <div class="modal-body">
         <div class="modal-field">
-          <label for="finish-date">Date Premier IPC</label>
+          <label for="finish-date">Date Premier IPC (PO N+1)</label>
           <input type="date" id="finish-date">
         </div>
         <div class="modal-field">
-          <label for="finish-time">Heure Premier IPC</label>
+          <label for="finish-time">Heure Premier IPC (PO N+1)</label>
           <input type="time" id="finish-time" step="60">
         </div>
       </div>
@@ -1549,19 +1587,27 @@
         name: `Étape ${index + 1}`,
         type,
         targetMin: targets[type],
-        operatorIndex: ((index % operatorsCount) + 1)
+        operatorIndex: ((index % operatorsCount) + 1),
+        actions: []
       }));
     };
 
     let settings = {
       operatorsCount: 3,
       alertMinutes: 12,
-      standardSteps: createDefaultStandardSteps(3)
+      standardSteps: createDefaultStandardSteps(3),
+      justificationReasons: [
+        "Optimisation du procédé",
+        "Expérience de l'opérateur",
+        "Outils/équipements adaptés",
+        "Conditions favorables"
+      ]
     };
 
     let draftOperatorsCount = settings.operatorsCount;
     let draftAlertMinutes = settings.alertMinutes;
     let draftStandardSteps = JSON.parse(JSON.stringify(settings.standardSteps));
+    let draftJustificationReasons = [...settings.justificationReasons];
 
     let standardStepCounter = settings.standardSteps.length + 1;
 
@@ -1594,8 +1640,7 @@
     const operatorsGrid = document.querySelector("#operators-grid");
     const justificationModal = document.querySelector("#justification-modal");
     const justificationReason = document.querySelector("#justification-reason");
-    const justificationOtherWrapper = document.querySelector("#justification-other-wrapper");
-    const justificationOther = document.querySelector("#justification-other");
+    const justificationError = document.querySelector("#justification-error");
     const justificationCancel = document.querySelector("#justification-cancel");
     const justificationConfirm = document.querySelector("#justification-confirm");
     const resetSmedButton = document.querySelector("#reset-smed-button");
@@ -1616,6 +1661,8 @@
     const standardStepsList = document.querySelector("#standard-steps-list");
     const addStandardStepButton = document.querySelector("#add-standard-step");
     const resetStandardStepsButton = document.querySelector("#reset-standard-steps");
+    const justificationList = document.querySelector("#justification-list");
+    const addJustificationButton = document.querySelector("#add-justification");
     const targetSmedDisplay = document.querySelector("#target-smed-display");
     const alertThresholdDisplay = document.querySelector("#alert-threshold-display");
     const consistencyTypeTable = document.querySelector("#consistency-type-table tbody");
@@ -1694,7 +1741,9 @@
             startTime: null,
             elapsedSeconds: 0,
             endTime: null,
-            justification: ""
+            justification: "",
+            actions: step.actions ? [...step.actions] : [],
+            actionsDone: step.actions ? step.actions.map(() => false) : []
           }));
         newOperators.push({
           id: `operator-${i}`,
@@ -1872,14 +1921,16 @@
     };
 
     const initializeReasons = () => {
-      if (justificationReason) {
-        justificationReason.selectedIndex = 0;
+      if (!justificationReason) {
+        return;
       }
-      if (justificationOther) {
-        justificationOther.value = "";
-      }
-      if (justificationOtherWrapper) {
-        justificationOtherWrapper.hidden = true;
+      justificationReason.innerHTML = `
+        <option value="">-- Sélectionnez --</option>
+        ${settings.justificationReasons.map((reason) => `<option value="${reason}">${reason}</option>`).join("")}
+      `;
+      justificationReason.selectedIndex = 0;
+      if (justificationError) {
+        justificationError.hidden = true;
       }
     };
 
@@ -1907,8 +1958,8 @@
         return;
       }
       const step = operator.steps[runningIndex];
-      const thresholdMin = step.targetSeconds / 60 / 2;
-      if (!forced && actualMin < thresholdMin) {
+      const targetMin = step.targetSeconds / 60;
+      if (!forced && targetMin > 0 && actualMin > targetMin) {
         openJustificationModal(operator, actualMin);
         return;
       }
@@ -1939,6 +1990,11 @@
     const handleValidate = (operator, stepIndex) => {
       const step = operator.steps[stepIndex];
       if (!step || step.status !== "running") {
+        return;
+      }
+      const actions = Array.isArray(step.actions) ? step.actions : [];
+      const done = Array.isArray(step.actionsDone) ? step.actionsDone : [];
+      if (actions.length && !actions.every((_, idx) => done[idx])) {
         return;
       }
       const now = Date.now();
@@ -2083,10 +2139,23 @@
           `;
           if (isRunning) {
             const canValidate = isSmedStarted || step.type === "external";
+            const actions = Array.isArray(step.actions) ? step.actions : [];
+            const done = Array.isArray(step.actionsDone) ? step.actionsDone : [];
+            const allDone = actions.length === 0 || actions.every((_, idx) => done[idx]);
             const disabled = !canValidate ? "disabled" : "";
             html += `
               <div class="step-actions">
-                <button class="step-button" data-action="validate" data-op="${operator.id}" data-step-index="${stepIndex}" ${disabled}>
+                ${actions.length ? `
+                  <div class="action-list">
+                    ${actions.map((action, idx) => `
+                      <label class="action-item">
+                        <input type="checkbox" data-action="toggle-action" data-op="${operator.id}" data-step-index="${stepIndex}" data-action-index="${idx}" ${done[idx] ? "checked" : ""}>
+                        <span>${action}</span>
+                      </label>
+                    `).join("")}
+                  </div>
+                ` : ""}
+                <button class="step-button" data-action="validate" data-op="${operator.id}" data-step-index="${stepIndex}" ${disabled || !allDone ? "disabled" : ""}>
                   Valider
                 </button>
               </div>
@@ -2335,8 +2404,11 @@
 
     const ensureDraftState = () => {
       normalizeOperatorIndex(draftStandardSteps, draftOperatorsCount);
-      draftStandardSteps.forEach((step, index) => {
-        step.order = index + 1;
+      const orderCounters = {};
+      draftStandardSteps.forEach((step) => {
+        const key = step.operatorIndex;
+        orderCounters[key] = (orderCounters[key] || 0) + 1;
+        step.order = orderCounters[key];
       });
     };
 
@@ -2344,7 +2416,8 @@
       return (
         draftOperatorsCount !== settings.operatorsCount ||
         draftAlertMinutes !== settings.alertMinutes ||
-        JSON.stringify(draftStandardSteps) !== JSON.stringify(settings.standardSteps)
+        JSON.stringify(draftStandardSteps) !== JSON.stringify(settings.standardSteps) ||
+        JSON.stringify(draftJustificationReasons) !== JSON.stringify(settings.justificationReasons)
       );
     };
 
@@ -2422,42 +2495,63 @@
         return `<option value="${value}">Opérateur ${value}</option>`;
       }).join("");
 
-      standardStepsList.innerHTML = draftStandardSteps.map((step, index) => `
-        <div class="standard-step-card" data-step-id="${step.id}">
-          <div class="standard-step-row">
-            <span class="analysis-pill">#${index + 1}</span>
-            <div class="standard-step-actions">
-              <button class="analysis-button" type="button" data-action="move-up">Monter</button>
-              <button class="analysis-button" type="button" data-action="move-down">Descendre</button>
-              <button class="analysis-button" type="button" data-action="delete">Supprimer</button>
-            </div>
+      standardStepsList.innerHTML = Array.from({ length: draftOperatorsCount }, (_, index) => {
+        const operatorIndex = index + 1;
+        const stepsForOperator = draftStandardSteps.filter((step) => step.operatorIndex === operatorIndex);
+        return `
+          <div class="standard-column" data-operator="${operatorIndex}">
+            <h4>Opérateur ${operatorIndex}</h4>
+            ${stepsForOperator.map((step, localIndex) => `
+              <div class="standard-step-card" data-step-id="${step.id}">
+                <div class="standard-step-row">
+                  <span class="analysis-pill">#${localIndex + 1}</span>
+                  <div class="standard-step-actions">
+                    <button class="analysis-button" type="button" data-action="move-up">Monter</button>
+                    <button class="analysis-button" type="button" data-action="move-down">Descendre</button>
+                    <button class="analysis-button" type="button" data-action="delete">Supprimer</button>
+                  </div>
+                </div>
+                <div class="standard-step-row">
+                  <label>Nom</label>
+                  <input type="text" data-field="name" value="${step.name}">
+                </div>
+                <div class="standard-step-row">
+                  <label>Type</label>
+                  <select data-field="type">
+                    <option value="external" ${step.type === "external" ? "selected" : ""}>Externe</option>
+                    <option value="handoff" ${step.type === "handoff" ? "selected" : ""}>Chevauchante</option>
+                    <option value="internal" ${step.type === "internal" ? "selected" : ""}>Interne</option>
+                  </select>
+                </div>
+                <div class="standard-step-row">
+                  <label>Temps cible (min)</label>
+                  <div class="standard-step-actions">
+                    <button class="analysis-button" type="button" data-action="target-minus">-</button>
+                    <span class="analysis-value">${step.targetMin}</span>
+                    <button class="analysis-button" type="button" data-action="target-plus">+</button>
+                  </div>
+                </div>
+                <div class="standard-step-row">
+                  <label>Déplacer vers</label>
+                  <select data-field="operatorIndex">${operatorOptions}</select>
+                </div>
+                <div class="standard-step-row">
+                  <label>Actions</label>
+                  <div class="action-list">
+                    ${(step.actions || []).map((action, actionIndex) => `
+                      <div class="action-item">
+                        <input type="text" data-field="action" data-action-index="${actionIndex}" value="${action}">
+                        <button class="analysis-button" type="button" data-action="remove-action" data-action-index="${actionIndex}">Supprimer</button>
+                      </div>
+                    `).join("")}
+                    <button class="analysis-button" type="button" data-action="add-action">Ajouter une action</button>
+                  </div>
+                </div>
+              </div>
+            `).join("")}
           </div>
-          <div class="standard-step-row">
-            <label>Nom</label>
-            <input type="text" data-field="name" value="${step.name}">
-          </div>
-          <div class="standard-step-row">
-            <label>Type</label>
-            <select data-field="type">
-              <option value="external" ${step.type === "external" ? "selected" : ""}>Externe</option>
-              <option value="handoff" ${step.type === "handoff" ? "selected" : ""}>Chevauchante</option>
-              <option value="internal" ${step.type === "internal" ? "selected" : ""}>Interne</option>
-            </select>
-          </div>
-          <div class="standard-step-row">
-            <label>Temps cible (min)</label>
-            <div class="standard-step-actions">
-              <button class="analysis-button" type="button" data-action="target-minus">-</button>
-              <span class="analysis-value">${step.targetMin}</span>
-              <button class="analysis-button" type="button" data-action="target-plus">+</button>
-            </div>
-          </div>
-          <div class="standard-step-row">
-            <label>Opérateur</label>
-            <select data-field="operatorIndex">${operatorOptions}</select>
-          </div>
-        </div>
-      `).join("");
+        `;
+      }).join("");
 
       standardStepsList.querySelectorAll("select[data-field=\"operatorIndex\"]").forEach((select) => {
         const card = select.closest(".standard-step-card");
@@ -2482,9 +2576,24 @@
       }
       renderStandardSteps();
       renderConsistency();
+      renderJustifications();
       if (settingsApply) {
         settingsApply.disabled = isSmedStarted || !hasSettingsChanges();
       }
+    };
+
+    const renderJustifications = () => {
+      if (!justificationList) {
+        return;
+      }
+      justificationList.innerHTML = draftJustificationReasons.map((reason, index) => `
+        <div class="action-item" data-reason-index="${index}">
+          <input type="text" value="${reason}" data-field="reason">
+          <button class="analysis-button" type="button" data-action="move-reason-up">Monter</button>
+          <button class="analysis-button" type="button" data-action="move-reason-down">Descendre</button>
+          <button class="analysis-button" type="button" data-action="remove-reason">Supprimer</button>
+        </div>
+      `).join("");
     };
 
     const applySettings = () => {
@@ -2494,6 +2603,7 @@
       settings.operatorsCount = draftOperatorsCount;
       settings.alertMinutes = draftAlertMinutes;
       settings.standardSteps = JSON.parse(JSON.stringify(draftStandardSteps));
+      settings.justificationReasons = [...draftJustificationReasons];
       normalizeOperatorIndex(settings.standardSteps, settings.operatorsCount);
       targetSeconds = getTargetSecondsFromStandard(settings.standardSteps);
       alertSeconds = settings.alertMinutes * 60;
@@ -2508,6 +2618,7 @@
       draftOperatorsCount = settings.operatorsCount;
       draftAlertMinutes = settings.alertMinutes;
       draftStandardSteps = JSON.parse(JSON.stringify(settings.standardSteps));
+      draftJustificationReasons = [...settings.justificationReasons];
       renderSettingsForm();
       setActiveTab("smed");
     };
@@ -2551,6 +2662,28 @@
           }
           return;
         }
+        const reasonWrapper = target.closest("[data-reason-index]");
+        if (reasonWrapper && action) {
+          const reasonIndex = Number(reasonWrapper.dataset.reasonIndex);
+          if (action === "move-reason-up" && reasonIndex > 0) {
+            const [removed] = draftJustificationReasons.splice(reasonIndex, 1);
+            draftJustificationReasons.splice(reasonIndex - 1, 0, removed);
+            renderSettingsForm();
+          }
+          if (action === "move-reason-down" && reasonIndex < draftJustificationReasons.length - 1) {
+            const [removed] = draftJustificationReasons.splice(reasonIndex, 1);
+            draftJustificationReasons.splice(reasonIndex + 1, 0, removed);
+            renderSettingsForm();
+          }
+          if (action === "remove-reason") {
+            const shouldDelete = window.confirm("Supprimer cette raison ?");
+            if (shouldDelete) {
+              draftJustificationReasons.splice(reasonIndex, 1);
+              renderSettingsForm();
+            }
+          }
+          return;
+        }
         if (!stepId) {
           return;
         }
@@ -2559,14 +2692,20 @@
           return;
         }
         const step = draftStandardSteps[stepIndex];
-        if (action === "move-up" && stepIndex > 0) {
+        const sameOperatorSteps = draftStandardSteps.filter((item) => item.operatorIndex === step.operatorIndex);
+        const localIndex = sameOperatorSteps.findIndex((item) => item.id === step.id);
+        if (action === "move-up" && localIndex > 0) {
+          const targetStep = sameOperatorSteps[localIndex - 1];
+          const globalIndex = draftStandardSteps.findIndex((item) => item.id === targetStep.id);
           const [removed] = draftStandardSteps.splice(stepIndex, 1);
-          draftStandardSteps.splice(stepIndex - 1, 0, removed);
+          draftStandardSteps.splice(globalIndex, 0, removed);
           renderSettingsForm();
         }
-        if (action === "move-down" && stepIndex < draftStandardSteps.length - 1) {
+        if (action === "move-down" && localIndex < sameOperatorSteps.length - 1) {
+          const targetStep = sameOperatorSteps[localIndex + 1];
+          const globalIndex = draftStandardSteps.findIndex((item) => item.id === targetStep.id);
           const [removed] = draftStandardSteps.splice(stepIndex, 1);
-          draftStandardSteps.splice(stepIndex + 1, 0, removed);
+          draftStandardSteps.splice(globalIndex + 1, 0, removed);
           renderSettingsForm();
         }
         if (action === "delete") {
@@ -2584,6 +2723,20 @@
           step.targetMin = clampTargetMin(step.type, step.targetMin + 1);
           renderSettingsForm();
         }
+        if (action === "add-action") {
+          if (!Array.isArray(step.actions)) {
+            step.actions = [];
+          }
+          step.actions.push(`Action ${step.actions.length + 1}`);
+          renderSettingsForm();
+        }
+        if (action === "remove-action") {
+          const actionIndex = Number(target.dataset.actionIndex);
+          if (!Number.isNaN(actionIndex) && Array.isArray(step.actions)) {
+            step.actions.splice(actionIndex, 1);
+            renderSettingsForm();
+          }
+        }
       });
 
       settingsForm.addEventListener("input", (event) => {
@@ -2594,6 +2747,16 @@
         const card = target.closest(".standard-step-card");
         const stepId = card?.dataset.stepId;
         if (!stepId) {
+          const reasonWrapper = target.closest("[data-reason-index]");
+          if (reasonWrapper && target.dataset.field === "reason") {
+            const reasonIndex = Number(reasonWrapper.dataset.reasonIndex);
+            if (!Number.isNaN(reasonIndex)) {
+              draftJustificationReasons[reasonIndex] = target.value.trim() || draftJustificationReasons[reasonIndex];
+              if (settingsApply) {
+                settingsApply.disabled = isSmedStarted || !hasSettingsChanges();
+              }
+            }
+          }
           return;
         }
         const step = draftStandardSteps.find((item) => item.id === stepId);
@@ -2603,15 +2766,47 @@
         const field = target.dataset.field;
         if (field === "name") {
           step.name = target.value.trim() || step.name;
+          if (settingsApply) {
+            settingsApply.disabled = isSmedStarted || !hasSettingsChanges();
+          }
+          return;
         }
         if (field === "type") {
           step.type = target.value;
           step.targetMin = clampTargetMin(step.type, step.targetMin);
+          renderSettingsForm();
+          return;
         }
         if (field === "operatorIndex") {
-          step.operatorIndex = Number(target.value);
+          const newOperator = Number(target.value);
+          step.operatorIndex = newOperator;
+          const lastIndex = [...draftStandardSteps]
+            .map((item, idx) => ({ item, idx }))
+            .filter(({ item }) => item.operatorIndex === newOperator && item.id !== step.id)
+            .map(({ idx }) => idx)
+            .pop();
+          const currentIndex = draftStandardSteps.findIndex((item) => item.id === step.id);
+          const [removed] = draftStandardSteps.splice(currentIndex, 1);
+          if (lastIndex === undefined) {
+            draftStandardSteps.push(removed);
+          } else {
+            draftStandardSteps.splice(lastIndex + 1, 0, removed);
+          }
+          renderSettingsForm();
+          return;
         }
-        renderSettingsForm();
+        if (field === "action") {
+          const actionIndex = Number(target.dataset.actionIndex);
+          if (!Number.isNaN(actionIndex)) {
+            if (!Array.isArray(step.actions)) {
+              step.actions = [];
+            }
+            step.actions[actionIndex] = target.value.trim();
+            if (settingsApply) {
+              settingsApply.disabled = isSmedStarted || !hasSettingsChanges();
+            }
+          }
+        }
       });
     }
 
@@ -2623,7 +2818,8 @@
           name: `Étape ${draftStandardSteps.length + 1}`,
           type: "internal",
           targetMin: 10,
-          operatorIndex: 1
+          operatorIndex: 1,
+          actions: []
         });
         renderSettingsForm();
       });
@@ -2637,6 +2833,13 @@
         }
         draftStandardSteps = getDefaultStandardSteps();
         standardStepCounter = draftStandardSteps.length + 1;
+        renderSettingsForm();
+      });
+    }
+
+    if (addJustificationButton) {
+      addJustificationButton.addEventListener("click", () => {
+        draftJustificationReasons.push(`Raison ${draftJustificationReasons.length + 1}`);
         renderSettingsForm();
       });
     }
@@ -2657,6 +2860,15 @@
         if (!operator) {
           return;
         }
+        if (action === "toggle-action") {
+          const actionIndex = Number(target.dataset.actionIndex);
+          const step = operator.steps[stepIndex];
+          if (step && Array.isArray(step.actionsDone) && !Number.isNaN(actionIndex)) {
+            step.actionsDone[actionIndex] = target.checked;
+            renderOperators();
+          }
+          return;
+        }
         if (action === "validate") {
           if (Number.isNaN(stepIndex)) {
             return;
@@ -2666,22 +2878,17 @@
       });
     }
 
-    if (justificationReason) {
-      justificationReason.addEventListener("change", () => {
-        if (!justificationOtherWrapper || !justificationOther) {
-          return;
-        }
-        const isOther = justificationReason.value === "Autre";
-        justificationOtherWrapper.hidden = !isOther;
-        if (!isOther) {
-          justificationOther.value = "";
-        }
-      });
-    }
-
     if (justificationCancel) {
       justificationCancel.addEventListener("click", () => {
         closeJustificationModal();
+      });
+    }
+
+    if (justificationReason) {
+      justificationReason.addEventListener("change", () => {
+        if (justificationError) {
+          justificationError.hidden = true;
+        }
       });
     }
 
@@ -2696,18 +2903,16 @@
         }
         const selectedReason = justificationReason.value;
         if (!selectedReason) {
-          return;
-        }
-        if (selectedReason === "Autre" && (!justificationOther || !justificationOther.value.trim())) {
+          if (justificationError) {
+            justificationError.hidden = false;
+          }
           return;
         }
         const operator = operators.find((item) => item.id === pendingJustification.operatorId);
         if (operator) {
           const step = operator.steps.find((item) => item.status === "running");
           if (step) {
-            step.justification = selectedReason === "Autre"
-              ? justificationOther?.value.trim() || ""
-              : selectedReason;
+            step.justification = selectedReason;
           }
           completeStep(operator, pendingJustification.actualMin, true);
         }
@@ -2813,6 +3018,9 @@
         }
         updateSmedStarted();
         renderAnalysis();
+        exportJson();
+        exportReport();
+        exportCsv();
       });
     }
 
@@ -2864,7 +3072,9 @@
           startTs: entry.step.startTime ? new Date(entry.step.startTime).toISOString() : "",
           endTs: entry.step.endTime ? new Date(entry.step.endTime).toISOString() : "",
           status: entry.step.status,
-          justification: entry.step.justification || ""
+          justification: entry.step.justification || "",
+          actions: entry.step.actions || [],
+          actionsDone: entry.step.actionsDone || []
         };
       });
     };
@@ -2888,7 +3098,9 @@
           "Temps réel (min)",
           "Timestamp début étape",
           "Timestamp fin étape",
-          "Justification"
+          "Justification",
+          "Actions",
+          "Actions réalisées"
         ]
       ];
       buildStepsExport().forEach((step) => {
@@ -2905,7 +3117,9 @@
           step.realMin.toFixed(1),
           step.startTs,
           step.endTs,
-          step.justification
+          step.justification,
+          (step.actions || []).join("|"),
+          (step.actions || []).filter((_, idx) => step.actionsDone?.[idx]).join("|")
         ]);
       });
       const csvContent = rows.map((row) => row.map((cell) => {
@@ -2929,7 +3143,8 @@
         type: step.type,
         targetMin: step.targetMin,
         operator: `Opérateur ${step.operatorIndex}`,
-        order: step.order
+        order: step.order,
+        actions: step.actions || []
       }));
       const byType = {
         external: 0,
@@ -2976,7 +3191,9 @@
           startTs: step.startTs,
           endTs: step.endTs,
           status: step.status,
-          justification: step.justification
+          justification: step.justification,
+          actions: step.actions,
+          actionsDone: step.actionsDone
         })),
         summary: {
           byType,
