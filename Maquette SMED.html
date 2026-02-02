@@ -743,7 +743,8 @@
 
     .operator-card[data-status="done"] {
       opacity: 0.78;
-      transform: scale(0.98);
+      transform: scale(0.96);
+      animation: none;
       background: linear-gradient(180deg, rgba(34, 197, 94, 0.1), rgba(255, 255, 255, 0) 55%), var(--surface);
     }
 
@@ -765,12 +766,13 @@
       animation: breathe 2.2s ease-in-out infinite;
     }
 
-    .operator-card[data-status="running"] .operator-actions .primary {
-      box-shadow: 0 10px 22px rgba(42, 86, 255, 0.24);
+    .operator-card[data-status="todo"] {
+      opacity: 0.6;
+      animation: none;
     }
 
-    .operator-card.inactive {
-      opacity: 0.6;
+    .operator-card[data-status="running"] .operator-actions .primary {
+      box-shadow: 0 10px 22px rgba(42, 86, 255, 0.24);
     }
 
     .operator-card.external-frozen {
@@ -1639,34 +1641,18 @@
         column.className = "operator-column";
         column.innerHTML = `<h4>${operator.name}</h4>`;
 
-        let stepsToRender = operator.steps
-          .map((step, index) => {
-            const isCurrent = index === operator.currentStepIndex;
-            const isDone = index < operator.currentStepIndex;
-            const isFuture = index > operator.currentStepIndex;
-            if (isFuture) {
-              return null;
-            }
-            if (!isSmedStarted && step.type === "internal") {
-              return null;
-            }
-            const status = getStepStatusLabel(operator, isDone, isCurrent);
-            return {
-              step,
-              index,
-              isCurrent,
-              isDone,
-              status
-            };
-          })
-          .filter(Boolean);
-
-        if (isSmedStarted) {
-          const nonExternal = stepsToRender.filter((item) => item.step.type !== "external");
-          const external = stepsToRender.filter((item) => item.step.type === "external");
-          nonExternal.sort((a, b) => Number(a.isDone) - Number(b.isDone));
-          stepsToRender = [...nonExternal, ...external];
-        }
+        const stepsToRender = operator.steps.map((step, index) => {
+          const isCurrent = index === operator.currentStepIndex;
+          const isDone = index < operator.currentStepIndex;
+          const status = getStepStatusLabel(operator, isDone, isCurrent);
+          return {
+            step,
+            index,
+            isCurrent,
+            isDone,
+            status
+          };
+        });
 
         stepsToRender.forEach((stepItem) => {
           const { step, index, isCurrent, isDone, status } = stepItem;
@@ -1703,7 +1689,7 @@
             return operator.stepStatus === "running";
           })();
 
-          const showButton = isCurrent || isExternal;
+          const showButton = isCurrent;
           card.innerHTML = `
             <div class="operator-header">
               <div class="operator-status ${status.className}">${status.label}</div>
