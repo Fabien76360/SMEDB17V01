@@ -1037,6 +1037,157 @@
       cursor: not-allowed;
       box-shadow: none;
     }
+
+    .analysis-header {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .analysis-card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .analysis-card h3 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .analysis-value {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .analysis-section {
+      margin-bottom: 24px;
+    }
+
+    .analysis-section h3 {
+      margin-bottom: 12px;
+      font-size: 18px;
+    }
+
+    .analysis-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+
+    .analysis-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+    }
+
+    .analysis-table th,
+    .analysis-table td {
+      padding: 12px 14px;
+      font-size: 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .analysis-table th {
+      background: rgba(42, 86, 255, 0.08);
+      font-weight: 700;
+    }
+
+    .analysis-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .analysis-export {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .analysis-button {
+      padding: 10px 18px;
+      border-radius: 12px;
+      border: 1px solid rgba(42, 86, 255, 0.2);
+      background: rgba(42, 86, 255, 0.08);
+      color: var(--primary);
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+    }
+
+    .analysis-button:hover {
+      background: rgba(42, 86, 255, 0.14);
+    }
+
+    .analysis-button:active {
+      transform: scale(0.98);
+    }
+
+    .analysis-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .timeline-item {
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      display: grid;
+      gap: 6px;
+    }
+
+    .timeline-item strong {
+      font-size: 14px;
+    }
+
+    .analysis-muted {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .analysis-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(255, 122, 69, 0.12);
+      color: var(--accent);
+    }
+
+    .analysis-pill.done {
+      background: rgba(34, 197, 94, 0.12);
+      color: var(--success);
+    }
+
+    .finish-smed-button {
+      background: var(--accent);
+      color: #ffffff;
+      border: none;
+      box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .finish-smed-button:hover {
+      background: rgba(255, 122, 69, 0.9);
+    }
+
+    .finish-smed-button.hidden {
+      display: none;
+    }
   </style>
 </head>
 <body data-intensity="medium">
@@ -1055,6 +1206,14 @@
         </svg>
       </span>
       SMED
+    </button>
+    <button class="tabbar-button" data-tab="analyse">
+      <span class="tabbar-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 17h2v2H3v-2zm4-6h2v8H7v-8zm4-4h2v12h-2V7zm4 6h2v6h-2v-6zm4-10h2v16h-2V3z"/>
+        </svg>
+      </span>
+      Analyse
     </button>
     <button class="tabbar-button" data-tab="parametres" id="param-tab-button">
       <span class="tabbar-icon">
@@ -1090,6 +1249,9 @@
             <button class="reset-button" id="reset-smed-button">
               Réinitialiser
             </button>
+            <button class="reset-button finish-smed-button hidden" id="finish-smed-button">
+              Terminer SMED
+            </button>
           </div>
         </div>
       </div>
@@ -1109,6 +1271,82 @@
         </div>
       </div>
       <div class="operators-grid" id="operators-grid"></div>
+    </div>
+    <div class="page" data-tab="analyse">
+      <h2>Analyse</h2>
+      <div class="analysis-header">
+        <div class="analysis-card">
+          <h3>Session</h3>
+          <div class="analysis-value" id="analysis-ligne">—</div>
+          <div class="analysis-muted" id="analysis-po">—</div>
+        </div>
+        <div class="analysis-card">
+          <h3>Dernier IPC</h3>
+          <div class="analysis-value" id="analysis-last-ipc">—</div>
+          <div class="analysis-muted">Début SMED</div>
+        </div>
+        <div class="analysis-card">
+          <h3>Premier IPC</h3>
+          <div class="analysis-value" id="analysis-first-ipc">—</div>
+          <div class="analysis-muted">Fin SMED</div>
+        </div>
+        <div class="analysis-card">
+          <h3>Statut</h3>
+          <div class="analysis-value" id="analysis-status">—</div>
+        </div>
+      </div>
+      <div class="analysis-grid">
+        <div class="analysis-card">
+          <h3>Durée SMED réelle</h3>
+          <div class="analysis-value" id="analysis-real-duration">—</div>
+        </div>
+        <div class="analysis-card">
+          <h3>Durée cible SMED</h3>
+          <div class="analysis-value" id="analysis-target-duration">—</div>
+        </div>
+        <div class="analysis-card">
+          <h3>Écart</h3>
+          <div class="analysis-value" id="analysis-gap-duration">—</div>
+        </div>
+      </div>
+      <div class="analysis-section">
+        <h3>Répartition par opérateur (SMED)</h3>
+        <table class="analysis-table" id="analysis-operators-table">
+          <thead>
+            <tr>
+              <th>Opérateur</th>
+              <th>Temps réel (min)</th>
+              <th>Temps cible (min)</th>
+              <th>Écart (min)</th>
+              <th>% contribution</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="analysis-section">
+        <h3>Répartition par type</h3>
+        <table class="analysis-table" id="analysis-types-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Temps réel (min)</th>
+              <th>Temps cible (min)</th>
+              <th>% total global</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="analysis-section">
+        <h3>Timeline</h3>
+        <div class="analysis-timeline" id="analysis-timeline"></div>
+      </div>
+      <div class="analysis-export">
+        <button class="analysis-button" id="export-csv">Exporter CSV</button>
+        <button class="analysis-button" id="export-json">Exporter JSON</button>
+        <button class="analysis-button" id="export-report">Exporter Rapport (Manager)</button>
+      </div>
     </div>
     <div class="page" data-tab="parametres">
       <h2>Paramètres</h2>
@@ -1182,8 +1420,33 @@
       </div>
     </div>
   </div>
+  <div class="modal-overlay" id="finish-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Fin de SMED</h3>
+        <p class="modal-subtitle">Saisir la date et l'heure du Premier IPC (PO N+1).</p>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label for="finish-date">Date Premier IPC</label>
+          <input type="date" id="finish-date">
+        </div>
+        <div class="modal-field">
+          <label for="finish-time">Heure Premier IPC</label>
+          <input type="time" id="finish-time" step="60">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-button secondary" id="finish-cancel">Annuler</button>
+        <button class="modal-button primary" id="finish-confirm">Valider</button>
+      </div>
+    </div>
+  </div>
   <div class="started-toast" id="smed-started">
     ✓ SMED démarré
+  </div>
+  <div class="started-toast" id="smed-finished">
+    Le changement de production est terminé
   </div>
   <script>
     const stepTypes = ["external", "handoff", "internal"];
@@ -1221,6 +1484,8 @@
 
     let isSmedStarted = false;
     let wasSmedStarted = false;
+    let isSmedFinished = false;
+    let firstIpcTimestamp = null;
 
     let operatorTickIntervals = [];
 
@@ -1243,7 +1508,14 @@
     const justificationCancel = document.querySelector("#justification-cancel");
     const justificationConfirm = document.querySelector("#justification-confirm");
     const resetSmedButton = document.querySelector("#reset-smed-button");
+    const finishSmedButton = document.querySelector("#finish-smed-button");
     const smedStarted = document.querySelector("#smed-started");
+    const smedFinished = document.querySelector("#smed-finished");
+    const finishModal = document.querySelector("#finish-modal");
+    const finishDate = document.querySelector("#finish-date");
+    const finishTime = document.querySelector("#finish-time");
+    const finishCancel = document.querySelector("#finish-cancel");
+    const finishConfirm = document.querySelector("#finish-confirm");
     const settingsOperators = document.querySelector("#settings-operators");
     const settingsSteps = document.querySelector("#settings-steps");
     const settingsTarget = document.querySelector("#settings-target");
@@ -1253,6 +1525,20 @@
     const settingsForm = document.querySelector("#settings-form");
     const settingsLock = document.querySelector("#settings-lock");
     const paramTabButton = document.querySelector("#param-tab-button");
+    const analysisLigne = document.querySelector("#analysis-ligne");
+    const analysisPo = document.querySelector("#analysis-po");
+    const analysisLastIpc = document.querySelector("#analysis-last-ipc");
+    const analysisFirstIpc = document.querySelector("#analysis-first-ipc");
+    const analysisStatus = document.querySelector("#analysis-status");
+    const analysisRealDuration = document.querySelector("#analysis-real-duration");
+    const analysisTargetDuration = document.querySelector("#analysis-target-duration");
+    const analysisGapDuration = document.querySelector("#analysis-gap-duration");
+    const analysisOperatorsTable = document.querySelector("#analysis-operators-table tbody");
+    const analysisTypesTable = document.querySelector("#analysis-types-table tbody");
+    const analysisTimeline = document.querySelector("#analysis-timeline");
+    const exportCsvButton = document.querySelector("#export-csv");
+    const exportJsonButton = document.querySelector("#export-json");
+    const exportReportButton = document.querySelector("#export-report");
 
     const tabButtons = document.querySelectorAll(".tabbar-button");
 
@@ -1264,6 +1550,9 @@
       tabButtons.forEach((button) => {
         button.classList.toggle("active", button.dataset.tab === tab);
       });
+      if (tab === "analyse") {
+        renderAnalysis();
+      }
     };
 
     tabButtons.forEach((button) => {
@@ -1309,7 +1598,9 @@
             targetSeconds: targetSec,
             status: "todo",
             startTime: null,
-            elapsedSeconds: 0
+            elapsedSeconds: 0,
+            endTime: null,
+            justification: ""
           });
         }
         newOperators.push({
@@ -1331,6 +1622,39 @@
       const min = Math.floor(seconds / 60);
       const sec = Math.floor(seconds % 60);
       return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+    };
+
+    const formatMinutes = (minutes) => `${minutes.toFixed(1)} min`;
+
+    const toDateTimeInputValue = (date) => ({
+      date: date.toISOString().slice(0, 10),
+      time: date.toTimeString().slice(0, 5)
+    });
+
+    const formatDateTime = (date) => {
+      if (!date) {
+        return "—";
+      }
+      return date.toLocaleString("fr-FR", {
+        dateStyle: "short",
+        timeStyle: "short"
+      });
+    };
+
+    const getLastIpcDateTime = () => {
+      if (!ipcDate?.value || !ipcTime?.value) {
+        return null;
+      }
+      const value = new Date(`${ipcDate.value}T${ipcTime.value}`);
+      return Number.isNaN(value.getTime()) ? null : value;
+    };
+
+    const getFirstIpcDateTime = () => {
+      if (!firstIpcTimestamp) {
+        return null;
+      }
+      const value = new Date(firstIpcTimestamp);
+      return Number.isNaN(value.getTime()) ? null : value;
     };
 
     const updateChronoLabels = () => {
@@ -1469,6 +1793,7 @@
       }
       step.status = "done";
       step.elapsedSeconds = actualMin * 60;
+      step.endTime = Date.now();
       if (isSmedStarted) {
         const nextInternalIndex = operator.steps.findIndex(
           (s, idx) => idx > runningIndex && s.type === "internal" && s.status === "todo"
@@ -1487,6 +1812,7 @@
         }
       }
       renderOperators();
+      renderAnalysis();
     };
 
     const handleValidate = (operator, stepIndex) => {
@@ -1659,11 +1985,174 @@
 
     resetOperators();
 
+    const getStepRealSeconds = (step) => {
+      if (step.status === "done") {
+        return step.elapsedSeconds || 0;
+      }
+      if (step.status === "running" && step.startTime) {
+        const endTimestamp = isSmedFinished && firstIpcTimestamp ? firstIpcTimestamp : Date.now();
+        return Math.max(0, (endTimestamp - step.startTime) / 1000);
+      }
+      return 0;
+    };
+
+    const getAnalysisDataset = () => {
+      const lastIpc = getLastIpcDateTime();
+      const firstIpc = getFirstIpcDateTime();
+      const now = new Date();
+      const endTimestamp = firstIpc ? firstIpc.getTime() : now.getTime();
+      const startTimestamp = lastIpc ? lastIpc.getTime() : null;
+      const durationRealMin = startTimestamp ? (endTimestamp - startTimestamp) / 60000 : 0;
+      const targetSeconds = operators.reduce((total, operator) => {
+        return total + operator.steps.reduce((sum, step) => {
+          if (step.type === "internal" || step.type === "handoff") {
+            return sum + step.targetSeconds;
+          }
+          return sum;
+        }, 0);
+      }, 0);
+      const targetMinutes = targetSeconds / 60;
+      const steps = operators.flatMap((operator) => {
+        return operator.steps.map((step, index) => {
+          const realSeconds = getStepRealSeconds(step);
+          return {
+            operator,
+            step,
+            order: index + 1,
+            realSeconds
+          };
+        });
+      });
+      return {
+        lastIpc,
+        firstIpc,
+        durationRealMin,
+        targetMinutes,
+        steps
+      };
+    };
+
+    const renderAnalysis = () => {
+      const ligneValue = ligneInput?.value.trim() || "—";
+      const poValue = document.querySelector("#po-input")?.value.trim() || "—";
+      const dataset = getAnalysisDataset();
+      if (analysisLigne) {
+        analysisLigne.textContent = ligneValue;
+      }
+      if (analysisPo) {
+        analysisPo.textContent = poValue;
+      }
+      if (analysisLastIpc) {
+        analysisLastIpc.textContent = formatDateTime(dataset.lastIpc);
+      }
+      if (analysisFirstIpc) {
+        analysisFirstIpc.textContent = formatDateTime(dataset.firstIpc);
+      }
+      if (analysisStatus) {
+        analysisStatus.textContent = isSmedFinished ? "Terminé" : isSmedStarted ? "En cours" : "—";
+      }
+      if (analysisRealDuration) {
+        analysisRealDuration.textContent = formatMinutes(dataset.durationRealMin);
+      }
+      if (analysisTargetDuration) {
+        analysisTargetDuration.textContent = formatMinutes(dataset.targetMinutes);
+      }
+      if (analysisGapDuration) {
+        const gap = dataset.durationRealMin - dataset.targetMinutes;
+        analysisGapDuration.textContent = `${gap.toFixed(1)} min`;
+      }
+      if (analysisOperatorsTable) {
+        const totalSmedRealSeconds = dataset.steps.reduce((sum, entry) => {
+          if (entry.step.type === "internal" || entry.step.type === "handoff") {
+            return sum + entry.realSeconds;
+          }
+          return sum;
+        }, 0);
+        analysisOperatorsTable.innerHTML = operators.map((operator) => {
+          const operatorEntries = dataset.steps.filter((entry) => entry.operator.id === operator.id);
+          const realSeconds = operatorEntries.reduce((sum, entry) => {
+            if (entry.step.type === "internal" || entry.step.type === "handoff") {
+              return sum + entry.realSeconds;
+            }
+            return sum;
+          }, 0);
+          const targetSeconds = operator.steps.reduce((sum, step) => {
+            if (step.type === "internal" || step.type === "handoff") {
+              return sum + step.targetSeconds;
+            }
+            return sum;
+          }, 0);
+          const gapMin = realSeconds / 60 - targetSeconds / 60;
+          const contribution = totalSmedRealSeconds > 0 ? (realSeconds / totalSmedRealSeconds) * 100 : 0;
+          return `
+            <tr>
+              <td>${operator.name}</td>
+              <td>${(realSeconds / 60).toFixed(1)}</td>
+              <td>${(targetSeconds / 60).toFixed(1)}</td>
+              <td>${gapMin.toFixed(1)}</td>
+              <td>${contribution.toFixed(1)}%</td>
+            </tr>
+          `;
+        }).join("");
+      }
+      if (analysisTypesTable) {
+        const totalRealSeconds = dataset.steps.reduce((sum, entry) => sum + entry.realSeconds, 0);
+        const types = ["external", "handoff", "internal"];
+        analysisTypesTable.innerHTML = types.map((type) => {
+          const realSeconds = dataset.steps.reduce((sum, entry) => {
+            if (entry.step.type === type) {
+              return sum + entry.realSeconds;
+            }
+            return sum;
+          }, 0);
+          const targetSeconds = dataset.steps.reduce((sum, entry) => {
+            if ((type === "internal" || type === "handoff") && entry.step.type === type) {
+              return sum + entry.step.targetSeconds;
+            }
+            return sum;
+          }, 0);
+          const percent = totalRealSeconds > 0 ? (realSeconds / totalRealSeconds) * 100 : 0;
+          const targetDisplay = type === "external" ? "—" : (targetSeconds / 60).toFixed(1);
+          return `
+            <tr>
+              <td>${getStepTypeLabel(type)}</td>
+              <td>${(realSeconds / 60).toFixed(1)}</td>
+              <td>${targetDisplay}</td>
+              <td>${percent.toFixed(1)}%</td>
+            </tr>
+          `;
+        }).join("");
+      }
+      if (analysisTimeline) {
+        const timelineItems = dataset.steps
+          .filter((entry) => entry.step.status === "done")
+          .sort((a, b) => (a.step.endTime || 0) - (b.step.endTime || 0));
+        if (timelineItems.length === 0) {
+          analysisTimeline.innerHTML = `<div class="analysis-muted">Aucune étape validée.</div>`;
+        } else {
+          analysisTimeline.innerHTML = timelineItems.map((entry) => {
+            const timeLabel = entry.step.endTime ? formatDateTime(new Date(entry.step.endTime)) : "—";
+            return `
+              <div class="timeline-item">
+                <div><strong>${timeLabel}</strong> · ${entry.operator.name}</div>
+                <div>${entry.step.name} · ${getStepTypeLabel(entry.step.type)}</div>
+                <div class="analysis-muted">Temps réel : ${(entry.realSeconds / 60).toFixed(1)} min</div>
+              </div>
+            `;
+          }).join("");
+        }
+      }
+    };
+
     const updateSmedStarted = () => {
       const hasDate = Boolean(ipcDate && ipcDate.value);
       const hasTime = Boolean(ipcTime && ipcTime.value);
       const newIsSmedStarted = hasDate && hasTime;
       isSmedStarted = newIsSmedStarted;
+      if (!newIsSmedStarted) {
+        isSmedFinished = false;
+        firstIpcTimestamp = null;
+      }
       if (paramTabButton) {
         paramTabButton.disabled = isSmedStarted;
         paramTabButton.classList.toggle("disabled", isSmedStarted);
@@ -1688,6 +2177,9 @@
       if (smedStarted && !newIsSmedStarted) {
         smedStarted.classList.remove("visible");
       }
+      if (smedFinished && !newIsSmedStarted) {
+        smedFinished.classList.remove("visible");
+      }
       if (!newIsSmedStarted && startedToastTimeout) {
         clearTimeout(startedToastTimeout);
         startedToastTimeout = null;
@@ -1704,14 +2196,22 @@
         }, 5000);
         startAllOperatorsOnSmedStart();
       }
-      if (isSmedStarted) {
+      if (finishSmedButton) {
+        finishSmedButton.classList.toggle("hidden", !isSmedStarted || isSmedFinished);
+      }
+      if (isSmedStarted && !isSmedFinished) {
         startChrono();
         startOperatorTick();
+      } else if (isSmedStarted && isSmedFinished) {
+        stopChrono(false);
+        stopOperatorTick();
       } else {
         stopChrono(true);
+        stopOperatorTick();
       }
       wasSmedStarted = newIsSmedStarted;
       renderOperators();
+      renderAnalysis();
     };
 
     const readSettingsValues = () => {
@@ -1882,6 +2382,12 @@
         }
         const operator = operators.find((item) => item.id === pendingJustification.operatorId);
         if (operator) {
+          const step = operator.steps.find((item) => item.status === "running");
+          if (step) {
+            step.justification = selectedReason === "Autre"
+              ? justificationOther?.value.trim() || ""
+              : selectedReason;
+          }
           completeStep(operator, pendingJustification.actualMin, true);
         }
         closeJustificationModal();
@@ -1908,8 +2414,16 @@
         if (poInput) {
           poInput.value = "";
         }
+        if (finishDate) {
+          finishDate.value = "";
+        }
+        if (finishTime) {
+          finishTime.value = "";
+        }
         isSmedStarted = false;
         wasSmedStarted = false;
+        isSmedFinished = false;
+        firstIpcTimestamp = null;
         if (startedToastTimeout) {
           clearTimeout(startedToastTimeout);
           startedToastTimeout = null;
@@ -1917,8 +2431,441 @@
         if (smedStarted) {
           smedStarted.classList.remove("visible");
         }
+        if (smedFinished) {
+          smedFinished.classList.remove("visible");
+        }
         resetOperators();
         updateSmedStarted();
+      });
+    }
+
+    const openFinishModal = () => {
+      if (!finishModal || !finishDate || !finishTime) {
+        return;
+      }
+      const now = new Date();
+      const values = toDateTimeInputValue(now);
+      finishDate.value = values.date;
+      finishTime.value = values.time;
+      finishModal.classList.add("visible");
+    };
+
+    const closeFinishModal = () => {
+      if (!finishModal) {
+        return;
+      }
+      finishModal.classList.remove("visible");
+    };
+
+    if (finishSmedButton) {
+      finishSmedButton.addEventListener("click", () => {
+        if (!isSmedStarted || isSmedFinished) {
+          return;
+        }
+        openFinishModal();
+      });
+    }
+
+    if (finishCancel) {
+      finishCancel.addEventListener("click", closeFinishModal);
+    }
+
+    if (finishConfirm) {
+      finishConfirm.addEventListener("click", () => {
+        if (!finishDate?.value || !finishTime?.value) {
+          return;
+        }
+        const finishValue = new Date(`${finishDate.value}T${finishTime.value}`);
+        if (Number.isNaN(finishValue.getTime())) {
+          return;
+        }
+        firstIpcTimestamp = finishValue.getTime();
+        isSmedFinished = true;
+        stopChrono(false);
+        stopOperatorTick();
+        closeFinishModal();
+        if (smedFinished) {
+          smedFinished.classList.add("visible");
+          setTimeout(() => {
+            smedFinished.classList.remove("visible");
+          }, 5000);
+        }
+        updateSmedStarted();
+        renderAnalysis();
+      });
+    }
+
+    const exportFile = (content, filename, type) => {
+      const blob = new Blob([content], { type });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    };
+
+    const getSafeFileSegment = (value, fallback) => {
+      const trimmed = (value || "").trim();
+      if (!trimmed) {
+        return fallback;
+      }
+      return trimmed.replace(/[^\w-]+/g, "_");
+    };
+
+    const getExportTimestamp = () => {
+      const now = new Date();
+      const date = now.toISOString().slice(0, 10);
+      const time = now.toTimeString().slice(0, 5).replace(":", "");
+      return { date, time };
+    };
+
+    const getSessionId = () => {
+      const lastIpc = getLastIpcDateTime();
+      const datePart = lastIpc ? lastIpc.toISOString().slice(0, 10) : "date";
+      const timePart = lastIpc ? lastIpc.toTimeString().slice(0, 5).replace(":", "") : "time";
+      const line = getSafeFileSegment(ligneInput?.value, "LIGNE");
+      const po = getSafeFileSegment(document.querySelector("#po-input")?.value, "PO");
+      return `${line}_${po}_${datePart}_${timePart}`;
+    };
+
+    const buildStepsExport = () => {
+      const dataset = getAnalysisDataset();
+      return dataset.steps.map((entry) => {
+        return {
+          order: entry.order,
+          name: entry.step.name,
+          type: entry.step.type,
+          operator: entry.operator.name,
+          targetMin: entry.step.targetSeconds / 60,
+          realMin: entry.realSeconds / 60,
+          startTs: entry.step.startTime ? new Date(entry.step.startTime).toISOString() : "",
+          endTs: entry.step.endTime ? new Date(entry.step.endTime).toISOString() : "",
+          status: entry.step.status,
+          justification: entry.step.justification || ""
+        };
+      });
+    };
+
+    const exportCsv = () => {
+      const lastIpc = getLastIpcDateTime();
+      const firstIpc = getFirstIpcDateTime();
+      const line = ligneInput?.value.trim() || "";
+      const po = document.querySelector("#po-input")?.value.trim() || "";
+      const rows = [
+        [
+          "Ligne",
+          "PO",
+          "Date/heure Dernier IPC",
+          "Date/heure Premier IPC",
+          "Opérateur",
+          "Ordre étape",
+          "Nom étape",
+          "Type",
+          "Temps cible (min)",
+          "Temps réel (min)",
+          "Timestamp début étape",
+          "Timestamp fin étape",
+          "Justification"
+        ]
+      ];
+      buildStepsExport().forEach((step) => {
+        rows.push([
+          line,
+          po,
+          lastIpc ? lastIpc.toISOString() : "",
+          firstIpc ? firstIpc.toISOString() : "",
+          step.operator,
+          step.order,
+          step.name,
+          getStepTypeLabel(step.type),
+          step.targetMin.toFixed(1),
+          step.realMin.toFixed(1),
+          step.startTs,
+          step.endTs,
+          step.justification
+        ]);
+      });
+      const csvContent = rows.map((row) => row.map((cell) => {
+        const value = String(cell ?? "");
+        if (value.includes(",") || value.includes("\"") || value.includes("\n")) {
+          return `"${value.replace(/\"/g, "\"\"")}"`;
+        }
+        return value;
+      }).join(",")).join("\n");
+      const timestamp = getExportTimestamp();
+      const filename = `SMED_${getSafeFileSegment(line, "LIGNE")}_${getSafeFileSegment(po, "PO")}_${timestamp.date}_${timestamp.time}.csv`;
+      exportFile(csvContent, filename, "text/csv;charset=utf-8");
+    };
+
+    const exportJson = () => {
+      const dataset = getAnalysisDataset();
+      const lastIpc = getLastIpcDateTime();
+      const firstIpc = getFirstIpcDateTime();
+      const stepsStandard = operators.flatMap((operator) => {
+        return operator.steps.map((step, index) => ({
+          name: step.name,
+          type: step.type,
+          targetMin: step.targetSeconds / 60,
+          operator: operator.name,
+          order: index + 1
+        }));
+      });
+      const byType = {
+        external: 0,
+        handoff: 0,
+        internal: 0
+      };
+      const byOperatorSmed = {};
+      dataset.steps.forEach((entry) => {
+        const type = entry.step.type;
+        byType[type] += entry.realSeconds / 60;
+        if (type === "internal" || type === "handoff") {
+          if (!byOperatorSmed[entry.operator.name]) {
+            byOperatorSmed[entry.operator.name] = 0;
+          }
+          byOperatorSmed[entry.operator.name] += entry.realSeconds / 60;
+        }
+      });
+      const payload = {
+        meta: {
+          tool: "SMED Performance",
+          version: "v1",
+          sessionId: getSessionId(),
+          line: ligneInput?.value.trim() || "",
+          po: document.querySelector("#po-input")?.value.trim() || "",
+          lastIpcDateTime: lastIpc ? lastIpc.toISOString() : "",
+          firstIpcDateTime: firstIpc ? firstIpc.toISOString() : "",
+          status: isSmedFinished ? "done" : "in_progress",
+          durationRealMin: dataset.durationRealMin,
+          durationTargetMin: dataset.targetMinutes,
+          exportedAt: new Date().toISOString()
+        },
+        parameters: {
+          operatorsCount: settings.operatorsCount,
+          alertThresholdMin: settings.alertMinutes,
+          stepsStandard
+        },
+        steps: buildStepsExport().map((step) => ({
+          order: step.order,
+          name: step.name,
+          type: step.type,
+          operator: step.operator,
+          targetMin: step.targetMin,
+          realMin: step.realMin,
+          startTs: step.startTs,
+          endTs: step.endTs,
+          status: step.status,
+          justification: step.justification
+        })),
+        summary: {
+          byType,
+          byOperatorSmed
+        }
+      };
+      const timestamp = getExportTimestamp();
+      const line = getSafeFileSegment(ligneInput?.value, "LIGNE");
+      const po = getSafeFileSegment(document.querySelector("#po-input")?.value, "PO");
+      const filename = `SMED_${line}_${po}_${timestamp.date}_${timestamp.time}.json`;
+      exportFile(JSON.stringify(payload, null, 2), filename, "application/json;charset=utf-8");
+    };
+
+    const exportReport = () => {
+      const dataset = getAnalysisDataset();
+      const lastIpc = getLastIpcDateTime();
+      const firstIpc = getFirstIpcDateTime();
+      const line = ligneInput?.value.trim() || "";
+      const po = document.querySelector("#po-input")?.value.trim() || "";
+      const steps = buildStepsExport();
+      const smedSteps = steps.filter((step) => step.type !== "external");
+      const totalSmedReal = smedSteps.reduce((sum, step) => sum + step.realMin, 0);
+      const totalGlobalReal = steps.reduce((sum, step) => sum + step.realMin, 0);
+      const byType = ["external", "handoff", "internal"].map((type) => {
+        const real = steps.filter((step) => step.type === type).reduce((sum, step) => sum + step.realMin, 0);
+        const percent = totalGlobalReal > 0 ? (real / totalGlobalReal) * 100 : 0;
+        return { type, real, percent };
+      });
+      const byOperator = operators.map((operator) => {
+        const real = smedSteps.filter((step) => step.operator === operator.name).reduce((sum, step) => sum + step.realMin, 0);
+        const percent = totalSmedReal > 0 ? (real / totalSmedReal) * 100 : 0;
+        return { name: operator.name, real, percent };
+      });
+      const topSteps = steps
+        .map((step) => ({ ...step, gap: step.realMin - step.targetMin }))
+        .sort((a, b) => b.gap - a.gap)
+        .slice(0, 5);
+      const gapMin = dataset.durationRealMin - dataset.targetMinutes;
+      const gapPercent = dataset.targetMinutes > 0 ? (gapMin / dataset.targetMinutes) * 100 : 0;
+      const reportHtml = `
+        <!doctype html>
+        <html lang="fr">
+        <head>
+          <meta charset="utf-8">
+          <title>Rapport SMED</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 24px; color: #152033; }
+            h1 { margin-bottom: 8px; }
+            h2 { margin-top: 24px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+            th, td { border: 1px solid #d7dbe2; padding: 8px; text-align: left; font-size: 13px; }
+            th { background: #f0f1f4; }
+            .kpi-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+            .kpi-card { border: 1px solid #d7dbe2; border-radius: 12px; padding: 12px; }
+            .muted { color: #5a6472; font-size: 13px; }
+            .section { margin-top: 18px; }
+            .actions-line { border-bottom: 1px dashed #b5bdc9; height: 24px; margin-top: 12px; }
+            @media print { body { margin: 12mm; } }
+          </style>
+        </head>
+        <body>
+          <h1>Rapport SMED</h1>
+          <div class="muted">Ligne: ${line || "—"} · PO: ${po || "—"}</div>
+          <div class="section">
+            <strong>Dernier IPC:</strong> ${formatDateTime(lastIpc)}<br>
+            <strong>Premier IPC:</strong> ${formatDateTime(firstIpc)}<br>
+            <strong>Durée réelle SMED:</strong> ${dataset.durationRealMin.toFixed(1)} min<br>
+            <strong>Durée cible SMED:</strong> ${dataset.targetMinutes.toFixed(1)} min<br>
+            <strong>Écart:</strong> ${gapMin.toFixed(1)} min (${gapPercent.toFixed(1)}%)<br>
+            <strong>Statut:</strong> ${isSmedFinished ? "Terminé" : "En cours"}
+          </div>
+          <h2>Synthèse KPI</h2>
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <strong>Répartition par type</strong>
+              <table>
+                <thead><tr><th>Type</th><th>Réel (min)</th><th>% global</th></tr></thead>
+                <tbody>
+                  ${byType.map((row) => `
+                    <tr>
+                      <td>${getStepTypeLabel(row.type)}</td>
+                      <td>${row.real.toFixed(1)}</td>
+                      <td>${row.percent.toFixed(1)}%</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+            <div class="kpi-card">
+              <strong>Répartition SMED par opérateur</strong>
+              <table>
+                <thead><tr><th>Opérateur</th><th>Réel (min)</th><th>% SMED</th></tr></thead>
+                <tbody>
+                  ${byOperator.map((row) => `
+                    <tr>
+                      <td>${row.name}</td>
+                      <td>${row.real.toFixed(1)}</td>
+                      <td>${row.percent.toFixed(1)}%</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="section">
+            <strong>Top 5 étapes par écart</strong>
+            <table>
+              <thead><tr><th>Étape</th><th>Opérateur</th><th>Type</th><th>Écart (min)</th></tr></thead>
+              <tbody>
+                ${topSteps.map((step) => `
+                  <tr>
+                    <td>${step.name}</td>
+                    <td>${step.operator}</td>
+                    <td>${getStepTypeLabel(step.type)}</td>
+                    <td>${step.gap.toFixed(1)}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+          <h2>Détail étapes SMED</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Ordre</th>
+                <th>Nom</th>
+                <th>Opérateur</th>
+                <th>Type</th>
+                <th>Cible (min)</th>
+                <th>Réel (min)</th>
+                <th>Écart (min)</th>
+                <th>Justification</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${smedSteps.map((step) => `
+                <tr>
+                  <td>${step.order}</td>
+                  <td>${step.name}</td>
+                  <td>${step.operator}</td>
+                  <td>${getStepTypeLabel(step.type)}</td>
+                  <td>${step.targetMin.toFixed(1)}</td>
+                  <td>${step.realMin.toFixed(1)}</td>
+                  <td>${(step.realMin - step.targetMin).toFixed(1)}</td>
+                  <td>${step.justification || ""}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+          <h2>Étapes Externes (hors SMED)</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Ordre</th>
+                <th>Nom</th>
+                <th>Opérateur</th>
+                <th>Type</th>
+                <th>Cible (min)</th>
+                <th>Réel (min)</th>
+                <th>Écart (min)</th>
+                <th>Justification</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${steps.filter((step) => step.type === "external").map((step) => `
+                <tr>
+                  <td>${step.order}</td>
+                  <td>${step.name}</td>
+                  <td>${step.operator}</td>
+                  <td>${getStepTypeLabel(step.type)}</td>
+                  <td>${step.targetMin.toFixed(1)}</td>
+                  <td>${step.realMin.toFixed(1)}</td>
+                  <td>${(step.realMin - step.targetMin).toFixed(1)}</td>
+                  <td>${step.justification || ""}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+          <h2>Actions décidées</h2>
+          <div class="actions-line"></div>
+          <div class="actions-line"></div>
+          <div class="actions-line"></div>
+        </body>
+        </html>
+      `;
+      const timestamp = getExportTimestamp();
+      const filename = `SMED_RAPPORT_${getSafeFileSegment(line, "LIGNE")}_${getSafeFileSegment(po, "PO")}_${timestamp.date}_${timestamp.time}.html`;
+      exportFile(reportHtml, filename, "text/html;charset=utf-8");
+    };
+
+    if (exportCsvButton) {
+      exportCsvButton.addEventListener("click", () => {
+        renderAnalysis();
+        exportCsv();
+      });
+    }
+
+    if (exportJsonButton) {
+      exportJsonButton.addEventListener("click", () => {
+        renderAnalysis();
+        exportJson();
+      });
+    }
+
+    if (exportReportButton) {
+      exportReportButton.addEventListener("click", () => {
+        renderAnalysis();
+        exportReport();
       });
     }
 
@@ -1943,6 +2890,7 @@
     updateSmedStarted();
     initializeReasons();
     renderOperators();
+    renderAnalysis();
   </script>
 </body>
 </html>
