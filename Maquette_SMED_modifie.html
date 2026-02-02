@@ -1174,6 +1174,51 @@
       color: var(--success);
     }
 
+    .standard-step-card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 12px;
+      background: var(--surface);
+      display: grid;
+      gap: 10px;
+    }
+
+    .standard-step-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .standard-step-row label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .standard-step-row input,
+    .standard-step-row select {
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      padding: 0 10px;
+      font-size: 14px;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .standard-step-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .warning-text {
+      color: var(--warn);
+      font-weight: 600;
+    }
+
     .finish-smed-button {
       background: var(--accent);
       color: #ffffff;
@@ -1358,37 +1403,79 @@
         </div>
         <div>Les paramètres sont verrouillés car le SMED a démarré. Réinitialisez le SMED pour modifier la configuration.</div>
       </div>
-      <form class="settings-form" id="settings-form">
-        <div class="settings-field">
-          <label for="settings-operators">Nombre d'opérateurs</label>
-          <input type="number" id="settings-operators" min="1" max="10" step="1">
+      <div class="settings-form" id="settings-form">
+        <div class="analysis-card">
+          <h3>Organisation</h3>
+          <div class="settings-field">
+            <label>Nombre d'opérateurs</label>
+            <div class="actions-wrap">
+              <button class="settings-button" type="button" data-stepper="operators" data-action="minus">-</button>
+              <span class="analysis-value" id="operators-count-display">3</span>
+              <button class="settings-button" type="button" data-stepper="operators" data-action="plus">+</button>
+            </div>
+          </div>
         </div>
-        <div class="settings-field">
-          <label for="settings-steps">Nombre d'étapes par opérateur</label>
-          <input type="number" id="settings-steps" min="1" max="20" step="1">
+        <div class="analysis-card">
+          <h3>Étapes</h3>
+          <div id="standard-steps-list"></div>
+          <div class="analysis-export">
+            <button class="analysis-button" type="button" id="add-standard-step">Ajouter une étape</button>
+            <button class="analysis-button" type="button" id="reset-standard-steps">Réinitialiser le standard</button>
+          </div>
         </div>
-        <div class="settings-field">
-          <label for="settings-target">Temps cible (minutes)</label>
-          <input type="number" id="settings-target" min="1" step="0.1">
+        <div class="analysis-card">
+          <h3>Cadence SMED</h3>
+          <div class="settings-field">
+            <label>Durée cible SMED</label>
+            <div class="analysis-value" id="target-smed-display">—</div>
+          </div>
+          <div class="settings-field">
+            <label>Seuil d'alerte (minutes)</label>
+            <div class="actions-wrap">
+              <button class="settings-button" type="button" data-stepper="alert" data-action="minus">-</button>
+              <span class="analysis-value" id="alert-threshold-display">—</span>
+              <button class="settings-button" type="button" data-stepper="alert" data-action="plus">+</button>
+            </div>
+          </div>
         </div>
-        <div class="settings-field">
-          <label for="settings-alert">Seuil d'alerte (minutes)</label>
-          <input type="number" id="settings-alert" min="0.1" step="0.1">
-        </div>
-        <div class="settings-field">
-          <label for="settings-intensity">Intensité des alertes visuelles</label>
-          <select id="settings-intensity">
-            <option value="low">Faible (pas d'animations)</option>
-            <option value="medium">Moyenne (animations modérées)</option>
-            <option value="high">Forte (animations marquées)</option>
-          </select>
+        <div class="analysis-card">
+          <h3>Cohérence du standard</h3>
+          <div class="analysis-section">
+            <h3>Répartition par type</h3>
+            <table class="analysis-table" id="consistency-type-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Minutes</th>
+                  <th>% global</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="analysis-section">
+            <h3>Répartition par opérateur (SMED)</h3>
+            <table class="analysis-table" id="consistency-operator-table">
+              <thead>
+                <tr>
+                  <th>Opérateur</th>
+                  <th>Minutes</th>
+                  <th>% SMED</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="analysis-section">
+            <h3>Alertes</h3>
+            <div id="consistency-alerts" class="analysis-muted"></div>
+          </div>
         </div>
         <div class="settings-actions">
-          <button type="button" class="settings-button" id="settings-apply">
-            Appliquer
-          </button>
+          <button type="button" class="settings-button" id="settings-apply">Appliquer</button>
+          <button type="button" class="settings-button" id="settings-cancel">Annuler</button>
         </div>
-      </form>
+      </div>
     </div>
   </main>
   <div class="modal-overlay" id="justification-modal">
@@ -1449,33 +1536,37 @@
     Le changement de production est terminé
   </div>
   <script>
-    const stepTypes = ["external", "handoff", "internal"];
+    const createDefaultStandardSteps = (operatorsCount) => {
+      const types = ["external", "handoff", "internal", "external", "internal", "handoff"];
+      const targets = {
+        external: 5,
+        handoff: 8,
+        internal: 12
+      };
+      return types.map((type, index) => ({
+        id: `std-${index + 1}`,
+        order: index + 1,
+        name: `Étape ${index + 1}`,
+        type,
+        targetMin: targets[type],
+        operatorIndex: ((index % operatorsCount) + 1)
+      }));
+    };
 
     let settings = {
       operatorsCount: 3,
-      stepsCount: 6,
-      targetMinutes: 15,
       alertMinutes: 12,
-      intensity: "medium"
+      standardSteps: createDefaultStandardSteps(3)
     };
 
-    let targetSeconds = settings.targetMinutes * 60;
+    let draftOperatorsCount = settings.operatorsCount;
+    let draftAlertMinutes = settings.alertMinutes;
+    let draftStandardSteps = JSON.parse(JSON.stringify(settings.standardSteps));
+
+    let standardStepCounter = settings.standardSteps.length + 1;
+
+    let targetSeconds = 0;
     let alertSeconds = settings.alertMinutes * 60;
-
-    const stepTimings = {
-      external: {
-        min: 40,
-        max: 120
-      },
-      handoff: {
-        min: 30,
-        max: 60
-      },
-      internal: {
-        min: 60,
-        max: 180
-      }
-    };
 
     let operators = [];
 
@@ -1516,15 +1607,20 @@
     const finishTime = document.querySelector("#finish-time");
     const finishCancel = document.querySelector("#finish-cancel");
     const finishConfirm = document.querySelector("#finish-confirm");
-    const settingsOperators = document.querySelector("#settings-operators");
-    const settingsSteps = document.querySelector("#settings-steps");
-    const settingsTarget = document.querySelector("#settings-target");
-    const settingsAlert = document.querySelector("#settings-alert");
-    const settingsIntensity = document.querySelector("#settings-intensity");
     const settingsApply = document.querySelector("#settings-apply");
+    const settingsCancel = document.querySelector("#settings-cancel");
     const settingsForm = document.querySelector("#settings-form");
     const settingsLock = document.querySelector("#settings-lock");
     const paramTabButton = document.querySelector("#param-tab-button");
+    const operatorsCountDisplay = document.querySelector("#operators-count-display");
+    const standardStepsList = document.querySelector("#standard-steps-list");
+    const addStandardStepButton = document.querySelector("#add-standard-step");
+    const resetStandardStepsButton = document.querySelector("#reset-standard-steps");
+    const targetSmedDisplay = document.querySelector("#target-smed-display");
+    const alertThresholdDisplay = document.querySelector("#alert-threshold-display");
+    const consistencyTypeTable = document.querySelector("#consistency-type-table tbody");
+    const consistencyOperatorTable = document.querySelector("#consistency-operator-table tbody");
+    const consistencyAlerts = document.querySelector("#consistency-alerts");
     const analysisLigne = document.querySelector("#analysis-ligne");
     const analysisPo = document.querySelector("#analysis-po");
     const analysisLastIpc = document.querySelector("#analysis-last-ipc");
@@ -1586,23 +1682,20 @@
     const generateOperators = () => {
       const newOperators = [];
       for (let i = 1; i <= settings.operatorsCount; i++) {
-        const steps = [];
-        for (let j = 1; j <= settings.stepsCount; j++) {
-          const type = stepTypes[(j - 1) % stepTypes.length];
-          const timing = stepTimings[type];
-          const targetSec = Math.floor(Math.random() * (timing.max - timing.min + 1) + timing.min);
-          steps.push({
-            id: `step-${i}-${j}`,
-            name: `Étape ${j}`,
-            type,
-            targetSeconds: targetSec,
+        const steps = settings.standardSteps
+          .filter((step) => step.operatorIndex === i)
+          .map((step) => ({
+            id: step.id,
+            order: step.order,
+            name: step.name,
+            type: step.type,
+            targetSeconds: step.targetMin * 60,
             status: "todo",
             startTime: null,
             elapsedSeconds: 0,
             endTime: null,
             justification: ""
-          });
-        }
+          }));
         newOperators.push({
           id: `operator-${i}`,
           name: `Opérateur ${i}`,
@@ -1623,6 +1716,35 @@
       const sec = Math.floor(seconds % 60);
       return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
     };
+
+    const getTargetSecondsFromStandard = (steps) => {
+      return steps.reduce((sum, step) => {
+        if (step.type === "internal" || step.type === "handoff") {
+          return sum + step.targetMin * 60;
+        }
+        return sum;
+      }, 0);
+    };
+
+    const clampOperatorCount = (value) => Math.min(6, Math.max(1, value));
+
+    const clampTargetMin = (type, value) => {
+      const max = 60;
+      if (type === "external") {
+        return Math.min(max, Math.max(0, value));
+      }
+      return Math.min(max, Math.max(1, value));
+    };
+
+    const normalizeOperatorIndex = (steps, operatorsCount) => {
+      steps.forEach((step) => {
+        if (step.operatorIndex > operatorsCount) {
+          step.operatorIndex = 1;
+        }
+      });
+    };
+
+    targetSeconds = getTargetSecondsFromStandard(settings.standardSteps);
 
     const formatMinutes = (minutes) => `${minutes.toFixed(1)} min`;
 
@@ -1661,7 +1783,6 @@
       if (!chronoTarget) {
         return;
       }
-      const targetSeconds = settings.targetMinutes * 60;
       chronoTarget.textContent = formatTime(targetSeconds);
     };
 
@@ -2018,7 +2139,7 @@
           return {
             operator,
             step,
-            order: index + 1,
+            order: step.order ?? index + 1,
             realSeconds
           };
         });
@@ -2157,11 +2278,6 @@
         paramTabButton.disabled = isSmedStarted;
         paramTabButton.classList.toggle("disabled", isSmedStarted);
       }
-      [settingsOperators, settingsSteps, settingsTarget, settingsAlert, settingsIntensity].forEach((field) => {
-        if (field) {
-          field.disabled = isSmedStarted;
-        }
-      });
       if (settingsLock) {
         settingsLock.classList.toggle("visible", isSmedStarted);
       }
@@ -2212,87 +2328,188 @@
       wasSmedStarted = newIsSmedStarted;
       renderOperators();
       renderAnalysis();
+      renderSettingsForm();
     };
 
-    const readSettingsValues = () => {
-      const operatorsCount = Math.max(1, Number(settingsOperators?.value || settings.operatorsCount));
-      const stepsCount = Math.max(1, Number(settingsSteps?.value || settings.stepsCount));
-      const targetMinutes = Math.max(1, Number(settingsTarget?.value || settings.targetMinutes));
-      const alertMinutes = Math.max(0.1, Number(settingsAlert?.value || settings.alertMinutes));
-      const intensity = settingsIntensity?.value || settings.intensity;
-      return {
-        operatorsCount,
-        stepsCount,
-        targetMinutes,
-        alertMinutes,
-        intensity
-      };
+    const getDefaultStandardSteps = () => createDefaultStandardSteps(draftOperatorsCount);
+
+    const ensureDraftState = () => {
+      normalizeOperatorIndex(draftStandardSteps, draftOperatorsCount);
+      draftStandardSteps.forEach((step, index) => {
+        step.order = index + 1;
+      });
     };
 
     const hasSettingsChanges = () => {
-      const values = readSettingsValues();
       return (
-        values.operatorsCount !== settings.operatorsCount ||
-        values.stepsCount !== settings.stepsCount ||
-        values.targetMinutes !== settings.targetMinutes ||
-        values.alertMinutes !== settings.alertMinutes ||
-        values.intensity !== settings.intensity
+        draftOperatorsCount !== settings.operatorsCount ||
+        draftAlertMinutes !== settings.alertMinutes ||
+        JSON.stringify(draftStandardSteps) !== JSON.stringify(settings.standardSteps)
       );
     };
 
-    const syncSettingsForm = () => {
-      document.body.dataset.intensity = settings.intensity;
-      if (settingsOperators) {
-        settingsOperators.value = String(settings.operatorsCount);
+    const renderConsistency = () => {
+      if (!consistencyTypeTable || !consistencyOperatorTable || !consistencyAlerts) {
+        return;
       }
-      if (settingsSteps) {
-        settingsSteps.value = String(settings.stepsCount);
+      const totalGlobal = draftStandardSteps.reduce((sum, step) => sum + step.targetMin, 0);
+      const totalSmed = draftStandardSteps.reduce((sum, step) => {
+        if (step.type === "internal" || step.type === "handoff") {
+          return sum + step.targetMin;
+        }
+        return sum;
+      }, 0);
+      const types = ["external", "handoff", "internal"];
+      consistencyTypeTable.innerHTML = types.map((type) => {
+        const minutes = draftStandardSteps
+          .filter((step) => step.type === type)
+          .reduce((sum, step) => sum + step.targetMin, 0);
+        const percent = totalGlobal > 0 ? (minutes / totalGlobal) * 100 : 0;
+        return `
+          <tr>
+            <td>${getStepTypeLabel(type)}</td>
+            <td>${minutes.toFixed(1)}</td>
+            <td>${percent.toFixed(1)}%</td>
+          </tr>
+        `;
+      }).join("");
+
+      const operatorRows = [];
+      const operatorTotals = {};
+      for (let i = 1; i <= draftOperatorsCount; i++) {
+        operatorTotals[i] = draftStandardSteps
+          .filter((step) => step.operatorIndex === i && (step.type === "internal" || step.type === "handoff"))
+          .reduce((sum, step) => sum + step.targetMin, 0);
+        const percent = totalSmed > 0 ? (operatorTotals[i] / totalSmed) * 100 : 0;
+        operatorRows.push(`
+          <tr>
+            <td>Opérateur ${i}</td>
+            <td>${operatorTotals[i].toFixed(1)}</td>
+            <td>${percent.toFixed(1)}%</td>
+          </tr>
+        `);
       }
-      if (settingsTarget) {
-        settingsTarget.value = settings.targetMinutes.toFixed(1);
+      consistencyOperatorTable.innerHTML = operatorRows.join("");
+
+      const alerts = [];
+      Object.entries(operatorTotals).forEach(([index, total]) => {
+        const percent = totalSmed > 0 ? (total / totalSmed) * 100 : 0;
+        if (percent > 60) {
+          alerts.push(`Attention: l’opérateur ${index} concentre ${percent.toFixed(1)} % du temps SMED`);
+        }
+      });
+      const externalPercent = totalGlobal > 0
+        ? (draftStandardSteps.filter((step) => step.type === "external").reduce((sum, step) => sum + step.targetMin, 0) / totalGlobal) * 100
+        : 0;
+      if (externalPercent > 70) {
+        alerts.push(`Attention: ${externalPercent.toFixed(1)} % des temps sont classés Externe, vérifier la cohérence SMED`);
       }
-      if (settingsAlert) {
-        settingsAlert.value = settings.alertMinutes.toFixed(1);
-        settingsAlert.max = Math.max(settings.targetMinutes - 0.1, 0.1).toString();
+      const hasLongHandoff = draftStandardSteps.some((step) => step.type === "handoff" && step.targetMin > 15);
+      if (hasLongHandoff) {
+        alerts.push("Attention: une étape chevauchante dépasse 15 min, vérifier le découpage");
       }
-      if (settingsIntensity) {
-        settingsIntensity.value = settings.intensity;
+      consistencyAlerts.innerHTML = alerts.length
+        ? `<ul class="warning-text">${alerts.map((item) => `<li>${item}</li>`).join("")}</ul>`
+        : "Aucune alerte détectée.";
+    };
+
+    const renderStandardSteps = () => {
+      if (!standardStepsList) {
+        return;
       }
-      updateChronoLabels();
+      const operatorOptions = Array.from({ length: draftOperatorsCount }, (_, index) => {
+        const value = index + 1;
+        return `<option value="${value}">Opérateur ${value}</option>`;
+      }).join("");
+
+      standardStepsList.innerHTML = draftStandardSteps.map((step, index) => `
+        <div class="standard-step-card" data-step-id="${step.id}">
+          <div class="standard-step-row">
+            <span class="analysis-pill">#${index + 1}</span>
+            <div class="standard-step-actions">
+              <button class="analysis-button" type="button" data-action="move-up">Monter</button>
+              <button class="analysis-button" type="button" data-action="move-down">Descendre</button>
+              <button class="analysis-button" type="button" data-action="delete">Supprimer</button>
+            </div>
+          </div>
+          <div class="standard-step-row">
+            <label>Nom</label>
+            <input type="text" data-field="name" value="${step.name}">
+          </div>
+          <div class="standard-step-row">
+            <label>Type</label>
+            <select data-field="type">
+              <option value="external" ${step.type === "external" ? "selected" : ""}>Externe</option>
+              <option value="handoff" ${step.type === "handoff" ? "selected" : ""}>Chevauchante</option>
+              <option value="internal" ${step.type === "internal" ? "selected" : ""}>Interne</option>
+            </select>
+          </div>
+          <div class="standard-step-row">
+            <label>Temps cible (min)</label>
+            <div class="standard-step-actions">
+              <button class="analysis-button" type="button" data-action="target-minus">-</button>
+              <span class="analysis-value">${step.targetMin}</span>
+              <button class="analysis-button" type="button" data-action="target-plus">+</button>
+            </div>
+          </div>
+          <div class="standard-step-row">
+            <label>Opérateur</label>
+            <select data-field="operatorIndex">${operatorOptions}</select>
+          </div>
+        </div>
+      `).join("");
+
+      standardStepsList.querySelectorAll("select[data-field=\"operatorIndex\"]").forEach((select) => {
+        const card = select.closest(".standard-step-card");
+        const stepId = card?.dataset.stepId;
+        const step = draftStandardSteps.find((item) => item.id === stepId);
+        if (step) {
+          select.value = String(step.operatorIndex);
+        }
+      });
+    };
+
+    const renderSettingsForm = () => {
+      ensureDraftState();
+      if (operatorsCountDisplay) {
+        operatorsCountDisplay.textContent = String(draftOperatorsCount);
+      }
+      if (alertThresholdDisplay) {
+        alertThresholdDisplay.textContent = String(draftAlertMinutes);
+      }
+      if (targetSmedDisplay) {
+        targetSmedDisplay.textContent = formatMinutes(getTargetSecondsFromStandard(draftStandardSteps) / 60);
+      }
+      renderStandardSteps();
+      renderConsistency();
+      if (settingsApply) {
+        settingsApply.disabled = isSmedStarted || !hasSettingsChanges();
+      }
     };
 
     const applySettings = () => {
       if (isSmedStarted) {
         return;
       }
-      const values = readSettingsValues();
-      const safeAlert = Math.min(values.alertMinutes, Math.max(values.targetMinutes - 0.1, 0.1));
-      settings.operatorsCount = values.operatorsCount;
-      settings.stepsCount = values.stepsCount;
-      settings.targetMinutes = values.targetMinutes;
-      settings.alertMinutes = safeAlert;
-      settings.intensity = values.intensity;
-      targetSeconds = settings.targetMinutes * 60;
+      settings.operatorsCount = draftOperatorsCount;
+      settings.alertMinutes = draftAlertMinutes;
+      settings.standardSteps = JSON.parse(JSON.stringify(draftStandardSteps));
+      normalizeOperatorIndex(settings.standardSteps, settings.operatorsCount);
+      targetSeconds = getTargetSecondsFromStandard(settings.standardSteps);
       alertSeconds = settings.alertMinutes * 60;
-      document.body.dataset.intensity = settings.intensity;
-      syncSettingsForm();
+      updateChronoLabels();
       resetOperators();
       stopChrono(true);
       updateChronoDisplay();
-      if (settingsApply) {
-        settingsApply.disabled = true;
-      }
       setActiveTab("smed");
     };
 
-    const handleSettingsInput = () => {
-      if (settingsAlert && settingsTarget) {
-        const targetValue = Math.max(1, Number(settingsTarget.value || settings.targetMinutes));
-        settingsAlert.max = Math.max(targetValue - 0.1, 0.1).toString();
-      }
-      if (settingsApply) {
-        settingsApply.disabled = isSmedStarted || !hasSettingsChanges();
-      }
+    const cancelSettings = () => {
+      draftOperatorsCount = settings.operatorsCount;
+      draftAlertMinutes = settings.alertMinutes;
+      draftStandardSteps = JSON.parse(JSON.stringify(settings.standardSteps));
+      renderSettingsForm();
+      setActiveTab("smed");
     };
 
     if (ipcDate && ipcTime) {
@@ -2300,24 +2517,128 @@
       ipcTime.addEventListener("input", updateSmedStarted);
     }
 
-    if (settingsOperators) {
-      settingsOperators.addEventListener("input", handleSettingsInput);
-    }
-    if (settingsSteps) {
-      settingsSteps.addEventListener("input", handleSettingsInput);
-    }
-    if (settingsTarget) {
-      settingsTarget.addEventListener("input", handleSettingsInput);
-    }
-    if (settingsAlert) {
-      settingsAlert.addEventListener("input", handleSettingsInput);
-    }
-    if (settingsIntensity) {
-      settingsIntensity.addEventListener("change", handleSettingsInput);
-    }
-
     if (settingsApply) {
       settingsApply.addEventListener("click", applySettings);
+    }
+    if (settingsCancel) {
+      settingsCancel.addEventListener("click", cancelSettings);
+    }
+
+    if (settingsForm) {
+      settingsForm.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) {
+          return;
+        }
+        const stepper = target.dataset.stepper;
+        const action = target.dataset.action;
+        const card = target.closest(".standard-step-card");
+        const stepId = card?.dataset.stepId;
+        if (stepper === "operators") {
+          const delta = action === "plus" ? 1 : action === "minus" ? -1 : 0;
+          if (delta !== 0) {
+            draftOperatorsCount = clampOperatorCount(draftOperatorsCount + delta);
+            normalizeOperatorIndex(draftStandardSteps, draftOperatorsCount);
+            renderSettingsForm();
+          }
+          return;
+        }
+        if (stepper === "alert") {
+          const delta = action === "plus" ? 1 : action === "minus" ? -1 : 0;
+          if (delta !== 0) {
+            draftAlertMinutes = Math.max(1, draftAlertMinutes + delta);
+            renderSettingsForm();
+          }
+          return;
+        }
+        if (!stepId) {
+          return;
+        }
+        const stepIndex = draftStandardSteps.findIndex((item) => item.id === stepId);
+        if (stepIndex === -1) {
+          return;
+        }
+        const step = draftStandardSteps[stepIndex];
+        if (action === "move-up" && stepIndex > 0) {
+          const [removed] = draftStandardSteps.splice(stepIndex, 1);
+          draftStandardSteps.splice(stepIndex - 1, 0, removed);
+          renderSettingsForm();
+        }
+        if (action === "move-down" && stepIndex < draftStandardSteps.length - 1) {
+          const [removed] = draftStandardSteps.splice(stepIndex, 1);
+          draftStandardSteps.splice(stepIndex + 1, 0, removed);
+          renderSettingsForm();
+        }
+        if (action === "delete") {
+          const shouldDelete = window.confirm("Supprimer cette étape ?");
+          if (shouldDelete) {
+            draftStandardSteps.splice(stepIndex, 1);
+            renderSettingsForm();
+          }
+        }
+        if (action === "target-minus") {
+          step.targetMin = clampTargetMin(step.type, step.targetMin - 1);
+          renderSettingsForm();
+        }
+        if (action === "target-plus") {
+          step.targetMin = clampTargetMin(step.type, step.targetMin + 1);
+          renderSettingsForm();
+        }
+      });
+
+      settingsForm.addEventListener("input", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement) && !(target instanceof HTMLSelectElement)) {
+          return;
+        }
+        const card = target.closest(".standard-step-card");
+        const stepId = card?.dataset.stepId;
+        if (!stepId) {
+          return;
+        }
+        const step = draftStandardSteps.find((item) => item.id === stepId);
+        if (!step) {
+          return;
+        }
+        const field = target.dataset.field;
+        if (field === "name") {
+          step.name = target.value.trim() || step.name;
+        }
+        if (field === "type") {
+          step.type = target.value;
+          step.targetMin = clampTargetMin(step.type, step.targetMin);
+        }
+        if (field === "operatorIndex") {
+          step.operatorIndex = Number(target.value);
+        }
+        renderSettingsForm();
+      });
+    }
+
+    if (addStandardStepButton) {
+      addStandardStepButton.addEventListener("click", () => {
+        draftStandardSteps.push({
+          id: `std-${standardStepCounter++}`,
+          order: draftStandardSteps.length + 1,
+          name: `Étape ${draftStandardSteps.length + 1}`,
+          type: "internal",
+          targetMin: 10,
+          operatorIndex: 1
+        });
+        renderSettingsForm();
+      });
+    }
+
+    if (resetStandardStepsButton) {
+      resetStandardStepsButton.addEventListener("click", () => {
+        const shouldReset = window.confirm("Réinitialiser le standard ?");
+        if (!shouldReset) {
+          return;
+        }
+        draftStandardSteps = getDefaultStandardSteps();
+        standardStepCounter = draftStandardSteps.length + 1;
+        renderSettingsForm();
+      });
     }
 
     if (operatorsGrid) {
@@ -2603,15 +2924,13 @@
       const dataset = getAnalysisDataset();
       const lastIpc = getLastIpcDateTime();
       const firstIpc = getFirstIpcDateTime();
-      const stepsStandard = operators.flatMap((operator) => {
-        return operator.steps.map((step, index) => ({
-          name: step.name,
-          type: step.type,
-          targetMin: step.targetSeconds / 60,
-          operator: operator.name,
-          order: index + 1
-        }));
-      });
+      const stepsStandard = settings.standardSteps.map((step) => ({
+        name: step.name,
+        type: step.type,
+        targetMin: step.targetMin,
+        operator: `Opérateur ${step.operatorIndex}`,
+        order: step.order
+      }));
       const byType = {
         external: 0,
         handoff: 0,
@@ -2886,7 +3205,8 @@
 
     updateDateTime();
     setInterval(updateDateTime, 1000);
-    syncSettingsForm();
+    renderSettingsForm();
+    updateChronoLabels();
     updateSmedStarted();
     initializeReasons();
     renderOperators();
