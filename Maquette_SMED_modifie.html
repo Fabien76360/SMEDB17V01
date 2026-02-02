@@ -665,8 +665,19 @@
 
     .step-actions {
       display: flex;
-      justify-content: flex-end;
+      flex-direction: column;
+      gap: 12px;
       margin-top: 12px;
+    }
+
+    .step-actions .action-list {
+      max-height: 140px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .step-actions .step-button {
+      align-self: flex-end;
     }
 
     .step-button {
@@ -1537,6 +1548,7 @@
             <option value="">-- Sélectionnez --</option>
           </select>
         </div>
+        <div class="analysis-muted" id="justification-empty" hidden>Aucune raison configurée dans Paramètres.</div>
         <div class="inline-error" id="justification-error" hidden>Veuillez sélectionner une raison.</div>
       </div>
       <div class="modal-actions">
@@ -1640,6 +1652,7 @@
     const operatorsGrid = document.querySelector("#operators-grid");
     const justificationModal = document.querySelector("#justification-modal");
     const justificationReason = document.querySelector("#justification-reason");
+    const justificationEmpty = document.querySelector("#justification-empty");
     const justificationError = document.querySelector("#justification-error");
     const justificationCancel = document.querySelector("#justification-cancel");
     const justificationConfirm = document.querySelector("#justification-confirm");
@@ -1932,6 +1945,9 @@
       if (justificationError) {
         justificationError.hidden = true;
       }
+      if (justificationEmpty) {
+        justificationEmpty.hidden = settings.justificationReasons.length > 0;
+      }
     };
 
     const openJustificationModal = (operator, actualMin) => {
@@ -1990,11 +2006,6 @@
     const handleValidate = (operator, stepIndex) => {
       const step = operator.steps[stepIndex];
       if (!step || step.status !== "running") {
-        return;
-      }
-      const actions = Array.isArray(step.actions) ? step.actions : [];
-      const done = Array.isArray(step.actionsDone) ? step.actionsDone : [];
-      if (actions.length && !actions.every((_, idx) => done[idx])) {
         return;
       }
       const now = Date.now();
@@ -2141,7 +2152,6 @@
             const canValidate = isSmedStarted || step.type === "external";
             const actions = Array.isArray(step.actions) ? step.actions : [];
             const done = Array.isArray(step.actionsDone) ? step.actionsDone : [];
-            const allDone = actions.length === 0 || actions.every((_, idx) => done[idx]);
             const disabled = !canValidate ? "disabled" : "";
             html += `
               <div class="step-actions">
@@ -2155,7 +2165,7 @@
                     `).join("")}
                   </div>
                 ` : ""}
-                <button class="step-button" data-action="validate" data-op="${operator.id}" data-step-index="${stepIndex}" ${disabled || !allDone ? "disabled" : ""}>
+                <button class="step-button" data-action="validate" data-op="${operator.id}" data-step-index="${stepIndex}" ${disabled}>
                   Valider
                 </button>
               </div>
@@ -2404,12 +2414,15 @@
 
     const ensureDraftState = () => {
       normalizeOperatorIndex(draftStandardSteps, draftOperatorsCount);
-      const orderCounters = {};
-      draftStandardSteps.forEach((step) => {
-        const key = step.operatorIndex;
-        orderCounters[key] = (orderCounters[key] || 0) + 1;
-        step.order = orderCounters[key];
-      });
+      let globalOrder = 1;
+      for (let operatorIndex = 1; operatorIndex <= draftOperatorsCount; operatorIndex += 1) {
+        draftStandardSteps
+          .filter((step) => step.operatorIndex === operatorIndex)
+          .forEach((step) => {
+            step.order = globalOrder;
+            globalOrder += 1;
+          });
+      }
     };
 
     const hasSettingsChanges = () => {
@@ -2500,7 +2513,9 @@
         const stepsForOperator = draftStandardSteps.filter((step) => step.operatorIndex === operatorIndex);
         return `
           <div class="standard-column" data-operator="${operatorIndex}">
-            <h4>Opérateur ${operatorIndex}</h4>
+            <div class="standard-step-row" style="justify-content: space-between; flex-wrap: wrap;">
+              <h4>Opérateur ${operatorIndex}</h4>
+            </div>
             ${stepsForOperator.map((step, localIndex) => `
               <div class="standard-step-card" data-step-id="${step.id}">
                 <div class="standard-step-row">
@@ -2510,6 +2525,7 @@
                     <button class="analysis-button" type="button" data-action="move-down">Descendre</button>
                     <button class="analysis-button" type="button" data-action="delete">Supprimer</button>
                   </div>
+                  <select data-field="operatorIndex">${operatorOptions}</select>
                 </div>
                 <div class="standard-step-row">
                   <label>Nom</label>
@@ -2530,10 +2546,6 @@
                     <span class="analysis-value">${step.targetMin}</span>
                     <button class="analysis-button" type="button" data-action="target-plus">+</button>
                   </div>
-                </div>
-                <div class="standard-step-row">
-                  <label>Déplacer vers</label>
-                  <select data-field="operatorIndex">${operatorOptions}</select>
                 </div>
                 <div class="standard-step-row">
                   <label>Actions</label>
@@ -2812,15 +2824,25 @@
 
     if (addStandardStepButton) {
       addStandardStepButton.addEventListener("click", () => {
-        draftStandardSteps.push({
+        const newStep = {
           id: `std-${standardStepCounter++}`,
           order: draftStandardSteps.length + 1,
           name: `Étape ${draftStandardSteps.length + 1}`,
-          type: "internal",
-          targetMin: 10,
+          type: "external",
+          targetMin: 0,
           operatorIndex: 1,
           actions: []
-        });
+        };
+        const lastIndex = [...draftStandardSteps]
+          .map((item, idx) => ({ item, idx }))
+          .filter(({ item }) => item.operatorIndex === 1)
+          .map(({ idx }) => idx)
+          .pop();
+        if (lastIndex === undefined) {
+          draftStandardSteps.push(newStep);
+        } else {
+          draftStandardSteps.splice(lastIndex + 1, 0, newStep);
+        }
         renderSettingsForm();
       });
     }
@@ -2899,6 +2921,12 @@
           return;
         }
         if (!justificationReason) {
+          return;
+        }
+        if (settings.justificationReasons.length === 0) {
+          if (justificationEmpty) {
+            justificationEmpty.hidden = false;
+          }
           return;
         }
         const selectedReason = justificationReason.value;
