@@ -1,0 +1,1948 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Maquette SMED</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f5f2;
+      --surface: #ffffff;
+      --surface-muted: #f0f1f4;
+      --text: #152033;
+      --text-muted: #5a6472;
+      --primary: #2a56ff;
+      --accent: #ff7a45;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warn: #f59e0b;
+      --chrono-ok: #2f8a57;
+      --chrono-warn: #d6a020;
+      --chrono-over: #c75757;
+      --chrono-over-base: #f8e9e9;
+      --reset-bg: #fdeeee;
+      --reset-border: rgba(161, 72, 72, 0.35);
+      --reset-text: #7b2b2b;
+      --border: rgba(21, 32, 51, 0.12);
+      --shadow-sm: 0 1px 2px rgba(21, 32, 51, 0.06), 0 4px 10px rgba(21, 32, 51, 0.06);
+      --shadow-md: 0 8px 24px rgba(21, 32, 51, 0.1);
+      --shadow-lg: 0 14px 40px rgba(21, 32, 51, 0.14);
+      --glow: 0 0 0 3px rgba(43, 58, 143, 0.1);
+      --radius: 18px;
+      --focus: #ffbf3f;
+      --header-height: 72px;
+      --tabbar-height: 64px;
+      --sticky-top: calc(var(--header-height) + var(--tabbar-height) + 8px);
+    }
+
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(31, 75, 153, 0.08), transparent 60%),
+        radial-gradient(900px 500px at 90% 0%, rgba(214, 160, 32, 0.08), transparent 55%),
+        radial-gradient(1000px 600px at 50% 110%, rgba(255, 170, 90, 0.1), transparent 60%),
+        var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 1));
+      height: var(--header-height);
+      padding: 8px 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-md);
+      z-index: 20;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0.2px;
+      font-weight: 700;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .subtitle-line {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: baseline;
+    }
+
+    .subtitle-line span:first-child {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(42, 86, 255, 0.1);
+      border: 1px solid rgba(42, 86, 255, 0.18);
+      color: rgba(21, 32, 51, 0.8);
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+
+    .datetime-inline {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.4px;
+      min-width: 170px;
+      display: inline-block;
+    }
+
+    main {
+      padding: calc(var(--header-height) + var(--tabbar-height) + 16px) 20px 32px;
+      min-height: 100vh;
+    }
+
+    @media (max-height: 700px) {
+      :root {
+        --header-height: 60px;
+        --tabbar-height: 56px;
+      }
+
+      header {
+        padding: 8px 22px;
+      }
+
+      header h1 {
+        font-size: 20px;
+      }
+
+      .datetime-inline {
+        min-width: 160px;
+      }
+
+      main {
+        padding: calc(var(--header-height) + var(--tabbar-height) + 12px) 16px 24px;
+      }
+    }
+
+    .page {
+      display: none;
+      animation: fadeIn 0.2s ease-in;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .page h2 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    .id-block {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: minmax(180px, 1.2fr) minmax(220px, 2fr) minmax(160px, 1fr) minmax(130px, 0.8fr) minmax(150px, 0.7fr);
+      grid-template-areas: "ligne po ipc-date ipc-time actions";
+      margin-bottom: 16px;
+      max-width: 1200px;
+    }
+
+    .id-block > * {
+      min-width: 0;
+    }
+
+    .field.ligne {
+      grid-area: ligne;
+    }
+
+    .field.po {
+      grid-area: po;
+    }
+
+    .field.date {
+      grid-area: ipc-date;
+    }
+
+    .field.time {
+      grid-area: ipc-time;
+    }
+
+    .field.actions-field {
+      grid-area: actions;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field label {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .field input {
+      height: 44px;
+      min-height: 44px;
+      padding: 0 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 16px;
+    }
+
+    .field input[type="date"],
+    .field input[type="time"] {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .field.wide,
+    .field.date,
+    .field.time,
+    .field.actions-field {
+      width: 100%;
+    }
+
+    .actions-wrap {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+
+    .actions-wrap > * {
+      min-width: 0;
+    }
+
+    .field input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .field input:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .reset-button {
+      height: 44px;
+      min-height: 44px;
+      padding: 0 14px;
+      border-radius: 12px;
+      border: 1px solid var(--reset-border);
+      background: var(--reset-bg);
+      color: var(--reset-text);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
+    .reset-button:active {
+      transform: scale(0.98);
+    }
+
+    .reset-button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+      box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    .chrono-card {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 14px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      min-height: 44px;
+      flex: 1 1 auto;
+      width: 100%;
+      min-width: 0;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .chrono-bar {
+      position: sticky;
+      top: var(--sticky-top);
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(21, 32, 51, 0.08);
+      border-radius: 20px;
+      padding: 10px 16px;
+      box-shadow: var(--shadow-md);
+      backdrop-filter: blur(40px);
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    body[data-intensity="medium"] .chrono-bar.warn,
+    body[data-intensity="high"] .chrono-bar.warn {
+      animation: warningPulse 1.4s ease-in-out infinite;
+    }
+
+    body[data-intensity="medium"] .chrono-bar.over,
+    body[data-intensity="high"] .chrono-bar.over {
+      animation: overPulse 1s ease-in-out infinite;
+    }
+
+    @keyframes warningPulse {
+      0%,
+      100% {
+        background: rgba(255, 255, 255, 0.82);
+        box-shadow: var(--shadow-md);
+      }
+
+      50% {
+        background: rgba(255, 250, 230, 0.9);
+        box-shadow: var(--shadow-md), 0 0 16px rgba(245, 158, 11, 0.15);
+      }
+    }
+
+    @keyframes overPulse {
+      0%,
+      100% {
+        background: var(--chrono-over-base);
+        box-shadow: var(--shadow-md);
+      }
+
+      50% {
+        background: rgba(248, 233, 233, 1);
+        box-shadow: var(--shadow-md), 0 0 16px rgba(239, 68, 68, 0.18);
+      }
+    }
+
+    .chrono-bar.over {
+      background: var(--chrono-over-base);
+      border-color: rgba(199, 87, 87, 0.2);
+    }
+
+    .chrono-bar::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.8) 50%, transparent 100%);
+      transform: translateX(-100%);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    body[data-intensity="high"] .chrono-bar.warn::before,
+    body[data-intensity="high"] .chrono-bar.over::before {
+      animation: shimmer 2.5s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+      0% {
+        transform: translateX(-100%);
+        opacity: 0;
+      }
+
+      50% {
+        transform: translateX(100%);
+        opacity: 0.5;
+      }
+
+      100% {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+
+    .chrono-left {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .chrono-right {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex: 0 0 auto;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .chrono-label {
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .chrono-time {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 20px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.4px;
+      color: var(--chrono-ok);
+    }
+
+    .chrono-bar.warn .chrono-time {
+      color: var(--chrono-warn);
+    }
+
+    .chrono-bar.over .chrono-time {
+      color: var(--chrono-over);
+    }
+
+    .chrono-icon {
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .chrono-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+
+    .started-toast {
+      position: fixed;
+      top: calc(var(--header-height) + var(--tabbar-height) + 32px);
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      opacity: 0;
+      background: linear-gradient(135deg, rgba(42, 86, 255, 0.98), rgba(42, 86, 255, 1));
+      color: #ffffff;
+      padding: 12px 24px;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      pointer-events: none;
+      z-index: 200;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .started-toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .operators-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      align-items: start;
+    }
+
+    .operator-card {
+      background: var(--surface);
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      padding: 16px 14px 10px;
+      min-width: 0;
+    }
+
+    .operator-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .operator-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .operator-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .operator-status .icon {
+      width: 18px;
+      height: 18px;
+    }
+
+    .operator-status svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+
+    .operator-status.idle {
+      color: var(--text-muted);
+    }
+
+    .operator-status.active {
+      color: var(--primary);
+    }
+
+    .operator-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .step-card {
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .step-card.running {
+      background: linear-gradient(135deg, rgba(42, 86, 255, 0.05), rgba(42, 86, 255, 0.08));
+      border-color: rgba(42, 86, 255, 0.3);
+      box-shadow: var(--shadow-sm), 0 0 0 3px rgba(42, 86, 255, 0.08);
+    }
+
+    body[data-intensity="medium"] .step-card.running,
+    body[data-intensity="high"] .step-card.running {
+      animation: runningGlow 1.6s ease-in-out infinite;
+    }
+
+    @keyframes runningGlow {
+      0%,
+      100% {
+        box-shadow: var(--shadow-sm), 0 0 0 3px rgba(42, 86, 255, 0.08);
+      }
+
+      50% {
+        box-shadow: var(--shadow-sm), 0 0 0 3px rgba(42, 86, 255, 0.14), 0 0 12px rgba(42, 86, 255, 0.1);
+      }
+    }
+
+    .step-card.done {
+      background: var(--surface-muted);
+      opacity: 0.7;
+    }
+
+    .step-card.compact {
+      padding: 8px 12px;
+      cursor: default;
+    }
+
+    .step-card.full {
+      padding: 14px;
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 0;
+    }
+
+    .step-card.full .step-header {
+      margin-bottom: 12px;
+    }
+
+    .step-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+    }
+
+    .step-card.running .step-icon {
+      color: var(--primary);
+    }
+
+    .step-card.done .step-icon {
+      color: var(--success);
+    }
+
+    .step-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+
+    .step-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .step-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .step-card.done .step-name {
+      color: var(--text-muted);
+    }
+
+    .step-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.2;
+    }
+
+    .step-timer {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 15px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.3px;
+      color: var(--text);
+      margin-left: auto;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .step-card.running .step-timer {
+      color: var(--primary);
+    }
+
+    .step-card.done .step-timer {
+      color: var(--text-muted);
+    }
+
+    .step-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 12px;
+    }
+
+    .step-button {
+      padding: 10px 18px;
+      border-radius: 10px;
+      border: none;
+      background: var(--primary);
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+      box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .step-button:hover {
+      background: rgba(42, 86, 255, 0.9);
+    }
+
+    .step-button:active {
+      transform: scale(0.98);
+    }
+
+    .step-button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .step-button:disabled {
+      background: var(--surface-muted);
+      color: var(--text-muted);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(21, 32, 51, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+      backdrop-filter: blur(8px);
+      animation: fadeInOverlay 0.2s ease;
+    }
+
+    .modal-overlay.visible {
+      display: flex;
+    }
+
+    @keyframes fadeInOverlay {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .modal {
+      background: var(--surface);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-lg);
+      padding: 24px;
+      max-width: 480px;
+      width: 90%;
+      animation: fadeInModal 0.2s ease;
+    }
+
+    @keyframes fadeInModal {
+      from {
+        opacity: 0;
+        transform: translateY(-16px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-header {
+      margin-bottom: 16px;
+    }
+
+    .modal-title {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0 0 4px 0;
+    }
+
+    .modal-subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    .modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .modal-field label {
+      display: block;
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .modal-field select,
+    .modal-field input {
+      width: 100%;
+      height: 44px;
+      padding: 0 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 16px;
+    }
+
+    .modal-field select:focus-visible,
+    .modal-field input:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .modal-button {
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+      border: none;
+    }
+
+    .modal-button.secondary {
+      background: var(--surface-muted);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .modal-button.secondary:hover {
+      background: rgba(240, 241, 244, 0.7);
+    }
+
+    .modal-button.primary {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .modal-button.primary:hover {
+      background: rgba(42, 86, 255, 0.9);
+    }
+
+    .modal-button:active {
+      transform: scale(0.98);
+    }
+
+    .modal-button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .tabbar {
+      position: fixed;
+      top: var(--header-height);
+      left: 0;
+      right: 0;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 1));
+      height: var(--tabbar-height);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      z-index: 15;
+      box-shadow: 0 4px 10px rgba(21, 32, 51, 0.04);
+      backdrop-filter: blur(20px);
+    }
+
+    .tabbar-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 12px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.14s ease;
+    }
+
+    .tabbar-button:hover {
+      background: rgba(21, 32, 51, 0.04);
+    }
+
+    .tabbar-button.active {
+      background: rgba(42, 86, 255, 0.1);
+      border-color: rgba(42, 86, 255, 0.2);
+      color: var(--primary);
+    }
+
+    .tabbar-button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .tabbar-button:active {
+      transform: scale(0.98);
+    }
+
+    .tabbar-button.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .tabbar-button.disabled:hover {
+      background: transparent;
+    }
+
+    .tabbar-icon {
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tabbar-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+
+    .settings-notice {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(42, 86, 255, 0.08);
+      border: 1px solid rgba(42, 86, 255, 0.15);
+      margin-bottom: 16px;
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    .settings-notice .icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      color: var(--primary);
+    }
+
+    .settings-notice svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+
+    .settings-form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-width: 600px;
+    }
+
+    .settings-form.settings-disabled {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .settings-field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .settings-field label {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .settings-field input,
+    .settings-field select {
+      height: 44px;
+      padding: 0 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 16px;
+    }
+
+    .settings-field input:focus-visible,
+    .settings-field select:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .settings-field input:disabled,
+    .settings-field select:disabled {
+      background: var(--surface-muted);
+      cursor: not-allowed;
+    }
+
+    .settings-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .settings-button {
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+      border: none;
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .settings-button:hover {
+      background: rgba(42, 86, 255, 0.9);
+    }
+
+    .settings-button:active {
+      transform: scale(0.98);
+    }
+
+    .settings-button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .settings-button:disabled {
+      background: var(--surface-muted);
+      color: var(--text-muted);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+  </style>
+</head>
+<body data-intensity="medium">
+  <header>
+    <h1>Suivi SMED</h1>
+    <p class="subtitle-line">
+      <span id="header-ligne">—</span>
+      <span class="datetime-inline" id="header-datetime">—</span>
+    </p>
+  </header>
+  <div class="tabbar">
+    <button class="tabbar-button active" data-tab="smed">
+      <span class="tabbar-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
+      </span>
+      SMED
+    </button>
+    <button class="tabbar-button" data-tab="parametres" id="param-tab-button">
+      <span class="tabbar-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+        </svg>
+      </span>
+      Paramètres
+    </button>
+  </div>
+  <main>
+    <div class="page active" data-tab="smed">
+      <div class="id-block">
+        <div class="field ligne">
+          <label for="ligne-input">Ligne</label>
+          <input type="text" id="ligne-input" placeholder="Ex: L2">
+        </div>
+        <div class="field po">
+          <label for="po-input">PO</label>
+          <input type="text" id="po-input" placeholder="Ex: OF-24-0042">
+        </div>
+        <div class="field date">
+          <label for="ipc-date">Date IPC</label>
+          <input type="date" id="ipc-date">
+        </div>
+        <div class="field time">
+          <label for="ipc-time">Heure IPC</label>
+          <input type="time" id="ipc-time" step="60">
+        </div>
+        <div class="field actions-field">
+          <label>&nbsp;</label>
+          <div class="actions-wrap">
+            <button class="reset-button" id="reset-smed-button">
+              Réinitialiser
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="chrono-bar" id="chrono-bar">
+        <div class="chrono-left">
+          <div class="chrono-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42A8.962 8.962 0 0 0 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9a8.994 8.994 0 0 0 7.03-14.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+            </svg>
+          </div>
+          <span class="chrono-label">Temps écoulé</span>
+          <span class="chrono-time" id="chrono-time">00:00</span>
+        </div>
+        <div class="chrono-right">
+          <span class="chrono-label">Objectif</span>
+          <span class="chrono-time" id="chrono-target">00:00</span>
+        </div>
+      </div>
+      <div class="operators-grid" id="operators-grid"></div>
+    </div>
+    <div class="page" data-tab="parametres">
+      <h2>Paramètres</h2>
+      <div class="settings-notice" id="settings-lock" style="display: none;">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+          </svg>
+        </div>
+        <div>Les paramètres sont verrouillés car le SMED a démarré. Réinitialisez le SMED pour modifier la configuration.</div>
+      </div>
+      <form class="settings-form" id="settings-form">
+        <div class="settings-field">
+          <label for="settings-operators">Nombre d'opérateurs</label>
+          <input type="number" id="settings-operators" min="1" max="10" step="1">
+        </div>
+        <div class="settings-field">
+          <label for="settings-steps">Nombre d'étapes par opérateur</label>
+          <input type="number" id="settings-steps" min="1" max="20" step="1">
+        </div>
+        <div class="settings-field">
+          <label for="settings-target">Temps cible (minutes)</label>
+          <input type="number" id="settings-target" min="1" step="0.1">
+        </div>
+        <div class="settings-field">
+          <label for="settings-alert">Seuil d'alerte (minutes)</label>
+          <input type="number" id="settings-alert" min="0.1" step="0.1">
+        </div>
+        <div class="settings-field">
+          <label for="settings-intensity">Intensité des alertes visuelles</label>
+          <select id="settings-intensity">
+            <option value="low">Faible (pas d'animations)</option>
+            <option value="medium">Moyenne (animations modérées)</option>
+            <option value="high">Forte (animations marquées)</option>
+          </select>
+        </div>
+        <div class="settings-actions">
+          <button type="button" class="settings-button" id="settings-apply">
+            Appliquer
+          </button>
+        </div>
+      </form>
+    </div>
+  </main>
+  <div class="modal-overlay" id="justification-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Justification requise</h3>
+        <p class="modal-subtitle">L'étape a été réalisée en moins de temps que prévu.</p>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label for="justification-reason">Raison</label>
+          <select id="justification-reason">
+            <option value="">-- Sélectionnez --</option>
+            <option value="Optimisation du procédé">Optimisation du procédé</option>
+            <option value="Expérience de l'opérateur">Expérience de l'opérateur</option>
+            <option value="Outils/équipements adaptés">Outils/équipements adaptés</option>
+            <option value="Conditions favorables">Conditions favorables</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+        <div class="modal-field" id="justification-other-wrapper" hidden>
+          <label for="justification-other">Précisez</label>
+          <input type="text" id="justification-other" placeholder="Détails de la raison">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-button secondary" id="justification-cancel">Annuler</button>
+        <button class="modal-button primary" id="justification-confirm">Confirmer</button>
+      </div>
+    </div>
+  </div>
+  <div class="started-toast" id="smed-started">
+    ✓ SMED démarré
+  </div>
+  <script>
+    const stepTypes = ["external", "handoff", "internal"];
+
+    let settings = {
+      operatorsCount: 3,
+      stepsCount: 6,
+      targetMinutes: 15,
+      alertMinutes: 12,
+      intensity: "medium"
+    };
+
+    let targetSeconds = settings.targetMinutes * 60;
+    let alertSeconds = settings.alertMinutes * 60;
+
+    const stepTimings = {
+      external: {
+        min: 40,
+        max: 120
+      },
+      handoff: {
+        min: 30,
+        max: 60
+      },
+      internal: {
+        min: 60,
+        max: 180
+      }
+    };
+
+    let operators = [];
+
+    let chronoStartTimestamp = null;
+    let chronoInterval = null;
+
+    let isSmedStarted = false;
+    let wasSmedStarted = false;
+
+    let operatorTickIntervals = [];
+
+    let pendingJustification = null;
+
+    let startedToastTimeout = null;
+
+    const headerDateTime = document.querySelector("#header-datetime");
+    const headerLigne = document.querySelector("#header-ligne");
+    const ipcDate = document.querySelector("#ipc-date");
+    const ipcTime = document.querySelector("#ipc-time");
+    const chronoBar = document.querySelector("#chrono-bar");
+    const chronoTime = document.querySelector("#chrono-time");
+    const chronoTarget = document.querySelector("#chrono-target");
+    const operatorsGrid = document.querySelector("#operators-grid");
+    const justificationModal = document.querySelector("#justification-modal");
+    const justificationReason = document.querySelector("#justification-reason");
+    const justificationOtherWrapper = document.querySelector("#justification-other-wrapper");
+    const justificationOther = document.querySelector("#justification-other");
+    const justificationCancel = document.querySelector("#justification-cancel");
+    const justificationConfirm = document.querySelector("#justification-confirm");
+    const resetSmedButton = document.querySelector("#reset-smed-button");
+    const smedStarted = document.querySelector("#smed-started");
+    const settingsOperators = document.querySelector("#settings-operators");
+    const settingsSteps = document.querySelector("#settings-steps");
+    const settingsTarget = document.querySelector("#settings-target");
+    const settingsAlert = document.querySelector("#settings-alert");
+    const settingsIntensity = document.querySelector("#settings-intensity");
+    const settingsApply = document.querySelector("#settings-apply");
+    const settingsForm = document.querySelector("#settings-form");
+    const settingsLock = document.querySelector("#settings-lock");
+    const paramTabButton = document.querySelector("#param-tab-button");
+
+    const tabButtons = document.querySelectorAll(".tabbar-button");
+
+    const setActiveTab = (tab) => {
+      const pages = document.querySelectorAll(".page");
+      pages.forEach((page) => {
+        page.classList.toggle("active", page.dataset.tab === tab);
+      });
+      tabButtons.forEach((button) => {
+        button.classList.toggle("active", button.dataset.tab === tab);
+      });
+    };
+
+    tabButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        if (button.classList.contains("disabled")) {
+          return;
+        }
+        const tab = button.dataset.tab;
+        if (tab) {
+          setActiveTab(tab);
+        }
+      });
+    });
+
+    const ligneInput = document.querySelector("#ligne-input");
+
+    const updateHeaderLigne = () => {
+      if (!ligneInput || !headerLigne) {
+        return;
+      }
+      const value = ligneInput.value.trim();
+      headerLigne.textContent = value || "—";
+    };
+
+    if (ligneInput) {
+      ligneInput.addEventListener("input", updateHeaderLigne);
+    }
+
+    updateHeaderLigne();
+
+    const generateOperators = () => {
+      const newOperators = [];
+      for (let i = 1; i <= settings.operatorsCount; i++) {
+        const steps = [];
+        for (let j = 1; j <= settings.stepsCount; j++) {
+          const type = stepTypes[(j - 1) % stepTypes.length];
+          const timing = stepTimings[type];
+          const targetSec = Math.floor(Math.random() * (timing.max - timing.min + 1) + timing.min);
+          steps.push({
+            id: `step-${i}-${j}`,
+            name: `Étape ${j}`,
+            type,
+            targetSeconds: targetSec,
+            status: "todo",
+            startTime: null,
+            elapsedSeconds: 0
+          });
+        }
+        newOperators.push({
+          id: `operator-${i}`,
+          name: `Opérateur ${i}`,
+          steps
+        });
+      }
+      return newOperators;
+    };
+
+    const resetOperators = () => {
+      operators = generateOperators();
+      stopOperatorTick();
+      renderOperators();
+    };
+
+    const formatTime = (seconds) => {
+      const min = Math.floor(seconds / 60);
+      const sec = Math.floor(seconds % 60);
+      return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+    };
+
+    const updateChronoLabels = () => {
+      if (!chronoTarget) {
+        return;
+      }
+      const targetSeconds = settings.targetMinutes * 60;
+      chronoTarget.textContent = formatTime(targetSeconds);
+    };
+
+    const updateChronoDisplay = () => {
+      if (!chronoBar || !chronoTime) {
+        return;
+      }
+      const now = Date.now();
+      const elapsed = chronoStartTimestamp !== null ? Math.floor((now - chronoStartTimestamp) / 1000) : 0;
+      chronoTime.textContent = formatTime(elapsed);
+      if (!isSmedStarted) {
+        chronoBar.classList.remove("warn", "over");
+        return;
+      }
+      const warn = elapsed >= alertSeconds && elapsed < targetSeconds;
+      const over = elapsed >= targetSeconds;
+      chronoBar.classList.toggle("warn", warn);
+      chronoBar.classList.toggle("over", over);
+    };
+
+    const startChrono = () => {
+      if (chronoInterval) {
+        return;
+      }
+      chronoStartTimestamp = Date.now();
+      updateChronoDisplay();
+      chronoInterval = setInterval(updateChronoDisplay, 1000);
+    };
+
+    const stopChrono = (reset = false) => {
+      if (chronoInterval) {
+        clearInterval(chronoInterval);
+        chronoInterval = null;
+      }
+      if (reset) {
+        chronoStartTimestamp = null;
+      }
+      updateChronoDisplay();
+    };
+
+    const renderStepIcon = (step) => {
+      let icon = "";
+      if (step.status === "done") {
+        icon = `
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+        `;
+      } else if (step.type === "external") {
+        icon = `
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+          </svg>
+        `;
+      } else if (step.type === "handoff") {
+        icon = `
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
+          </svg>
+        `;
+      } else {
+        icon = `
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+        `;
+      }
+      return icon;
+    };
+
+    const getStepTypeLabel = (type) => {
+      const labels = {
+        external: "Externe",
+        handoff: "Chevauchante",
+        internal: "Interne"
+      };
+      return labels[type] || type;
+    };
+
+    const getCompletedCount = (operator) => {
+      return operator.steps.filter((step) => step.status === "done").length;
+    };
+
+    const isOperatorIdle = (operator) => {
+      return operator.steps.every((step) => step.status !== "running");
+    };
+
+    const initializeReasons = () => {
+      if (justificationReason) {
+        justificationReason.selectedIndex = 0;
+      }
+      if (justificationOther) {
+        justificationOther.value = "";
+      }
+      if (justificationOtherWrapper) {
+        justificationOtherWrapper.hidden = true;
+      }
+    };
+
+    const openJustificationModal = (operator, actualMin) => {
+      pendingJustification = {
+        operatorId: operator.id,
+        actualMin
+      };
+      initializeReasons();
+      if (justificationModal) {
+        justificationModal.classList.add("visible");
+      }
+    };
+
+    const closeJustificationModal = () => {
+      pendingJustification = null;
+      if (justificationModal) {
+        justificationModal.classList.remove("visible");
+      }
+    };
+
+    const completeStep = (operator, actualMin, forced = false) => {
+      const runningIndex = operator.steps.findIndex((step) => step.status === "running");
+      if (runningIndex === -1) {
+        return;
+      }
+      const step = operator.steps[runningIndex];
+      const thresholdMin = step.targetSeconds / 60 / 2;
+      if (!forced && actualMin < thresholdMin) {
+        openJustificationModal(operator, actualMin);
+        return;
+      }
+      step.status = "done";
+      step.elapsedSeconds = actualMin * 60;
+      if (isSmedStarted) {
+        const nextInternalIndex = operator.steps.findIndex(
+          (s, idx) => idx > runningIndex && s.type === "internal" && s.status === "todo"
+        );
+        if (nextInternalIndex !== -1) {
+          operator.steps[nextInternalIndex].status = "running";
+          operator.steps[nextInternalIndex].startTime = Date.now();
+        } else {
+          const nextHandoffIndex = operator.steps.findIndex(
+            (s, idx) => idx > runningIndex && s.type === "handoff" && s.status === "todo"
+          );
+          if (nextHandoffIndex !== -1) {
+            operator.steps[nextHandoffIndex].status = "running";
+            operator.steps[nextHandoffIndex].startTime = Date.now();
+          }
+        }
+      }
+      renderOperators();
+    };
+
+    const handleValidate = (operator, stepIndex) => {
+      const step = operator.steps[stepIndex];
+      if (!step || step.status !== "running") {
+        return;
+      }
+      const now = Date.now();
+      const elapsed = step.startTime !== null ? (now - step.startTime) / 1000 : 0;
+      const actualMin = elapsed / 60;
+      completeStep(operator, actualMin, false);
+    };
+
+    const startAllOperatorsOnSmedStart = () => {
+      operators.forEach((operator) => {
+        const firstInternal = operator.steps.find((step) => step.type === "internal" && step.status === "todo");
+        if (firstInternal) {
+          firstInternal.status = "running";
+          firstInternal.startTime = Date.now();
+        } else {
+          const firstHandoff = operator.steps.find((step) => step.type === "handoff" && step.status === "todo");
+          if (firstHandoff) {
+            firstHandoff.status = "running";
+            firstHandoff.startTime = Date.now();
+          }
+        }
+      });
+      renderOperators();
+    };
+
+    const tickOperator = (operator) => {
+      const running = operator.steps.find((step) => step.status === "running");
+      if (!running || running.startTime === null) {
+        return;
+      }
+      const now = Date.now();
+      running.elapsedSeconds = (now - running.startTime) / 1000;
+      renderOperators();
+    };
+
+    const startOperatorTick = () => {
+      stopOperatorTick();
+      operators.forEach((operator) => {
+        const interval = setInterval(() => {
+          tickOperator(operator);
+        }, 1000);
+        operatorTickIntervals.push(interval);
+      });
+    };
+
+    const stopOperatorTick = () => {
+      operatorTickIntervals.forEach((interval) => {
+        clearInterval(interval);
+      });
+      operatorTickIntervals = [];
+    };
+
+    /**
+     * NOUVELLE FONCTION: Gère la tuile "En cours" AVANT IPC.
+     * Pour chaque opérateur, si aucune étape n'est running,
+     * on passe la première external non terminée en running.
+     */
+    const ensurePreIpcRunningForEachOperator = () => {
+      operators.forEach((operator) => {
+        // Vérifier s'il existe déjà une étape en running
+        const hasRunning = operator.steps.some((step) => step.status === "running");
+        
+        if (!hasRunning) {
+          // Trouver la première étape external non terminée
+          const firstExternalTodo = operator.steps.find(
+            (step) => step.type === "external" && step.status !== "done"
+          );
+          
+          if (firstExternalTodo) {
+            // Passer cette étape en running
+            firstExternalTodo.status = "running";
+            firstExternalTodo.startTime = Date.now();
+          }
+        }
+      });
+    };
+
+    const renderOperators = () => {
+      if (!operatorsGrid) {
+        return;
+      }
+
+      // NOUVEAU: Appeler la fonction de gestion des tuiles "En cours" avant IPC
+      if (!isSmedStarted) {
+        ensurePreIpcRunningForEachOperator();
+      }
+
+      let html = "";
+      operators.forEach((operator) => {
+        const completedCount = getCompletedCount(operator);
+        const idle = isOperatorIdle(operator);
+        const statusClass = idle ? "idle" : "active";
+        const statusText = idle ? "En attente" : "En activité";
+        const statusIcon = idle
+          ? `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+             </svg>`
+          : `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+             </svg>`;
+        html += `
+          <div class="operator-card">
+            <div class="operator-header">
+              <h3 class="operator-title">${operator.name}</h3>
+              <div class="operator-status ${statusClass}">
+                <span class="icon">${statusIcon}</span>
+                <span>${statusText}</span>
+              </div>
+            </div>
+            <div class="operator-steps">
+        `;
+        operator.steps.forEach((step, stepIndex) => {
+          const shouldShow =
+            isSmedStarted ||
+            step.type === "external" ||
+            step.type === "handoff";
+          if (!shouldShow) {
+            return;
+          }
+          const isRunning = step.status === "running";
+          const isDone = step.status === "done";
+          const isTodo = step.status === "todo";
+          const isCompact = !isRunning;
+          const cardClass = `step-card ${isCompact ? "compact" : "full"} ${step.status}`;
+          const typeLabel = getStepTypeLabel(step.type);
+          const timeDisplay = isDone
+            ? formatTime(step.elapsedSeconds)
+            : isRunning
+              ? formatTime(step.elapsedSeconds)
+              : formatTime(step.targetSeconds);
+          const icon = renderStepIcon(step);
+          html += `
+            <div class="${cardClass}">
+              <div class="step-header">
+                <div class="step-icon">${icon}</div>
+                <div class="step-info">
+                  <div class="step-name">${step.name}</div>
+                  <div class="step-meta">${typeLabel}</div>
+                </div>
+                <div class="step-timer">${timeDisplay}</div>
+              </div>
+          `;
+          if (isRunning) {
+            const canValidate = isSmedStarted || step.type === "external";
+            const disabled = !canValidate ? "disabled" : "";
+            html += `
+              <div class="step-actions">
+                <button class="step-button" data-action="validate" data-op="${operator.id}" data-step-index="${stepIndex}" ${disabled}>
+                  Valider
+                </button>
+              </div>
+            `;
+          }
+          html += `
+            </div>
+          `;
+        });
+        html += `
+            </div>
+          </div>
+        `;
+      });
+      operatorsGrid.innerHTML = html;
+    };
+
+    resetOperators();
+
+    const updateSmedStarted = () => {
+      const hasDate = Boolean(ipcDate && ipcDate.value);
+      const hasTime = Boolean(ipcTime && ipcTime.value);
+      const newIsSmedStarted = hasDate && hasTime;
+      isSmedStarted = newIsSmedStarted;
+      if (paramTabButton) {
+        paramTabButton.disabled = isSmedStarted;
+        paramTabButton.classList.toggle("disabled", isSmedStarted);
+      }
+      [settingsOperators, settingsSteps, settingsTarget, settingsAlert, settingsIntensity].forEach((field) => {
+        if (field) {
+          field.disabled = isSmedStarted;
+        }
+      });
+      if (settingsLock) {
+        settingsLock.classList.toggle("visible", isSmedStarted);
+      }
+      if (settingsForm) {
+        settingsForm.classList.toggle("settings-disabled", isSmedStarted);
+      }
+      if (settingsApply) {
+        settingsApply.disabled = isSmedStarted || !hasSettingsChanges();
+      }
+      if (isSmedStarted && document.querySelector(".page.active")?.dataset.tab === "parametres") {
+        setActiveTab("smed");
+      }
+      if (smedStarted && !newIsSmedStarted) {
+        smedStarted.classList.remove("visible");
+      }
+      if (!newIsSmedStarted && startedToastTimeout) {
+        clearTimeout(startedToastTimeout);
+        startedToastTimeout = null;
+      }
+      if (!wasSmedStarted && newIsSmedStarted && smedStarted) {
+        if (startedToastTimeout) {
+          clearTimeout(startedToastTimeout);
+          startedToastTimeout = null;
+        }
+        smedStarted.classList.add("visible");
+        startedToastTimeout = setTimeout(() => {
+          smedStarted.classList.remove("visible");
+          startedToastTimeout = null;
+        }, 5000);
+        startAllOperatorsOnSmedStart();
+      }
+      if (isSmedStarted) {
+        startChrono();
+        startOperatorTick();
+      } else {
+        stopChrono(true);
+      }
+      wasSmedStarted = newIsSmedStarted;
+      renderOperators();
+    };
+
+    const readSettingsValues = () => {
+      const operatorsCount = Math.max(1, Number(settingsOperators?.value || settings.operatorsCount));
+      const stepsCount = Math.max(1, Number(settingsSteps?.value || settings.stepsCount));
+      const targetMinutes = Math.max(1, Number(settingsTarget?.value || settings.targetMinutes));
+      const alertMinutes = Math.max(0.1, Number(settingsAlert?.value || settings.alertMinutes));
+      const intensity = settingsIntensity?.value || settings.intensity;
+      return {
+        operatorsCount,
+        stepsCount,
+        targetMinutes,
+        alertMinutes,
+        intensity
+      };
+    };
+
+    const hasSettingsChanges = () => {
+      const values = readSettingsValues();
+      return (
+        values.operatorsCount !== settings.operatorsCount ||
+        values.stepsCount !== settings.stepsCount ||
+        values.targetMinutes !== settings.targetMinutes ||
+        values.alertMinutes !== settings.alertMinutes ||
+        values.intensity !== settings.intensity
+      );
+    };
+
+    const syncSettingsForm = () => {
+      document.body.dataset.intensity = settings.intensity;
+      if (settingsOperators) {
+        settingsOperators.value = String(settings.operatorsCount);
+      }
+      if (settingsSteps) {
+        settingsSteps.value = String(settings.stepsCount);
+      }
+      if (settingsTarget) {
+        settingsTarget.value = settings.targetMinutes.toFixed(1);
+      }
+      if (settingsAlert) {
+        settingsAlert.value = settings.alertMinutes.toFixed(1);
+        settingsAlert.max = Math.max(settings.targetMinutes - 0.1, 0.1).toString();
+      }
+      if (settingsIntensity) {
+        settingsIntensity.value = settings.intensity;
+      }
+      updateChronoLabels();
+    };
+
+    const applySettings = () => {
+      if (isSmedStarted) {
+        return;
+      }
+      const values = readSettingsValues();
+      const safeAlert = Math.min(values.alertMinutes, Math.max(values.targetMinutes - 0.1, 0.1));
+      settings.operatorsCount = values.operatorsCount;
+      settings.stepsCount = values.stepsCount;
+      settings.targetMinutes = values.targetMinutes;
+      settings.alertMinutes = safeAlert;
+      settings.intensity = values.intensity;
+      targetSeconds = settings.targetMinutes * 60;
+      alertSeconds = settings.alertMinutes * 60;
+      document.body.dataset.intensity = settings.intensity;
+      syncSettingsForm();
+      resetOperators();
+      stopChrono(true);
+      updateChronoDisplay();
+      if (settingsApply) {
+        settingsApply.disabled = true;
+      }
+      setActiveTab("smed");
+    };
+
+    const handleSettingsInput = () => {
+      if (settingsAlert && settingsTarget) {
+        const targetValue = Math.max(1, Number(settingsTarget.value || settings.targetMinutes));
+        settingsAlert.max = Math.max(targetValue - 0.1, 0.1).toString();
+      }
+      if (settingsApply) {
+        settingsApply.disabled = isSmedStarted || !hasSettingsChanges();
+      }
+    };
+
+    if (ipcDate && ipcTime) {
+      ipcDate.addEventListener("input", updateSmedStarted);
+      ipcTime.addEventListener("input", updateSmedStarted);
+    }
+
+    if (settingsOperators) {
+      settingsOperators.addEventListener("input", handleSettingsInput);
+    }
+    if (settingsSteps) {
+      settingsSteps.addEventListener("input", handleSettingsInput);
+    }
+    if (settingsTarget) {
+      settingsTarget.addEventListener("input", handleSettingsInput);
+    }
+    if (settingsAlert) {
+      settingsAlert.addEventListener("input", handleSettingsInput);
+    }
+    if (settingsIntensity) {
+      settingsIntensity.addEventListener("change", handleSettingsInput);
+    }
+
+    if (settingsApply) {
+      settingsApply.addEventListener("click", applySettings);
+    }
+
+    if (operatorsGrid) {
+      operatorsGrid.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) {
+          return;
+        }
+        const action = target.dataset.action;
+        const opId = target.dataset.op;
+        const stepIndex = Number(target.dataset.stepIndex);
+        if (!action || !opId) {
+          return;
+        }
+        const operator = operators.find((item) => item.id === opId);
+        if (!operator) {
+          return;
+        }
+        if (action === "validate") {
+          if (Number.isNaN(stepIndex)) {
+            return;
+          }
+          handleValidate(operator, stepIndex);
+        }
+      });
+    }
+
+    if (justificationReason) {
+      justificationReason.addEventListener("change", () => {
+        if (!justificationOtherWrapper || !justificationOther) {
+          return;
+        }
+        const isOther = justificationReason.value === "Autre";
+        justificationOtherWrapper.hidden = !isOther;
+        if (!isOther) {
+          justificationOther.value = "";
+        }
+      });
+    }
+
+    if (justificationCancel) {
+      justificationCancel.addEventListener("click", () => {
+        closeJustificationModal();
+      });
+    }
+
+    if (justificationConfirm) {
+      justificationConfirm.addEventListener("click", () => {
+        if (!pendingJustification) {
+          closeJustificationModal();
+          return;
+        }
+        if (!justificationReason) {
+          return;
+        }
+        const selectedReason = justificationReason.value;
+        if (!selectedReason) {
+          return;
+        }
+        if (selectedReason === "Autre" && (!justificationOther || !justificationOther.value.trim())) {
+          return;
+        }
+        const operator = operators.find((item) => item.id === pendingJustification.operatorId);
+        if (operator) {
+          completeStep(operator, pendingJustification.actualMin, true);
+        }
+        closeJustificationModal();
+      });
+    }
+
+    if (resetSmedButton) {
+      resetSmedButton.addEventListener("click", () => {
+        const shouldReset = window.confirm("Confirmer la remise à zéro du SMED ?");
+        if (!shouldReset) {
+          return;
+        }
+        if (ipcDate) {
+          ipcDate.value = "";
+        }
+        if (ipcTime) {
+          ipcTime.value = "";
+        }
+        const ligneInput = document.querySelector("#ligne-input");
+        const poInput = document.querySelector("#po-input");
+        if (ligneInput) {
+          ligneInput.value = "";
+        }
+        if (poInput) {
+          poInput.value = "";
+        }
+        isSmedStarted = false;
+        wasSmedStarted = false;
+        if (startedToastTimeout) {
+          clearTimeout(startedToastTimeout);
+          startedToastTimeout = null;
+        }
+        if (smedStarted) {
+          smedStarted.classList.remove("visible");
+        }
+        resetOperators();
+        updateSmedStarted();
+      });
+    }
+
+    // Date/heure en direct (locale fr-FR, mise à jour chaque seconde).
+    const updateDateTime = () => {
+      if (!headerDateTime) {
+        return;
+      }
+      const now = new Date();
+      const time = now.toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      });
+      const date = now.toLocaleDateString("fr-FR");
+      headerDateTime.textContent = `${time} – ${date}`;
+    };
+
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+    syncSettingsForm();
+    updateSmedStarted();
+    initializeReasons();
+    renderOperators();
+  </script>
+</body>
+</html>
