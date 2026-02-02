@@ -62,7 +62,6 @@
       --focus: #ffd84a;
     }
 
-    body[data-theme="high-contrast"] .operator-card::before,
     body[data-theme="high-contrast"] .chrono-bar::before,
     body[data-theme="high-contrast"] .tab-bar::before {
       opacity: 0;
@@ -698,24 +697,42 @@
       transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease, border-color 0.14s ease;
     }
 
+    .operator-card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 6px;
+      border-radius: 20px 0 0 20px;
+      background: transparent;
+      z-index: 1;
+    }
+
     .operator-card::after {
       content: "";
       position: absolute;
       inset: 0;
       border-radius: inherit;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
       box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
       pointer-events: none;
       opacity: 0.55;
     }
 
-    .operator-card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
-      opacity: 0.35;
-      pointer-events: none;
+    .operator-card > * {
+      position: relative;
+      z-index: 2;
+    }
+
+    .operator-card.step-type-external::before,
+    .operator-card.step-type-handoff.before-ipc::before {
+      background: rgba(90, 100, 114, 0.95);
+    }
+
+    .operator-card.step-type-internal::before,
+    .operator-card.step-type-handoff.after-ipc::before {
+      background: rgba(255, 122, 69, 0.9);
     }
 
     .operator-card:hover,
@@ -743,7 +760,6 @@
       opacity: 1;
       transform: none;
       border-color: rgba(255, 122, 69, 0.22);
-      border-left: 6px solid rgba(255, 122, 69, 0.75);
       background: linear-gradient(180deg, rgba(255, 255, 255, 1), rgba(255, 245, 238, 0.65));
       box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.65), 0 0 0 3px rgba(255, 122, 69, 0.08);
       animation: breathe 2.2s ease-in-out infinite;
@@ -755,6 +771,13 @@
 
     .operator-card.inactive {
       opacity: 0.6;
+    }
+
+    .operator-card.external-frozen {
+      opacity: 0.55;
+      filter: saturate(0.6);
+      animation: none;
+      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.6);
     }
 
     .operator-header {
@@ -1514,10 +1537,19 @@
     };
 
     const buildSteps = (count) => (
-      Array.from({ length: count }, (_, index) => ({
-        label: `Action ${index + 1}`,
-        targetMin: 5.0
-      }))
+      Array.from({ length: count }, (_, index) => {
+        let type = "internal";
+        if (index === 0 || index === 1) {
+          type = "external";
+        } else if (index === 2) {
+          type = "handoff";
+        }
+        return {
+          label: `Action ${index + 1}`,
+          targetMin: 5.0,
+          type
+        };
+      })
     );
 
     const buildOperators = (count, steps) => (
@@ -1570,7 +1602,8 @@
 
     const startAllOperatorsOnSmedStart = () => {
       operators.forEach((operator) => {
-        if (operator.currentStepIndex < operator.steps.length) {
+        const step = operator.steps[operator.currentStepIndex];
+        if (operator.currentStepIndex < operator.steps.length && step && step.type !== "external") {
           operator.stepStatus = "running";
           operator.stepStartTimestamp = Date.now();
           operator.elapsedSeconds = 0;
@@ -1581,14 +1614,14 @@
       renderOperators();
     };
 
-    const getOperatorStatusLabel = (operator) => {
-      if (operator.currentStepIndex >= operator.steps.length) {
+    const getStepStatusLabel = (operator, isDone, isCurrent) => {
+      if (isDone) {
         return { label: "Terminé", className: "done" };
       }
-      if (operator.stepStatus === "running") {
+      if (isCurrent && operator.stepStatus === "running") {
         return { label: "En cours", className: "running" };
       }
-      if (operator.stepStatus === "over") {
+      if (isCurrent && operator.stepStatus === "over") {
         return { label: "Dépassé", className: "over" };
       }
       return { label: "À faire", className: "todo" };
@@ -1602,39 +1635,96 @@
       }
       operatorsGrid.innerHTML = "";
       operators.forEach((operator) => {
-        const status = getOperatorStatusLabel(operator);
-        const isDone = operator.currentStepIndex >= operator.steps.length;
-        const step = operator.steps[operator.currentStepIndex];
-        const stepLabel = step ? step.label : "Toutes les étapes";
-        const targetMin = step ? step.targetMin.toFixed(1) : "--";
-        const actualMin = operator.actualMin !== null ? operator.actualMin.toFixed(1) : "--";
-        const disabled = !isSmedStarted || isDone;
-
-        const canValidate = isSmedStarted && operator.stepStatus === "running" && !isDone;
         const column = document.createElement("div");
         column.className = "operator-column";
         column.innerHTML = `<h4>${operator.name}</h4>`;
-        const card = document.createElement("div");
-        card.className = `operator-card ${!isSmedStarted ? "inactive" : ""}`;
-        card.dataset.status = status.className;
-        card.innerHTML = `
-          <div class="operator-header">
-            <div class="operator-status ${status.className}">${status.label}</div>
-          </div>
-          <div class="operator-step">
-            <strong>${stepLabel}</strong>
-            <span>Étape ${Math.min(operator.currentStepIndex + 1, operator.steps.length)} / ${operator.steps.length}</span>
-          </div>
-          <div class="operator-chips">
-            <span class="chip">Cible: ${targetMin} min</span>
-            <span class="chip ${actualMin === "--" ? "muted" : ""}">Réel: ${actualMin} min</span>
-          </div>
-          <div class="operator-actions">
-            <button class="primary" data-action="validate" data-op="${operator.id}" ${canValidate ? "" : "disabled"}>Valider</button>
-          </div>
-          <div class="operator-footer">Chrono étape: ${formatMinutes(operator.elapsedSeconds)} min</div>
-        `;
-        column.appendChild(card);
+
+        let stepsToRender = operator.steps
+          .map((step, index) => {
+            const isCurrent = index === operator.currentStepIndex;
+            const isDone = index < operator.currentStepIndex;
+            const isFuture = index > operator.currentStepIndex;
+            if (isFuture) {
+              return null;
+            }
+            if (!isSmedStarted && step.type === "internal") {
+              return null;
+            }
+            const status = getStepStatusLabel(operator, isDone, isCurrent);
+            return {
+              step,
+              index,
+              isCurrent,
+              isDone,
+              status
+            };
+          })
+          .filter(Boolean);
+
+        if (isSmedStarted) {
+          const nonExternal = stepsToRender.filter((item) => item.step.type !== "external");
+          const external = stepsToRender.filter((item) => item.step.type === "external");
+          nonExternal.sort((a, b) => Number(a.isDone) - Number(b.isDone));
+          stepsToRender = [...nonExternal, ...external];
+        }
+
+        stepsToRender.forEach((stepItem) => {
+          const { step, index, isCurrent, isDone, status } = stepItem;
+          const isExternal = step.type === "external";
+          const isHandoff = step.type === "handoff";
+          const stepLabel = step.label;
+          const targetMin = step.targetMin.toFixed(1);
+          const actualMin = isCurrent && operator.actualMin !== null ? operator.actualMin.toFixed(1) : "--";
+          const isFrozenExternal = isSmedStarted && isExternal;
+          const card = document.createElement("div");
+          const handoffStateClass = isHandoff ? (isSmedStarted ? "after-ipc" : "before-ipc") : "";
+          const baseClasses = [
+            "operator-card",
+            `step-type-${step.type}`,
+            handoffStateClass,
+            isFrozenExternal ? "external-frozen" : ""
+          ].filter(Boolean).join(" ");
+          card.className = baseClasses;
+          card.dataset.status = status.className;
+
+          const canValidate = (() => {
+            if (isDone) {
+              return false;
+            }
+            if (!isCurrent) {
+              return false;
+            }
+            if (!isSmedStarted) {
+              return isExternal;
+            }
+            if (isExternal) {
+              return false;
+            }
+            return operator.stepStatus === "running";
+          })();
+
+          const showButton = isCurrent || isExternal;
+          card.innerHTML = `
+            <div class="operator-header">
+              <div class="operator-status ${status.className}">${status.label}</div>
+            </div>
+            <div class="operator-step">
+              <strong>${stepLabel}</strong>
+              <span>Étape ${index + 1} / ${operator.steps.length}</span>
+            </div>
+            <div class="operator-chips">
+              <span class="chip">Cible: ${targetMin} min</span>
+              <span class="chip ${actualMin === "--" ? "muted" : ""}">Réel: ${actualMin} min</span>
+            </div>
+            ${showButton ? `
+            <div class="operator-actions">
+              <button class="primary" data-action="validate" data-op="${operator.id}" data-step-index="${index}" ${canValidate ? "" : "disabled"}>Valider</button>
+            </div>
+            ` : ""}
+            <div class="operator-footer">Chrono étape: ${isCurrent ? formatMinutes(operator.elapsedSeconds) : "--"} min</div>
+          `;
+          column.appendChild(card);
+        });
         operatorsGrid.appendChild(column);
       });
     };
@@ -1683,11 +1773,22 @@
       renderOperators();
     };
 
-    const handleValidate = (operator) => {
-      if (operator.stepStatus !== "running") {
+    const handleValidate = (operator, stepIndex) => {
+      if (operator.currentStepIndex !== stepIndex) {
         return;
       }
       const step = operator.steps[operator.currentStepIndex];
+      if (!step) {
+        return;
+      }
+      const isExternal = step.type === "external";
+      if (isSmedStarted) {
+        if (isExternal || operator.stepStatus !== "running") {
+          return;
+        }
+      } else if (!isExternal) {
+        return;
+      }
       const actualMinValue = Number(formatMinutes(operator.elapsedSeconds));
       const isOver = actualMinValue > step.targetMin;
       if (isOver) {
@@ -1945,6 +2046,7 @@
         }
         const action = target.dataset.action;
         const opId = target.dataset.op;
+        const stepIndex = Number(target.dataset.stepIndex);
         if (!action || !opId) {
           return;
         }
@@ -1953,7 +2055,10 @@
           return;
         }
         if (action === "validate") {
-          handleValidate(operator);
+          if (Number.isNaN(stepIndex)) {
+            return;
+          }
+          handleValidate(operator, stepIndex);
         }
       });
     }
