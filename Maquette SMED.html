@@ -771,6 +771,32 @@
       animation: none;
     }
 
+    .operator-card.compact {
+      padding: 10px 12px;
+      gap: 8px;
+      transform: none;
+      animation: none;
+    }
+
+    .operator-card.compact .operator-actions,
+    .operator-card.compact .operator-footer {
+      display: none;
+    }
+
+    .operator-card.compact .operator-step strong {
+      font-size: 14px;
+    }
+
+    .operator-card.compact .operator-chips {
+      gap: 6px;
+    }
+
+    .operator-card.compact-indicator {
+      text-align: center;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
     .operator-card[data-status="running"] .operator-actions .primary {
       box-shadow: 0 10px 22px rgba(42, 86, 255, 0.24);
     }
@@ -1641,6 +1667,7 @@
         column.className = "operator-column";
         column.innerHTML = `<h4>${operator.name}</h4>`;
 
+        const maxUpcoming = 3;
         const stepsToRender = operator.steps.map((step, index) => {
           const isCurrent = index === operator.currentStepIndex;
           const isDone = index < operator.currentStepIndex;
@@ -1654,7 +1681,24 @@
           };
         });
 
-        stepsToRender.forEach((stepItem) => {
+        const currentStep = stepsToRender.find((item) => item.isCurrent);
+        const doneSteps = stepsToRender.filter((item) => item.isDone);
+        const futureSteps = stepsToRender.filter((item) => !item.isDone && !item.isCurrent);
+        const isRunning = currentStep?.status.className === "running";
+
+        const upcomingSlots = Math.max(isRunning ? maxUpcoming : maxUpcoming - 1, 1);
+        const upcomingSteps = [...futureSteps].slice(0, upcomingSlots);
+        const remainingUpcoming = Math.max(futureSteps.length - upcomingSteps.length, 0);
+
+        const orderedSteps = [];
+        if (isRunning && currentStep) {
+          orderedSteps.push(currentStep);
+        } else if (currentStep) {
+          upcomingSteps.unshift(currentStep);
+        }
+        orderedSteps.push(...upcomingSteps);
+
+        orderedSteps.forEach((stepItem) => {
           const { step, index, isCurrent, isDone, status } = stepItem;
           const isExternal = step.type === "external";
           const isHandoff = step.type === "handoff";
@@ -1664,11 +1708,13 @@
           const isFrozenExternal = isSmedStarted && isExternal;
           const card = document.createElement("div");
           const handoffStateClass = isHandoff ? (isSmedStarted ? "after-ipc" : "before-ipc") : "";
+          const isCompact = !isCurrent || status.className !== "running";
           const baseClasses = [
             "operator-card",
             `step-type-${step.type}`,
             handoffStateClass,
-            isFrozenExternal ? "external-frozen" : ""
+            isFrozenExternal ? "external-frozen" : "",
+            isCompact ? "compact" : ""
           ].filter(Boolean).join(" ");
           card.className = baseClasses;
           card.dataset.status = status.className;
@@ -1708,6 +1754,57 @@
             </div>
             ` : ""}
             <div class="operator-footer">Chrono étape: ${isCurrent ? formatMinutes(operator.elapsedSeconds) : "--"} min</div>
+          `;
+          column.appendChild(card);
+        });
+
+        if (remainingUpcoming > 0) {
+          const indicator = document.createElement("div");
+          indicator.className = "operator-card compact compact-indicator";
+          indicator.dataset.status = "todo";
+          indicator.innerHTML = `
+            <div class="operator-step">
+              <strong>+${remainingUpcoming} étapes</strong>
+              <span>À venir</span>
+            </div>
+          `;
+          column.appendChild(indicator);
+        }
+
+        doneSteps.forEach((stepItem) => {
+          const { step, index, status } = stepItem;
+          const isExternal = step.type === "external";
+          const isHandoff = step.type === "handoff";
+          const stepLabel = step.label;
+          const targetMin = step.targetMin.toFixed(1);
+          const actualMin = stepItem.index === operator.currentStepIndex && operator.actualMin !== null
+            ? operator.actualMin.toFixed(1)
+            : "--";
+          const isFrozenExternal = isSmedStarted && isExternal;
+          const card = document.createElement("div");
+          const handoffStateClass = isHandoff ? (isSmedStarted ? "after-ipc" : "before-ipc") : "";
+          const baseClasses = [
+            "operator-card",
+            "compact",
+            `step-type-${step.type}`,
+            handoffStateClass,
+            isFrozenExternal ? "external-frozen" : ""
+          ].filter(Boolean).join(" ");
+          card.className = baseClasses;
+          card.dataset.status = status.className;
+          card.innerHTML = `
+            <div class="operator-header">
+              <div class="operator-status ${status.className}">${status.label}</div>
+            </div>
+            <div class="operator-step">
+              <strong>${stepLabel}</strong>
+              <span>Étape ${index + 1} / ${operator.steps.length}</span>
+            </div>
+            <div class="operator-chips">
+              <span class="chip">Cible: ${targetMin} min</span>
+              <span class="chip ${actualMin === "--" ? "muted" : ""}">Réel: ${actualMin} min</span>
+            </div>
+            <div class="operator-footer">Chrono étape: -- min</div>
           `;
           column.appendChild(card);
         });
