@@ -680,6 +680,84 @@
       align-self: flex-end;
     }
 
+    .chip-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .chip-button {
+      border-radius: 999px;
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      background: var(--surface-muted);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 40px;
+    }
+
+    .chip-button.note {
+      color: var(--primary);
+    }
+
+    .chip-button.undo {
+      color: var(--warn);
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .chip-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .note-indicator {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(42, 86, 255, 0.12);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 6px;
+    }
+
+    :root {
+      --type-external: #3aa0f3;
+      --type-handoff: #f59e0b;
+      --type-internal: #22c55e;
+      --type-external-bg: rgba(58, 160, 243, 0.1);
+      --type-handoff-bg: rgba(245, 158, 11, 0.12);
+      --type-internal-bg: rgba(34, 197, 94, 0.12);
+    }
+
+    .step-card[data-type="external"] {
+      border-left: 4px solid var(--type-external);
+    }
+
+    .step-card[data-type="handoff"] {
+      border-left: 4px solid var(--type-handoff);
+    }
+
+    .step-card[data-type="internal"] {
+      border-left: 4px solid var(--type-internal);
+    }
+
+    .step-card.running[data-type="external"] {
+      background: var(--type-external-bg);
+    }
+
+    .step-card.running[data-type="handoff"] {
+      background: var(--type-handoff-bg);
+    }
+
+    .step-card.running[data-type="internal"] {
+      background: var(--type-internal-bg);
+    }
+
     .step-button {
       padding: 10px 18px;
       border-radius: 10px;
@@ -798,7 +876,8 @@
     }
 
     .modal-field select,
-    .modal-field input {
+    .modal-field input,
+    .modal-field textarea {
       width: 100%;
       height: 44px;
       padding: 0 12px;
@@ -809,8 +888,15 @@
       font-size: 16px;
     }
 
+    .modal-field textarea {
+      height: auto;
+      resize: vertical;
+      min-height: 120px;
+    }
+
     .modal-field select:focus-visible,
-    .modal-field input:focus-visible {
+    .modal-field input:focus-visible,
+    .modal-field textarea:focus-visible {
       outline: 3px solid var(--focus);
       outline-offset: 2px;
       box-shadow: var(--shadow-sm);
@@ -1249,13 +1335,24 @@
     }
 
     .action-item {
-      display: flex;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
       gap: 8px;
       align-items: center;
     }
 
     .action-item input[type="text"] {
-      flex: 1;
+      min-width: 0;
+    }
+
+    @media (max-width: 520px) {
+      .action-item {
+        grid-template-columns: 1fr;
+      }
+
+      .action-item .analysis-button {
+        width: 100%;
+      }
     }
 
     .inline-error {
@@ -1579,6 +1676,24 @@
       </div>
     </div>
   </div>
+  <div class="modal-overlay" id="note-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Note terrain</h3>
+        <p class="modal-subtitle">Ajouter une note pour l’étape en cours.</p>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label for="note-text">Note</label>
+          <textarea id="note-text" rows="4" placeholder="Saisir une note..."></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-button secondary" id="note-cancel">Annuler</button>
+        <button class="modal-button primary" id="note-save">Enregistrer</button>
+      </div>
+    </div>
+  </div>
   <div class="started-toast" id="smed-started">
     ✓ SMED démarré
   </div>
@@ -1641,6 +1756,8 @@
     let pendingJustification = null;
 
     let startedToastTimeout = null;
+    let sessionEvents = [];
+    let pendingNote = null;
 
     const headerDateTime = document.querySelector("#header-datetime");
     const headerLigne = document.querySelector("#header-ligne");
@@ -1665,6 +1782,10 @@
     const finishTime = document.querySelector("#finish-time");
     const finishCancel = document.querySelector("#finish-cancel");
     const finishConfirm = document.querySelector("#finish-confirm");
+    const noteModal = document.querySelector("#note-modal");
+    const noteText = document.querySelector("#note-text");
+    const noteCancel = document.querySelector("#note-cancel");
+    const noteSave = document.querySelector("#note-save");
     const settingsApply = document.querySelector("#settings-apply");
     const settingsCancel = document.querySelector("#settings-cancel");
     const settingsForm = document.querySelector("#settings-form");
@@ -1756,7 +1877,8 @@
             endTime: null,
             justification: "",
             actions: step.actions ? [...step.actions] : [],
-            actionsDone: step.actions ? step.actions.map(() => false) : []
+            actionsDone: step.actions ? step.actions.map(() => false) : [],
+            notes: []
           }));
         newOperators.push({
           id: `operator-${i}`,
@@ -2137,12 +2259,13 @@
               ? formatTime(step.elapsedSeconds)
               : formatTime(step.targetSeconds);
           const icon = renderStepIcon(step);
+          const hasNotes = Array.isArray(step.notes) && step.notes.length > 0;
           html += `
-            <div class="${cardClass}">
+            <div class="${cardClass}" data-status="${step.status}" data-type="${step.type}">
               <div class="step-header">
                 <div class="step-icon">${icon}</div>
                 <div class="step-info">
-                  <div class="step-name">${step.name}</div>
+                  <div class="step-name">${step.name}${hasNotes ? `<span class="note-indicator">Note</span>` : ""}</div>
                   <div class="step-meta">${typeLabel}</div>
                 </div>
                 <div class="step-timer">${timeDisplay}</div>
@@ -2153,8 +2276,13 @@
             const actions = Array.isArray(step.actions) ? step.actions : [];
             const done = Array.isArray(step.actionsDone) ? step.actionsDone : [];
             const disabled = !canValidate ? "disabled" : "";
+            const hasDone = operator.steps.some((item) => item.status === "done");
             html += `
               <div class="step-actions">
+                <div class="chip-bar">
+                  <button class="chip-button undo" data-action="undo-last" data-op="${operator.id}" ${hasDone ? "" : "disabled"}>Annuler</button>
+                  <button class="chip-button note" data-action="add-note" data-op="${operator.id}" data-step-index="${stepIndex}">Note</button>
+                </div>
                 ${actions.length ? `
                   <div class="action-list">
                     ${actions.map((action, idx) => `
@@ -2891,6 +3019,56 @@
           }
           return;
         }
+        if (action === "undo-last") {
+          const hasDone = operator.steps.some((item) => item.status === "done");
+          if (!hasDone) {
+            return;
+          }
+          const shouldUndo = window.confirm("Annuler la dernière validation de cet opérateur ?");
+          if (!shouldUndo) {
+            return;
+          }
+          const lastDoneIndex = [...operator.steps].map((step, index) => ({ step, index }))
+            .filter(({ step }) => step.status === "done")
+            .map(({ index }) => index)
+            .pop();
+          if (lastDoneIndex === undefined) {
+            return;
+          }
+          const lastDone = operator.steps[lastDoneIndex];
+          lastDone.status = "todo";
+          lastDone.elapsedSeconds = 0;
+          lastDone.endTime = null;
+          lastDone.startTime = null;
+          lastDone.justification = "";
+          if (isSmedStarted && operator.steps.every((step) => step.status !== "running")) {
+            lastDone.status = "running";
+            lastDone.startTime = Date.now();
+          }
+          sessionEvents.push({
+            type: "undo",
+            operatorIndex: Number(operator.id.split("-")[1]),
+            stepId: lastDone.id,
+            at: Date.now()
+          });
+          renderOperators();
+          renderAnalysis();
+          return;
+        }
+        if (action === "add-note") {
+          const step = operator.steps[stepIndex];
+          if (!step) {
+            return;
+          }
+          pendingNote = { operatorId: operator.id, stepIndex };
+          if (noteText) {
+            noteText.value = "";
+          }
+          if (noteModal) {
+            noteModal.classList.add("visible");
+          }
+          return;
+        }
         if (action === "validate") {
           if (Number.isNaN(stepIndex)) {
             return;
@@ -2945,6 +3123,40 @@
           completeStep(operator, pendingJustification.actualMin, true);
         }
         closeJustificationModal();
+      });
+    }
+
+    if (noteCancel) {
+      noteCancel.addEventListener("click", () => {
+        pendingNote = null;
+        if (noteModal) {
+          noteModal.classList.remove("visible");
+        }
+      });
+    }
+
+    if (noteSave) {
+      noteSave.addEventListener("click", () => {
+        if (!pendingNote || !noteText) {
+          return;
+        }
+        const text = noteText.value.trim();
+        if (!text) {
+          return;
+        }
+        const operator = operators.find((item) => item.id === pendingNote.operatorId);
+        const step = operator?.steps[pendingNote.stepIndex];
+        if (step) {
+          if (!Array.isArray(step.notes)) {
+            step.notes = [];
+          }
+          step.notes.push({ text, at: Date.now() });
+        }
+        pendingNote = null;
+        if (noteModal) {
+          noteModal.classList.remove("visible");
+        }
+        renderOperators();
       });
     }
 
@@ -3102,7 +3314,8 @@
           status: entry.step.status,
           justification: entry.step.justification || "",
           actions: entry.step.actions || [],
-          actionsDone: entry.step.actionsDone || []
+          actionsDone: entry.step.actionsDone || [],
+          notes: entry.step.notes || []
         };
       });
     };
@@ -3128,7 +3341,8 @@
           "Timestamp fin étape",
           "Justification",
           "Actions",
-          "Actions réalisées"
+          "Actions réalisées",
+          "Notes"
         ]
       ];
       buildStepsExport().forEach((step) => {
@@ -3147,7 +3361,8 @@
           step.endTs,
           step.justification,
           (step.actions || []).join("|"),
-          (step.actions || []).filter((_, idx) => step.actionsDone?.[idx]).join("|")
+          (step.actions || []).filter((_, idx) => step.actionsDone?.[idx]).join("|"),
+          (step.notes || []).map((note) => note.text).join(" | ")
         ]);
       });
       const csvContent = rows.map((row) => row.map((cell) => {
@@ -3221,12 +3436,14 @@
           status: step.status,
           justification: step.justification,
           actions: step.actions,
-          actionsDone: step.actionsDone
+          actionsDone: step.actionsDone,
+          notes: step.notes
         })),
         summary: {
           byType,
           byOperatorSmed
-        }
+        },
+        events: sessionEvents
       };
       const timestamp = getExportTimestamp();
       const line = getSafeFileSegment(ligneInput?.value, "LIGNE");
