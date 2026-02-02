@@ -36,178 +36,6 @@
       --sticky-top: calc(var(--header-height) + var(--tabbar-height) + 8px);
     }
 
-    body[data-theme="high-contrast"] {
-      --bg: #0b0b0b;
-      --surface: #111111;
-      --surface-muted: #1a1a1a;
-      --text: #ffffff;
-      --text-muted: #d5d5d5;
-      --primary: #00d4ff;
-      --accent: #ffd84a;
-      --success: #2cff9b;
-      --danger: #ff5c5c;
-      --warn: #ffd84a;
-      --chrono-ok: #2cff9b;
-      --chrono-warn: #ffd84a;
-      --chrono-over: #ff5c5c;
-      --chrono-over-base: #1a0f0f;
-      --reset-bg: #1a0f0f;
-      --reset-border: rgba(255, 92, 92, 0.75);
-      --reset-text: #ffb4b4;
-      --border: rgba(255, 255, 255, 0.55);
-      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.6);
-      --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.6);
-      --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.7);
-      --glow: 0 0 0 0 rgba(0, 0, 0, 0);
-      --focus: #ffd84a;
-    }
-
-    body[data-theme="high-contrast"] .chrono-bar::before,
-    body[data-theme="high-contrast"] .tab-bar::before {
-      opacity: 0;
-    }
-
-    body[data-theme="high-contrast"] .operator-card::after {
-      opacity: 0;
-    }
-
-    body[data-theme="high-contrast"] .chrono-bar {
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-      background: #101010;
-      border-color: var(--border);
-      box-shadow: none;
-    }
-
-    body[data-theme="high-contrast"] .chrono-card {
-      background: #0f0f0f;
-      border-color: var(--border);
-    }
-
-    body[data-theme="high-contrast"] .chrono-card::before {
-      opacity: 0.25;
-    }
-
-    body[data-theme="high-contrast"] .tab-bar {
-      background: #121212;
-      border-color: var(--border);
-      box-shadow: none;
-    }
-
-    body[data-theme="high-contrast"] .tab-button {
-      color: #eaeaea;
-      background: transparent;
-    }
-
-    body[data-theme="high-contrast"] .tab-button.active {
-      background: #ffffff;
-      color: #111111;
-      border-color: #ffffff;
-      box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.45);
-    }
-
-    body[data-theme="high-contrast"] .subtitle-line span:first-child {
-      background: #1a1a1a;
-      color: #ffffff;
-      border-color: var(--border);
-    }
-
-    body[data-theme="high-contrast"] .field input {
-      background: #0f0f0f;
-      border: 1px solid rgba(255, 255, 255, 0.65);
-      color: #ffffff;
-    }
-
-    body[data-theme="high-contrast"] .field input:focus-visible {
-      outline: 3px solid var(--focus);
-    }
-
-    body[data-theme="high-contrast"] .reset-button {
-      background: var(--reset-bg);
-      border-color: var(--reset-border);
-      color: var(--reset-text);
-    }
-
-    body[data-theme="high-contrast"] .reset-button:hover,
-    body[data-theme="high-contrast"] .reset-button:focus-visible {
-      filter: brightness(1.08);
-      outline: 3px solid var(--focus);
-      outline-offset: 2px;
-    }
-
-    body[data-theme="high-contrast"] .operator-card {
-      background: #0f0f0f;
-      border-color: var(--border);
-      box-shadow: none;
-    }
-
-    body[data-theme="high-contrast"] .operator-card[data-status="running"] {
-      border-left: 6px solid rgba(0, 212, 255, 0.95);
-      background: linear-gradient(180deg, rgba(0, 212, 255, 0.1), rgba(15, 15, 15, 1) 55%);
-      animation: none;
-      box-shadow: none;
-    }
-
-    body[data-theme="high-contrast"] .operator-card[data-status="done"] {
-      border-left: 6px solid rgba(44, 255, 155, 0.95);
-      opacity: 0.85;
-      box-shadow: none;
-    }
-
-    body[data-theme="high-contrast"] .operator-card[data-status="over"] {
-      border-left: 6px solid rgba(255, 92, 92, 0.95);
-      background: linear-gradient(180deg, rgba(255, 92, 92, 0.1), rgba(15, 15, 15, 1) 55%);
-      box-shadow: none;
-    }
-
-    body[data-theme="high-contrast"] .operator-actions button.primary {
-      background: #00d4ff;
-      color: #06222b;
-      box-shadow: none;
-      border-color: #00d4ff;
-    }
-
-    body[data-theme="high-contrast"] .operator-actions button.primary:disabled {
-      opacity: 0.45;
-      background: #2a2a2a;
-      color: #bdbdbd;
-      border-color: rgba(255, 255, 255, 0.35);
-    }
-
-    body[data-theme="high-contrast"] .operator-status {
-      background: #141414;
-      border-color: var(--border);
-      color: #ffffff;
-    }
-
-    body[data-theme="high-contrast"] .operator-status.running {
-      background: rgba(0, 212, 255, 0.18);
-      border-color: rgba(0, 212, 255, 0.55);
-      color: #eaffff;
-    }
-
-    body[data-theme="high-contrast"] .operator-status.done {
-      background: rgba(44, 255, 155, 0.16);
-      border-color: rgba(44, 255, 155, 0.55);
-      color: #eafff2;
-    }
-
-    body[data-theme="high-contrast"] .operator-status.over {
-      background: rgba(255, 92, 92, 0.16);
-      border-color: rgba(255, 92, 92, 0.55);
-      color: #ffecec;
-    }
-
-    body[data-theme="high-contrast"] .chip {
-      background: #141414;
-      border-color: rgba(255, 255, 255, 0.35);
-      color: #dcdcdc;
-      opacity: 0.75;
-    }
-
-    body[data-theme="high-contrast"] .chip.muted {
-      opacity: 0.45;
-    }
 
     * {
       box-sizing: border-box;
@@ -222,10 +50,6 @@
         radial-gradient(1000px 600px at 50% 110%, rgba(255, 170, 90, 0.1), transparent 60%),
         var(--bg);
       color: var(--text);
-    }
-
-    body[data-theme="high-contrast"] {
-      background: var(--bg);
     }
 
     header {
@@ -243,10 +67,6 @@
       border: 1px solid var(--border);
       box-shadow: var(--shadow-md);
       z-index: 20;
-    }
-
-    body[data-theme="high-contrast"] header {
-      background: var(--surface);
     }
 
     header h1 {
@@ -281,11 +101,6 @@
       letter-spacing: 0.2px;
     }
 
-    body[data-theme="high-contrast"] .subtitle-line span:first-child {
-      background: var(--surface-muted);
-      border-color: var(--border);
-      color: var(--text);
-    }
 
     .datetime-inline {
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
@@ -742,10 +557,10 @@
     }
 
     .operator-card[data-status="done"] {
-      opacity: 0.78;
-      transform: scale(0.96);
+      opacity: 1;
+      transform: none;
       animation: none;
-      background: linear-gradient(180deg, rgba(34, 197, 94, 0.1), rgba(255, 255, 255, 0) 55%), var(--surface);
+      background: var(--surface);
     }
 
     .operator-card[data-status="done"] .operator-actions,
@@ -776,9 +591,17 @@
       gap: 8px;
       transform: none;
       animation: none;
+      transition: opacity 0.25s ease, filter 0.25s ease, transform 0.25s ease;
+    }
+
+    .operator-card.compact[data-status="done"] {
+      opacity: 0.72;
+      filter: saturate(0.7);
+      transform: scale(0.98);
     }
 
     .operator-card.compact .operator-actions,
+    .operator-card.compact .operator-chips,
     .operator-card.compact .operator-footer {
       display: none;
     }
@@ -791,6 +614,15 @@
       gap: 6px;
     }
 
+    .operator-card.compact:hover,
+    .operator-card.compact:focus-within {
+      transform: none;
+      box-shadow:
+        0 18px 40px rgba(21, 32, 51, 0.1),
+        0 2px 6px rgba(21, 32, 51, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    }
+
     .operator-card.compact-indicator {
       text-align: center;
       font-weight: 700;
@@ -799,6 +631,10 @@
 
     .operator-card[data-status="running"] .operator-actions .primary {
       box-shadow: 0 10px 22px rgba(42, 86, 255, 0.24);
+    }
+
+    .operator-card[data-status="running"] .operator-actions {
+      display: flex;
     }
 
     .operator-card.external-frozen {
@@ -1134,9 +970,6 @@
       opacity: 0.9;
     }
 
-    body[data-theme="high-contrast"] .tab-button .ripple {
-      background: radial-gradient(circle, rgba(255, 216, 74, 0.7) 0%, rgba(255, 216, 74, 0) 70%);
-    }
 
     .settings-page {
       display: flex;
@@ -1708,7 +1541,7 @@
           const isFrozenExternal = isSmedStarted && isExternal;
           const card = document.createElement("div");
           const handoffStateClass = isHandoff ? (isSmedStarted ? "after-ipc" : "before-ipc") : "";
-          const isCompact = !isCurrent || status.className !== "running";
+          const isCompact = status.className !== "running";
           const baseClasses = [
             "operator-card",
             `step-type-${step.type}`,
@@ -1735,7 +1568,7 @@
             return operator.stepStatus === "running";
           })();
 
-          const showButton = isCurrent;
+          const showButton = status.className === "running";
           card.innerHTML = `
             <div class="operator-header">
               <div class="operator-status ${status.className}">${status.label}</div>
