@@ -1865,15 +1865,23 @@
             <div class="kpi-value" id="analysis-status">—</div>
           </div>
           <div class="kpi-tile">
-            <div class="kpi-label">Durée réelle</div>
-            <div class="kpi-value" id="analysis-real-duration">—</div>
+            <div class="kpi-label">Temps cumulé (effort)</div>
+            <div class="kpi-value" id="analysis-effort-duration">—</div>
           </div>
           <div class="kpi-tile">
-            <div class="kpi-label">Durée cible (I+H)</div>
+            <div class="kpi-label">Temps SMED (chemin critique)</div>
+            <div class="kpi-value" id="analysis-critical-duration">—</div>
+          </div>
+          <div class="kpi-tile">
+            <div class="kpi-label">Gain parallélisation</div>
+            <div class="kpi-value" id="analysis-parallel-gain">—</div>
+          </div>
+          <div class="kpi-tile">
+            <div class="kpi-label">Cible effort</div>
             <div class="kpi-value" id="analysis-target-duration">—</div>
           </div>
           <div class="kpi-tile">
-            <div class="kpi-label">Écart</div>
+            <div class="kpi-label">Écart effort</div>
             <div class="kpi-value" id="analysis-gap-duration">—</div>
           </div>
         </div>
@@ -1883,15 +1891,15 @@
         <h3>KPI Lean</h3>
         <div class="analysis-split">
           <div>
-            <div class="mini-title">Répartition par type (réel)</div>
+            <div class="mini-title">Répartition par type (effort)</div>
             <div class="mini-table" id="analysis-by-type"></div>
           </div>
           <div>
-            <div class="mini-title">Répartition par opérateur (I+H)</div>
+            <div class="mini-title">Répartition par opérateur (effort)</div>
             <div class="mini-table" id="analysis-by-operator"></div>
           </div>
         </div>
-        <div class="mini-title" style="margin-top: 14px;">Top 5 dépassements (réel - cible)</div>
+        <div class="mini-title" style="margin-top: 14px;">Top 5 dépassements (effort - cible)</div>
         <div class="mini-table" id="analysis-top-over"></div>
       </div>
 
@@ -2087,6 +2095,10 @@
     Le changement de production est terminé
   </div>
   <script>
+    // PATCH NOTES:
+    // - Ajout des KPI Temps cumulé, Temps SMED (chemin critique), Gain parallélisation, Cible effort, Écart effort.
+    // - Calcul chemin critique à partir des intervalles d'étapes (startT/endT) avec compatibilité anciennes sessions.
+    // - Affichage "Cible étape" dans chaque tuile opérateur.
     const createDefaultStandardSteps = (operatorsCount) => {
       const types = ["external", "handoff", "internal", "external", "internal", "handoff"];
       const targets = {
@@ -2355,7 +2367,9 @@
     const analysisLastIpc = document.querySelector("#analysis-last-ipc");
     const analysisFirstIpc = document.querySelector("#analysis-first-ipc");
     const analysisStatus = document.querySelector("#analysis-status");
-    const analysisRealDuration = document.querySelector("#analysis-real-duration");
+    const analysisEffortDuration = document.querySelector("#analysis-effort-duration");
+    const analysisCriticalDuration = document.querySelector("#analysis-critical-duration");
+    const analysisParallelGain = document.querySelector("#analysis-parallel-gain");
     const analysisTargetDuration = document.querySelector("#analysis-target-duration");
     const analysisGapDuration = document.querySelector("#analysis-gap-duration");
     const analysisByType = document.querySelector("#analysis-by-type");
@@ -2455,6 +2469,17 @@
       return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
     };
 
+    const formatTimeHms = (seconds) => {
+      if (!Number.isFinite(seconds)) {
+        return "—";
+      }
+      const totalSeconds = Math.max(0, Math.round(seconds));
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const secs = totalSeconds % 60;
+      return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    };
+
     const getTargetSecondsFromStandard = (steps) => {
       return steps.reduce((sum, step) => {
         if (step.type === "internal" || step.type === "handoff") {
@@ -2485,6 +2510,37 @@
     targetSeconds = getTargetSecondsFromStandard(settings.standardSteps);
 
     const formatMinutes = (minutes) => `${minutes.toFixed(1)} min`;
+
+    const getStepTargetMin = (step) => {
+      if (!step || typeof step !== "object") {
+        return null;
+      }
+      const subTasks = Array.isArray(step.subTasks) ? step.subTasks : [];
+      const subTargets = subTasks
+        .filter((task) => task && typeof task.targetMin === "number" && !Number.isNaN(task.targetMin) && task.active !== false)
+        .map((task) => task.targetMin);
+      if (subTargets.length > 0) {
+        return subTargets.reduce((sum, value) => sum + value, 0);
+      }
+      if (typeof step.targetMin === "number" && !Number.isNaN(step.targetMin)) {
+        return step.targetMin;
+      }
+      if (typeof step.targetSeconds === "number" && !Number.isNaN(step.targetSeconds)) {
+        return step.targetSeconds / 60;
+      }
+      return null;
+    };
+
+    const isHcStep = (step) => {
+      if (!step || typeof step !== "object") {
+        return false;
+      }
+      if (step.hc === true) {
+        return true;
+      }
+      const name = String(step.name || "").trim().toLowerCase();
+      return name === "activité chgt de po";
+    };
 
     const toDateTimeInputValue = (date) => ({
       date: date.toISOString().slice(0, 10),
@@ -2658,6 +2714,8 @@
       step.status = "done";
       step.elapsedSeconds = actualMin * 60;
       step.endTime = Date.now();
+      step.endT = step.endTime;
+      step.startT = step.endT - (step.elapsedSeconds * 1000);
       if (isSmedStarted) {
         const nextInternalIndex = operator.steps.findIndex(
           (s, idx) => idx > runningIndex && s.type === "internal" && s.status === "todo"
@@ -2827,6 +2885,8 @@
               : formatTime(step.targetSeconds);
           const icon = renderStepIcon(step);
           const hasNotes = Array.isArray(step.notes) && step.notes.length > 0;
+          const stepTargetMin = getStepTargetMin(step);
+          const stepTargetLabel = stepTargetMin === null ? "—" : formatMinutes(stepTargetMin);
           html += `
             <div class="${cardClass}" data-status="${step.status}" data-type="${step.type}">
               <div class="step-header">
@@ -2834,6 +2894,7 @@
                 <div class="step-info">
                   <div class="step-name">${step.name}${hasNotes ? `<span class="note-indicator">Note</span>` : ""}</div>
                   <div class="step-meta">${typeLabel}</div>
+                  <div class="step-meta">Cible étape: ${stepTargetLabel}</div>
                 </div>
                 <div class="step-timer">${timeDisplay}</div>
                 ${!isRunning ? `<button class="note-quick" data-action="add-note" data-op="${operator.id}" data-step-index="${stepIndex}" title="Ajouter une note">Note</button>` : ""}
@@ -2935,6 +2996,59 @@ html += `
         targetMinutes,
         steps
       };
+    };
+
+    const getStepInterval = (step, durationSeconds, nowMs) => {
+      if (step && typeof step.startT === "number" && typeof step.endT === "number") {
+        return { startT: step.startT, endT: step.endT };
+      }
+      const endT = step && typeof step.endTime === "number" ? step.endTime : null;
+      const startT = step && typeof step.startTime === "number" ? step.startTime : null;
+      if (endT !== null && durationSeconds > 0) {
+        return { startT: endT - (durationSeconds * 1000), endT };
+      }
+      if (startT !== null && durationSeconds > 0) {
+        return { startT, endT: startT + (durationSeconds * 1000) };
+      }
+      if (durationSeconds > 0 && typeof nowMs === "number") {
+        return { startT: nowMs - (durationSeconds * 1000), endT: nowMs };
+      }
+      return null;
+    };
+
+    const buildEffortMetrics = (dataset) => {
+      const nowMs = Date.now();
+      let effortSeconds = 0;
+      let criticalStart = null;
+      let criticalEnd = null;
+
+      dataset.steps.forEach((entry) => {
+        if (isHcStep(entry.step)) {
+          return;
+        }
+        const durationSeconds = getStepRealSeconds(entry.step);
+        if (durationSeconds <= 0) {
+          return;
+        }
+        effortSeconds += durationSeconds;
+        const interval = getStepInterval(entry.step, durationSeconds, nowMs);
+        if (!interval) {
+          return;
+        }
+        if (criticalStart === null || interval.startT < criticalStart) {
+          criticalStart = interval.startT;
+        }
+        if (criticalEnd === null || interval.endT > criticalEnd) {
+          criticalEnd = interval.endT;
+        }
+      });
+
+      const criticalSeconds = criticalStart !== null && criticalEnd !== null && criticalEnd >= criticalStart
+        ? (criticalEnd - criticalStart) / 1000
+        : null;
+      const gainSeconds = criticalSeconds === null ? null : Math.max(0, effortSeconds - criticalSeconds);
+
+      return { effortSeconds, criticalSeconds, gainSeconds };
     };
 
     
@@ -3084,48 +3198,49 @@ html += `
       }
 
       const durationTargetMin = getDurationTargetMin();
-      const durationRealMin = isSmedFinished && dataset.lastIpc && dataset.firstIpc
-        ? (dataset.firstIpc.getTime() - dataset.lastIpc.getTime()) / 60000
-        : null;
+      const effortMetrics = buildEffortMetrics(dataset);
+      const effortMinutes = effortMetrics.effortSeconds / 60;
 
-      if (analysisRealDuration) {
-        if (durationRealMin === null) {
-          const liveMin = dataset.lastIpc ? dataset.durationRealMin : 0;
-          analysisRealDuration.textContent = dataset.lastIpc ? `${liveMin.toFixed(1)} min` : "—";
-        } else {
-          analysisRealDuration.textContent = `${durationRealMin.toFixed(1)} min`;
-        }
+      if (analysisEffortDuration) {
+        analysisEffortDuration.textContent = formatTimeHms(effortMetrics.effortSeconds);
+      }
+      if (analysisCriticalDuration) {
+        analysisCriticalDuration.textContent = effortMetrics.criticalSeconds === null ? "—" : formatTimeHms(effortMetrics.criticalSeconds);
+      }
+      if (analysisParallelGain) {
+        analysisParallelGain.textContent = effortMetrics.gainSeconds === null ? "—" : formatTimeHms(effortMetrics.gainSeconds);
       }
       if (analysisTargetDuration) {
         analysisTargetDuration.textContent = `${durationTargetMin.toFixed(1)} min`;
       }
       if (analysisGapDuration) {
-        const gap = durationRealMin === null ? (dataset.lastIpc ? dataset.durationRealMin - durationTargetMin : 0) : (durationRealMin - durationTargetMin);
+        const gap = effortMinutes - durationTargetMin;
         analysisGapDuration.textContent = `${gap.toFixed(1)} min`;
       }
 
       const byType = { external: { min: 0 }, handoff: { min: 0 }, internal: { min: 0 } };
       const byOperator = {};
-      let totalSmedReal = 0;
-      let totalSmedTarget = 0;
+      let totalEffortReal = 0;
 
       dataset.steps.forEach((entry) => {
+        if (isHcStep(entry.step)) {
+          return;
+        }
         const type = entry.step.type;
         const operatorIndex = getOperatorIndex(entry.operator);
-        const realMin = entry.step.status === "done" ? entry.realSeconds / 60 : 0;
+        const realMin = entry.realSeconds > 0 ? entry.realSeconds / 60 : 0;
         byType[type].min += realMin;
 
+        if (!byOperator[operatorIndex]) {
+          byOperator[operatorIndex] = { real: 0, target: 0 };
+        }
+        if (realMin > 0) {
+          byOperator[operatorIndex].real += realMin;
+          totalEffortReal += realMin;
+        }
         if (type === "internal" || type === "handoff") {
-          if (!byOperator[operatorIndex]) {
-            byOperator[operatorIndex] = { real: 0, target: 0 };
-          }
           const targetMin = entry.step.targetSeconds / 60;
-          if (entry.step.status === "done") {
-            byOperator[operatorIndex].real += realMin;
-            totalSmedReal += realMin;
-          }
           byOperator[operatorIndex].target += targetMin;
-          totalSmedTarget += targetMin;
         }
       });
 
@@ -3142,7 +3257,7 @@ html += `
       if (analysisByOperator) {
         const entries = Object.entries(byOperator).sort((a, b) => Number(a[0]) - Number(b[0]));
         analysisByOperator.innerHTML = entries.map(([idx, stats]) => {
-          const pct = totalSmedReal > 0 ? (stats.real / totalSmedReal) * 100 : 0;
+          const pct = totalEffortReal > 0 ? (stats.real / totalEffortReal) * 100 : 0;
           return `<div class="mini-row"><div>Opérateur ${idx}</div><div>${stats.real.toFixed(1)} / ${stats.target.toFixed(1)} min , ${pct.toFixed(0)}%</div></div>`;
         }).join("") || `<div class="mini-row"><div>—</div><div>—</div></div>`;
       }
@@ -3161,10 +3276,11 @@ html += `
             targetMin,
             realMin,
             delta,
-            justification: entry.step.justification || ""
+            justification: entry.step.justification || "",
+            isHc: isHcStep(entry.step)
           };
         })
-        .filter((row) => row.delta !== null)
+        .filter((row) => row.delta !== null && !row.isHc)
         .sort((a, b) => (b.delta ?? 0) - (a.delta ?? 0))
         .slice(0, 5);
 
@@ -3870,6 +3986,8 @@ html += `
           lastDone.elapsedSeconds = 0;
           lastDone.endTime = null;
           lastDone.startTime = null;
+          lastDone.startT = null;
+          lastDone.endT = null;
           lastDone.justification = "";
           if (isSmedStarted && operator.steps.every((step) => step.status !== "running")) {
             lastDone.status = "running";
@@ -4156,6 +4274,7 @@ html += `
           order: entry.order,
           name: entry.step.name,
           type: entry.step.type,
+          hc: entry.step.hc === true,
           operator: entry.operator.name,
           targetMin: entry.step.targetSeconds / 60,
           realMin: entry.realSeconds / 60,
@@ -4351,8 +4470,9 @@ html += `
       const product = productInput?.value.trim() || "";
 
       const durationTargetMin = getDurationTargetMin();
-      const durationRealMin = isSmedFinished && lastIpc && firstIpc ? (firstIpc.getTime() - lastIpc.getTime()) / 60000 : null;
-      const gapMin = durationRealMin === null ? null : durationRealMin - durationTargetMin;
+      const effortMetrics = buildEffortMetrics(dataset);
+      const effortMinutes = effortMetrics.effortSeconds / 60;
+      const gapMin = effortMinutes - durationTargetMin;
 
       const steps = buildStepsExport().map((row) => {
         const operatorIndex = row.operatorIndex ?? (String(row.operator || "").match(/(\d+)/)?.[1] ? Number(String(row.operator).match(/(\d+)/)[1]) : 1);
@@ -4360,9 +4480,9 @@ html += `
         return { ...row, operatorIndex, delta };
       });
 
-      const smedSteps = steps.filter((row) => row.type === "internal" || row.type === "handoff");
+      const effortSteps = steps.filter((row) => !isHcStep({ name: row.name, hc: row.hc }));
       const byOperator = {};
-      smedSteps.forEach((row) => {
+      effortSteps.forEach((row) => {
         const idx = row.operatorIndex;
         if (!byOperator[idx]) {
           byOperator[idx] = { real: 0, target: 0 };
@@ -4370,10 +4490,12 @@ html += `
         if (typeof row.realMin === "number") {
           byOperator[idx].real += row.realMin;
         }
-        byOperator[idx].target += row.targetMin;
+        if (row.type === "internal" || row.type === "handoff") {
+          byOperator[idx].target += row.targetMin;
+        }
       });
 
-      const topDrift = smedSteps
+      const topDrift = effortSteps
         .filter((row) => typeof row.delta === "number")
         .sort((a, b) => (b.delta ?? 0) - (a.delta ?? 0))[0];
 
@@ -4392,9 +4514,11 @@ html += `
 
       const banner = `${escapeHtml(line)} , ${escapeHtml(po)} , ${escapeHtml(product || "—")}`;
       const period = `${lastIpc ? formatDateTime(lastIpc) : "—"} → ${firstIpc ? formatDateTime(firstIpc) : "—"}`;
-      const realText = durationRealMin === null ? "—" : `${durationRealMin.toFixed(1)} min`;
+      const effortText = formatTimeHms(effortMetrics.effortSeconds);
+      const criticalText = effortMetrics.criticalSeconds === null ? "—" : formatTimeHms(effortMetrics.criticalSeconds);
+      const gainText = effortMetrics.gainSeconds === null ? "—" : formatTimeHms(effortMetrics.gainSeconds);
       const targetText = `${durationTargetMin.toFixed(1)} min`;
-      const gapText = gapMin === null ? "—" : `${gapMin.toFixed(1)} min`;
+      const gapText = `${gapMin.toFixed(1)} min`;
 
       const operatorTiles = Object.entries(byOperator)
         .sort((a, b) => Number(a[0]) - Number(b[0]))
@@ -4558,17 +4682,32 @@ html += `
 
   <div class="grid">
     <div class="tile">
-      <div class="label">SMED cible vs réel (I+H)</div>
-      <div class="value">${targetText} → ${realText}</div>
-      <div class="sub">Écart: ${gapText}</div>
+      <div class="label">Temps cumulé (effort)</div>
+      <div class="value">${effortText}</div>
     </div>
     <div class="tile">
-      <div class="label">Contribution opérateurs (I+H)</div>
+      <div class="label">Temps SMED (chemin critique)</div>
+      <div class="value">${criticalText}</div>
+    </div>
+    <div class="tile">
+      <div class="label">Gain parallélisation</div>
+      <div class="value">${gainText}</div>
+    </div>
+    <div class="tile">
+      <div class="label">Cible effort</div>
+      <div class="value">${targetText}</div>
+    </div>
+    <div class="tile">
+      <div class="label">Écart effort</div>
+      <div class="value">${gapText}</div>
+    </div>
+    <div class="tile">
+      <div class="label">Contribution opérateurs (effort)</div>
       <div class="pills">${operatorTiles}</div>
     </div>
     <div class="tile">
       <div class="label">Top écart (étape)</div>
-      <div class="value">${gapMin === null ? "—" : gapText}</div>
+      <div class="value">${gapText}</div>
       <div class="sub">${topDriftHtml}</div>
     </div>
   </div>
