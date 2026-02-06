@@ -1808,9 +1808,12 @@
         </div>
         <div class="field actions-field">
           <label>&nbsp;</label>
-          <div class="actions-wrap">
+          <div class="actions-wrap main-actions">
             <button class="reset-button" id="reset-smed-button">
               Réinitialiser
+            </button>
+            <button class="reset-button" id="pause-smed-button" hidden>
+              ⏸ Pause SMED
             </button>
             <button class="reset-button finish-smed-button hidden" id="finish-smed-button">
               Terminer
@@ -2143,6 +2146,10 @@
 
     let startedToastTimeout = null;
     let sessionEvents = [];
+    let state = { marks: [] };
+    let isSmedPaused = false;
+    let pauseStartTimestamp = null;
+    let pausedDurationMs = 0;
     let pendingNote = null;
 
     // --- V1 Persistence (localStorage) ---
@@ -2161,6 +2168,10 @@
       targetSeconds,
       alertSeconds,
       sessionEvents,
+      state,
+      isSmedPaused,
+      pauseStartTimestamp,
+      pausedDurationMs,
       // context inputs are read from DOM on restore
       ipcDate: ipcDate?.value || "",
       ipcTime: ipcTime?.value || "",
@@ -2179,6 +2190,15 @@
       targetSeconds = typeof snap.targetSeconds === "number" ? snap.targetSeconds : targetSeconds;
       alertSeconds = typeof snap.alertSeconds === "number" ? snap.alertSeconds : alertSeconds;
       sessionEvents = Array.isArray(snap.sessionEvents) ? snap.sessionEvents : sessionEvents;
+      if (snap.state && typeof snap.state === "object") {
+        state = snap.state;
+        if (!Array.isArray(state.marks)) {
+          state.marks = [];
+        }
+      }
+      isSmedPaused = Boolean(snap.isSmedPaused);
+      pauseStartTimestamp = typeof snap.pauseStartTimestamp === "number" ? snap.pauseStartTimestamp : null;
+      pausedDurationMs = typeof snap.pausedDurationMs === "number" ? snap.pausedDurationMs : 0;
 
       // restore DOM fields if present
       const li = document.querySelector("#ligne-input");
@@ -2316,6 +2336,7 @@
     const chronoTime = document.querySelector("#chrono-time");
     const chronoTarget = document.querySelector("#chrono-target");
     const operatorsGrid = document.querySelector("#operators-grid");
+    const pauseSmedButton = document.querySelector("#pause-smed-button");
     const justificationModal = document.querySelector("#justification-modal");
     const justificationReason = document.querySelector("#justification-reason");
     const justificationEmpty = document.querySelector("#justification-empty");
@@ -2537,7 +2558,8 @@
         return;
       }
       const now = Date.now();
-      const elapsed = chronoStartTimestamp !== null ? Math.floor((now - chronoStartTimestamp) / 1000) : 0;
+      const pausedMs = pausedDurationMs + (isSmedPaused && pauseStartTimestamp ? (now - pauseStartTimestamp) : 0);
+      const elapsed = chronoStartTimestamp !== null ? Math.floor(Math.max(0, now - chronoStartTimestamp - pausedMs) / 1000) : 0;
       chronoTime.textContent = formatTime(elapsed);
       if (!isSmedStarted) {
         chronoBar.classList.remove("warn", "over");
@@ -2567,6 +2589,16 @@
         chronoStartTimestamp = null;
       }
       updateChronoDisplay();
+    };
+
+    const updatePauseButton = () => {
+      if (!pauseSmedButton) {
+        return;
+      }
+      const shouldShow = isSmedStarted && !isSmedFinished;
+      pauseSmedButton.hidden = !shouldShow;
+      pauseSmedButton.disabled = !shouldShow;
+      pauseSmedButton.textContent = isSmedPaused ? "▶ Reprendre SMED" : "⏸ Pause SMED";
     };
 
     const renderStepIcon = (step) => {
@@ -3312,6 +3344,7 @@ html += `
       if (finishSmedButton) {
         finishSmedButton.classList.toggle("hidden", !isSmedStarted || isSmedFinished);
       }
+      updatePauseButton();
       if (isSmedStarted && !isSmedFinished) {
         startChrono();
         startOperatorTick();
@@ -4002,6 +4035,51 @@ html += `
       });
     }
 
+    if (pauseSmedButton) {
+      pauseSmedButton.addEventListener("click", () => {
+        if (!isSmedStarted || isSmedFinished) {
+          return;
+        }
+        if (!isSmedPaused) {
+          isSmedPaused = true;
+          pauseStartTimestamp = Date.now();
+          if (!state || typeof state !== "object") {
+            state = { marks: [] };
+          }
+          if (!Array.isArray(state.marks)) {
+            state.marks = [];
+          }
+          state.marks.push({ kind: "pause", t: pauseStartTimestamp, label: "Pause SMED", note: "" });
+          sessionEvents.push({ type: "pause", at: pauseStartTimestamp, operatorIndex: null, stepId: null, payload: {} });
+          updatePauseButton();
+          updateChronoDisplay();
+          persistSave("active");
+          return;
+        }
+        const reason = window.prompt("Justification obligatoire de la pause (ex: nuit, week-end, attente planning)");
+        if (!reason || !reason.trim()) {
+          return;
+        }
+        const resumeTimestamp = Date.now();
+        isSmedPaused = false;
+        if (pauseStartTimestamp) {
+          pausedDurationMs += resumeTimestamp - pauseStartTimestamp;
+        }
+        pauseStartTimestamp = null;
+        if (!state || typeof state !== "object") {
+          state = { marks: [] };
+        }
+        if (!Array.isArray(state.marks)) {
+          state.marks = [];
+        }
+        state.marks.push({ kind: "resume", t: resumeTimestamp, label: "Reprise SMED", note: reason.trim() });
+        sessionEvents.push({ type: "resume", at: resumeTimestamp, operatorIndex: null, stepId: null, payload: { note: reason.trim() } });
+        updatePauseButton();
+        updateChronoDisplay();
+        persistSave("active");
+      });
+    }
+
     if (resetSmedButton) {
       resetSmedButton.addEventListener("click", () => {
         const shouldReset = window.confirm("Confirmer la remise à zéro du SMED ?");
@@ -4041,6 +4119,13 @@ html += `
         isSmedStarted = false;
         wasSmedStarted = false;
         isSmedFinished = false;
+        isSmedPaused = false;
+        pauseStartTimestamp = null;
+        pausedDurationMs = 0;
+        if (!state || typeof state !== "object") {
+          state = { marks: [] };
+        }
+        state.marks = [];
         firstIpcTimestamp = null;
         if (startedToastTimeout) {
           clearTimeout(startedToastTimeout);
@@ -4101,6 +4186,8 @@ html += `
         }
         firstIpcTimestamp = finishValue.getTime();
         isSmedFinished = true;
+        isSmedPaused = false;
+        pauseStartTimestamp = null;
         sessionEvents.push({ type: "finish_smed", at: firstIpcTimestamp, operatorIndex: null, stepId: null, payload: {} });
         persistSave("force");
         persistStopAutosave();
