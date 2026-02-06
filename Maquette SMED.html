@@ -1,0 +1,2082 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Maquette SMED</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f5f2;
+      --surface: #ffffff;
+      --surface-muted: #f0f1f4;
+      --text: #152033;
+      --text-muted: #5a6472;
+      --primary: #2a56ff;
+      --accent: #ff7a45;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warn: #f59e0b;
+      --chrono-ok: #2f8a57;
+      --chrono-warn: #d6a020;
+      --chrono-over: #c75757;
+      --chrono-over-base: #f8e9e9;
+      --reset-bg: #fdeeee;
+      --reset-border: rgba(161, 72, 72, 0.35);
+      --reset-text: #7b2b2b;
+      --border: rgba(21, 32, 51, 0.12);
+      --shadow-sm: 0 1px 2px rgba(21, 32, 51, 0.06), 0 4px 10px rgba(21, 32, 51, 0.06);
+      --shadow-md: 0 8px 24px rgba(21, 32, 51, 0.1);
+      --shadow-lg: 0 14px 40px rgba(21, 32, 51, 0.14);
+      --glow: 0 0 0 3px rgba(43, 58, 143, 0.1);
+      --radius: 18px;
+      --focus: #ffbf3f;
+      --header-height: 72px;
+      --tabbar-height: 64px;
+      --sticky-top: calc(var(--header-height) + var(--tabbar-height) + 8px);
+    }
+
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(31, 75, 153, 0.08), transparent 60%),
+        radial-gradient(900px 500px at 90% 0%, rgba(214, 160, 32, 0.08), transparent 55%),
+        radial-gradient(1000px 600px at 50% 110%, rgba(255, 170, 90, 0.1), transparent 60%),
+        var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 1));
+      height: var(--header-height);
+      padding: 8px 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-md);
+      z-index: 20;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0.2px;
+      font-weight: 700;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .subtitle-line {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: baseline;
+    }
+
+    .subtitle-line span:first-child {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(42, 86, 255, 0.1);
+      border: 1px solid rgba(42, 86, 255, 0.18);
+      color: rgba(21, 32, 51, 0.8);
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+
+    .datetime-inline {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.4px;
+      min-width: 170px;
+      display: inline-block;
+    }
+
+    main {
+      padding: calc(var(--header-height) + var(--tabbar-height) + 16px) 20px 32px;
+      min-height: 100vh;
+    }
+
+    @media (max-height: 700px) {
+      :root {
+        --header-height: 60px;
+        --tabbar-height: 56px;
+      }
+
+      header {
+        padding: 8px 22px;
+      }
+
+      header h1 {
+        font-size: 20px;
+      }
+
+      .datetime-inline {
+        min-width: 160px;
+      }
+
+      main {
+        padding: calc(var(--header-height) + var(--tabbar-height) + 12px) 16px 24px;
+      }
+    }
+
+    .page {
+      display: none;
+      animation: fadeIn 0.2s ease-in;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .page h2 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    .id-block {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: minmax(180px, 1.2fr) minmax(220px, 2fr) minmax(160px, 1fr) minmax(130px, 0.8fr) minmax(150px, 0.7fr);
+      grid-template-areas: "ligne po ipc-date ipc-time actions";
+      margin-bottom: 16px;
+      max-width: 1200px;
+    }
+
+    .id-block > * {
+      min-width: 0;
+    }
+
+    .field.ligne {
+      grid-area: ligne;
+    }
+
+    .field.po {
+      grid-area: po;
+    }
+
+    .field.date {
+      grid-area: ipc-date;
+    }
+
+    .field.time {
+      grid-area: ipc-time;
+    }
+
+    .field.actions-field {
+      grid-area: actions;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field label {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .field input {
+      height: 44px;
+      min-height: 44px;
+      padding: 0 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 16px;
+    }
+
+    .field input[type="date"],
+    .field input[type="time"] {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .field.wide,
+    .field.date,
+    .field.time,
+    .field.actions-field {
+      width: 100%;
+    }
+
+    .actions-wrap {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+
+    .actions-wrap > * {
+      min-width: 0;
+    }
+
+    .field input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .field input:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .reset-button {
+      height: 44px;
+      min-height: 44px;
+      padding: 0 14px;
+      border-radius: 12px;
+      border: 1px solid var(--reset-border);
+      background: var(--reset-bg);
+      color: var(--reset-text);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
+    .reset-button:active {
+      transform: scale(0.98);
+    }
+
+    .reset-button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+      box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    .chrono-card {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 14px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      min-height: 44px;
+      flex: 1 1 auto;
+      width: 100%;
+      min-width: 0;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .chrono-bar {
+      position: sticky;
+      top: var(--sticky-top);
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(21, 32, 51, 0.08);
+      border-radius: 20px;
+      padding: 10px;
+      box-shadow: 0 16px 40px rgba(21, 32, 51, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.65);
+      margin-bottom: 16px;
+      overflow: hidden;
+      backdrop-filter: blur(8px) saturate(135%);
+      -webkit-backdrop-filter: blur(8px) saturate(135%);
+    }
+
+    .chrono-bar .chrono-card {
+      flex: 1 1 auto;
+      width: 100%;
+      background: rgba(238, 242, 247, 0.72);
+    }
+
+    .chrono-bar::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0));
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
+    .chrono-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: var(--chrono-progress-color);
+      opacity: 0.18;
+      transform-origin: left;
+      transform: scaleX(var(--chrono-progress, 0));
+      transition: transform 180ms cubic-bezier(.2, .8, .2, 1);
+      z-index: 0;
+    }
+
+    .chrono-card.state-ok {
+      --chrono-progress-color: var(--chrono-ok);
+    }
+
+    .chrono-card.state-warn {
+      --chrono-progress-color: var(--chrono-warn);
+    }
+
+    .chrono-card.state-over {
+      --chrono-progress-color: var(--chrono-over);
+      background: var(--chrono-over-base);
+    }
+
+    .chrono-main {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      z-index: 1;
+    }
+
+    .chrono-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .chrono-time {
+      font-size: 30px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.2px;
+    }
+
+    .chrono-status {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.4px;
+    }
+
+    .chrono-metrics {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+      z-index: 1;
+    }
+
+    .chrono-metric {
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px 8px;
+      min-width: 74px;
+      text-align: center;
+      font-size: 11px;
+    }
+
+    .chrono-metric span {
+      display: block;
+      font-weight: 600;
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    @media (max-width: 980px) {
+      .id-block {
+        grid-template-columns: minmax(180px, 1.2fr) minmax(220px, 2fr) minmax(140px, 1fr);
+        grid-template-areas:
+          "ligne po actions"
+          "ipc-date ipc-time .";
+        max-width: none;
+      }
+
+      .actions-wrap {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .chrono-card {
+        flex: 1 1 100%;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .id-block {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "ligne"
+          "po"
+          "ipc-date"
+          "ipc-time"
+          "actions";
+      }
+
+      .actions-wrap {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .reset-button {
+        width: 100%;
+      }
+
+      .chrono-metrics {
+        margin-left: 0;
+      }
+
+      .chrono-card {
+        width: 100%;
+      }
+    }
+
+    .inline-status {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-muted);
+      font-size: 14px;
+      max-width: 360px;
+    }
+
+    .inline-status.visible {
+      display: inline-flex;
+    }
+
+    .inline-status .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+
+    .operators-section {
+      margin-top: 20px;
+    }
+
+    .operators-section h3 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      letter-spacing: 0.2px;
+      font-weight: 700;
+    }
+
+    .operators-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+
+    .operator-column {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .operator-column h4 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .operator-card {
+      background: var(--surface);
+      border: 1px solid rgba(21, 32, 51, 0.08);
+      border-radius: 20px;
+      padding: 14px;
+      box-shadow:
+        0 18px 40px rgba(21, 32, 51, 0.1),
+        0 2px 6px rgba(21, 32, 51, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.75);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease, border-color 0.14s ease;
+    }
+
+    .operator-card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 6px;
+      border-radius: 20px 0 0 20px;
+      background: transparent;
+      z-index: 1;
+    }
+
+    .operator-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+      pointer-events: none;
+      opacity: 0.55;
+    }
+
+    .operator-card > * {
+      position: relative;
+      z-index: 2;
+    }
+
+    .operator-card.step-type-external::before,
+    .operator-card.step-type-handoff.before-ipc::before {
+      background: rgba(90, 100, 114, 0.95);
+    }
+
+    .operator-card.step-type-internal::before,
+    .operator-card.step-type-handoff.after-ipc::before {
+      background: rgba(255, 122, 69, 0.9);
+    }
+
+    .operator-card:hover,
+    .operator-card:focus-within {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    }
+
+    .operator-card[data-status="done"] {
+      opacity: 1;
+      transform: none;
+      animation: none;
+      background: var(--surface);
+    }
+
+    .operator-card[data-status="done"] .operator-actions,
+    .operator-card[data-status="done"] .operator-chips {
+      gap: 6px;
+    }
+
+    .operator-card[data-status="done"] .operator-footer {
+      margin-top: -2px;
+    }
+
+    .operator-card[data-status="running"] {
+      opacity: 1;
+      transform: none;
+      border-color: rgba(255, 122, 69, 0.22);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 1), rgba(255, 245, 238, 0.65));
+      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.65), 0 0 0 3px rgba(255, 122, 69, 0.08);
+      animation: breathe 2.2s ease-in-out infinite;
+    }
+
+    .operator-card[data-status="todo"] {
+      opacity: 0.6;
+      animation: none;
+    }
+
+    .operator-card.compact {
+      padding: 10px 12px;
+      gap: 8px;
+      transform: none;
+      animation: none;
+      transition: opacity 0.25s ease, filter 0.25s ease, transform 0.25s ease;
+    }
+
+    .operator-card.compact[data-status="done"] {
+      opacity: 0.72;
+      filter: saturate(0.7);
+      transform: scale(0.98);
+    }
+
+    .operator-card.compact .operator-actions,
+    .operator-card.compact .operator-chips,
+    .operator-card.compact .operator-footer {
+      display: none;
+    }
+
+    .operator-card.compact .operator-step strong {
+      font-size: 14px;
+    }
+
+    .operator-card.compact .operator-chips {
+      gap: 6px;
+    }
+
+    .operator-card.compact:hover,
+    .operator-card.compact:focus-within {
+      transform: none;
+      box-shadow:
+        0 18px 40px rgba(21, 32, 51, 0.1),
+        0 2px 6px rgba(21, 32, 51, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    }
+
+    .operator-card.compact-indicator {
+      text-align: center;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .operator-card[data-status="running"] .operator-actions .primary {
+      box-shadow: 0 10px 22px rgba(42, 86, 255, 0.24);
+    }
+
+    .operator-card[data-status="running"] .operator-actions {
+      display: flex;
+    }
+
+    .operator-card.external-frozen {
+      opacity: 0.55;
+      filter: saturate(0.6);
+      animation: none;
+      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    }
+
+    .operator-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .operator-name {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .operator-status {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(21, 32, 51, 0.08);
+    }
+
+    .operator-status.todo {
+      color: var(--text-muted);
+    }
+
+    .operator-status.running {
+      color: #111;
+      background: rgba(255, 122, 69, 0.16);
+      border-color: rgba(255, 122, 69, 0.22);
+    }
+
+    .operator-status.done {
+      color: #0f5132;
+      background: rgba(34, 197, 94, 0.14);
+      border-color: rgba(34, 197, 94, 0.22);
+    }
+
+    .operator-status.over {
+      color: #7f1d1d;
+      background: rgba(239, 68, 68, 0.14);
+      border-color: rgba(239, 68, 68, 0.22);
+    }
+
+    .operator-status.running::before {
+      content: "▶";
+      margin-right: 6px;
+    }
+
+    .operator-status.done::before {
+      content: "✓";
+      margin-right: 6px;
+    }
+
+    .operator-status.over::before {
+      content: "!";
+      margin-right: 6px;
+    }
+
+    .operator-step {
+      display: grid;
+      gap: 6px;
+      font-size: 14px;
+    }
+
+    .operator-step strong {
+      font-size: 15px;
+    }
+
+    .operator-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      font-size: 11px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(21, 32, 51, 0.08);
+      color: var(--text-muted);
+      opacity: 0.85;
+    }
+
+    .chip.muted {
+      opacity: 0.45;
+    }
+
+    .operator-card[data-status="running"] .chip {
+      color: var(--text);
+    }
+
+    .operator-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .operator-actions button {
+      height: 44px;
+      min-height: 44px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 0 14px;
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+    }
+
+    .operator-actions button:active {
+      transform: scale(0.98);
+    }
+
+    .operator-actions button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .operator-actions button.primary {
+      height: 48px;
+      min-height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(42, 86, 255, 1), rgba(35, 70, 230, 1));
+      background-size: 120% 120%;
+      background-position: 0% 0%;
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 14px 28px rgba(42, 86, 255, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    }
+
+    .operator-actions button.primary:hover,
+    .operator-actions button.primary:focus-visible {
+      background-position: 50% 0%;
+      filter: brightness(1.02);
+    }
+
+    .operator-actions button.primary:active {
+      transform: scale(0.985);
+    }
+
+    .operator-actions button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+      box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    .operator-footer {
+      font-size: 11px;
+      color: var(--text-muted);
+      opacity: 0.75;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 50;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-card {
+      width: min(520px, 100%);
+      background: var(--surface);
+      border-radius: 18px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .modal-card h4 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .modal-card select,
+    .modal-card textarea {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      font-size: 14px;
+      background: var(--surface);
+      color: var(--text);
+      font-family: inherit;
+    }
+
+    .modal-card textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .modal-actions button {
+      height: 44px;
+      min-height: 44px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 0 16px;
+      cursor: pointer;
+    }
+
+    .modal-actions button.primary {
+      background: var(--primary);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .tab-bar {
+      position: fixed;
+      top: var(--header-height);
+      left: 16px;
+      right: 16px;
+      height: var(--tabbar-height);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(245, 247, 250, 0.92));
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 6px 10px;
+      border: 1px solid rgba(21, 32, 51, 0.1);
+      box-shadow: 0 10px 30px rgba(21, 32, 51, 0.1);
+      z-index: 15;
+      align-items: center;
+      overflow: hidden;
+      border-radius: 16px;
+      margin: 10px auto 0;
+      max-width: 1100px;
+    }
+
+    .tab-bar::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0));
+      opacity: 0.22;
+      pointer-events: none;
+    }
+
+    .tab-button {
+      position: relative;
+      height: 44px;
+      min-height: 44px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      font-size: 14px;
+      font-weight: 600;
+      background: transparent;
+      color: var(--text-muted);
+      transition: transform 120ms cubic-bezier(.2, .8, .2, 1), background 160ms cubic-bezier(.2, .8, .2, 1), border-color 160ms cubic-bezier(.2, .8, .2, 1);
+      overflow: hidden;
+      padding: 0 8px;
+    }
+
+    .tab-button:active,
+    .tab-button.pressed {
+      transform: scale(0.98);
+    }
+
+    .tab-button.active {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 1), rgba(245, 246, 249, 1));
+      color: var(--text);
+      border-color: rgba(21, 32, 51, 0.1);
+      box-shadow: 0 8px 18px rgba(21, 32, 51, 0.1), inset 0 -2px 0 rgba(42, 86, 255, 0.3);
+    }
+
+    .tab-button:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    .tab-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .tab-button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+    }
+
+    .tab-button.halo::after {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border-radius: 12px;
+      border: 2px solid var(--focus);
+      opacity: 0.9;
+      animation: halo 0.35s ease-out;
+      pointer-events: none;
+    }
+
+    .tab-button .ripple {
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 70%);
+      transform: translate(-50%, -50%);
+      animation: ripple 0.45s ease-out;
+      pointer-events: none;
+      opacity: 0.9;
+    }
+
+
+    .settings-page {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 960px;
+    }
+
+    .settings-lock {
+      display: none;
+      padding: 12px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--surface-muted);
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .settings-lock.visible {
+      display: block;
+    }
+
+    .settings-group {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 16px;
+      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .settings-group h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .settings-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .settings-field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .settings-field label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .settings-field input,
+    .settings-field select {
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 0 12px;
+      font-size: 15px;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .settings-field select {
+      appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+        linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+      background-position: calc(100% - 18px) 18px, calc(100% - 12px) 18px;
+      background-size: 6px 6px;
+      background-repeat: no-repeat;
+    }
+
+    .settings-field input:focus-visible,
+    .settings-field select:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .settings-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .settings-apply {
+      height: 48px;
+      min-height: 48px;
+      border-radius: 14px;
+      border: 1px solid transparent;
+      padding: 0 20px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(180deg, rgba(42, 86, 255, 1), rgba(35, 70, 230, 1));
+      box-shadow: 0 12px 22px rgba(42, 86, 255, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+    }
+
+    .settings-apply:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .settings-apply:active {
+      transform: scale(0.985);
+    }
+
+    .settings-disabled {
+      opacity: 0.65;
+      pointer-events: none;
+    }
+
+    body[data-intensity="dynamic"] .operator-card[data-status="running"] {
+      animation-duration: 1.8s;
+      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.65), 0 0 0 4px rgba(255, 122, 69, 0.1);
+    }
+
+    @keyframes breathe {
+      0%,
+      100% {
+        box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.65), 0 0 0 3px rgba(255, 122, 69, 0.06);
+      }
+      50% {
+        box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.65), 0 0 0 4px rgba(255, 122, 69, 0.09);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .operator-card,
+      .operator-actions button,
+      .tab-button {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes halo {
+      from {
+        opacity: 0.9;
+        transform: scale(0.96);
+      }
+      to {
+        opacity: 0;
+        transform: scale(1.04);
+      }
+    }
+
+    @keyframes ripple {
+      from {
+        transform: translate(-50%, -50%) scale(0.2);
+        opacity: 0.8;
+      }
+      to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Maquette SMED</h1>
+    <p class="subtitle-line">
+      <span>Offline, tactile, V1 |</span>
+      <span class="datetime-inline" aria-live="polite">
+        <span id="header-datetime">--:-- – --/--/----</span>
+      </span>
+    </p>
+  </header>
+
+  <nav class="tab-bar" aria-label="Navigation des pages">
+    <button class="tab-button active" type="button" data-target="smed" aria-current="page">SMED</button>
+    <button class="tab-button" type="button" data-target="analyse">Analyse</button>
+    <button class="tab-button" type="button" data-target="parametres">Paramètres</button>
+  </nav>
+
+  <main>
+    <section class="page active" id="page-smed" data-tab="smed">
+      <!-- Bloc d’identification (affichage uniquement). -->
+      <div class="id-block">
+        <div class="field wide ligne">
+          <label for="ligne-input">Ligne</label>
+          <input id="ligne-input" type="text" placeholder="Saisir la ligne">
+        </div>
+        <div class="field wide po">
+          <label for="po-input">PO</label>
+          <input id="po-input" type="text" placeholder="Saisir le PO">
+        </div>
+        <div class="field date">
+          <label for="ipc-date">Date IPC</label>
+          <input id="ipc-date" type="date" aria-label="Dernier IPC - date">
+        </div>
+        <div class="field time">
+          <label for="ipc-time">Heure IPC</label>
+          <input id="ipc-time" type="time" aria-label="Dernier IPC - heure" step="60">
+        </div>
+        <div class="field actions-field">
+          <label for="reset-smed">Reset</label>
+          <div class="actions-wrap">
+            <button id="reset-smed" class="reset-button" type="button">Reset</button>
+          </div>
+        </div>
+      </div>
+      <section class="chrono-bar" id="global-chrono-bar">
+        <div class="chrono-card state-ok" id="chrono-card" aria-live="polite">
+          <div class="chrono-main">
+            <span class="chrono-label">Chronomètre</span>
+            <span class="chrono-time" id="chrono-time">00:00</span>
+            <span class="chrono-status" id="chrono-status">EN ATTENTE</span>
+          </div>
+          <div class="chrono-metrics">
+            <div class="chrono-metric">
+              Cible
+              <span id="chrono-target">61.0 min</span>
+            </div>
+            <div class="chrono-metric">
+              Alerte
+              <span id="chrono-alert">12.0 min</span>
+            </div>
+          </div>
+        </div>
+      </section>
+      <div id="smed-started" class="inline-status" role="status" aria-live="polite">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Le changement de production a démarré</span>
+      </div>
+      <div class="operators-section">
+        <h3>Étapes du changement</h3>
+        <div id="operators-grid" class="operators-grid"></div>
+      </div>
+    </section>
+
+    <section class="page" id="page-analyse" data-tab="analyse">
+      <h2>Analyse</h2>
+    </section>
+
+    <section class="page" id="page-parametres" data-tab="parametres">
+      <h2>Paramètres</h2>
+      <div class="settings-page" id="settings-page">
+        <div id="settings-lock" class="settings-lock" role="status">
+          Paramètres verrouillés pendant un SMED.
+        </div>
+        <div id="settings-form">
+          <div class="settings-group">
+            <h3>Organisation</h3>
+            <div class="settings-grid">
+              <div class="settings-field">
+                <label for="settings-operators">Nombre d’opérateurs</label>
+                <input id="settings-operators" type="number" min="1" step="1" inputmode="numeric">
+              </div>
+              <div class="settings-field">
+                <label for="settings-steps">Nombre d’étapes</label>
+                <input id="settings-steps" type="number" min="1" step="1" inputmode="numeric">
+              </div>
+            </div>
+          </div>
+          <div class="settings-group">
+            <h3>Cadence SMED</h3>
+            <div class="settings-grid">
+              <div class="settings-field">
+                <label for="settings-target">Durée cible SMED (min)</label>
+                <input id="settings-target" type="number" min="1" step="0.1" inputmode="decimal">
+              </div>
+              <div class="settings-field">
+                <label for="settings-alert">Seuil d’alerte (min)</label>
+                <input id="settings-alert" type="number" min="0.1" step="0.1" inputmode="decimal">
+              </div>
+            </div>
+          </div>
+          <div class="settings-group">
+            <h3>Affichage</h3>
+            <div class="settings-grid">
+              <div class="settings-field">
+                <label for="settings-intensity">Intensité visuelle</label>
+                <select id="settings-intensity">
+                  <option value="normal">Normal</option>
+                  <option value="dynamic">Dynamique</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="settings-actions">
+            <button id="settings-apply" class="settings-apply" type="button" disabled>Appliquer</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div class="modal-overlay" id="justification-modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-card">
+      <h4>Justification requise</h4>
+      <p>Temps dépassé. Sélectionne une raison.</p>
+      <label for="justification-reason">Raison</label>
+      <select id="justification-reason">
+        <option value="">Sélectionner</option>
+      </select>
+      <div id="justification-other-wrapper" hidden>
+        <label for="justification-other">Autre</label>
+        <textarea id="justification-other" placeholder="Décrire la raison..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="justification-cancel">Annuler</button>
+        <button type="button" id="justification-confirm" class="primary">Valider</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Navigation par onglets + état actif.
+    const buttons = document.querySelectorAll(".tab-button");
+    const pages = document.querySelectorAll(".page");
+    const headerDateTime = document.querySelector("#header-datetime");
+    const ipcDate = document.querySelector("#ipc-date");
+    const ipcTime = document.querySelector("#ipc-time");
+    const resetSmedButton = document.querySelector("#reset-smed");
+    const chronoCard = document.querySelector("#chrono-card");
+    const chronoTime = document.querySelector("#chrono-time");
+    const chronoStatus = document.querySelector("#chrono-status");
+    const chronoTargetLabel = document.querySelector("#chrono-target");
+    const chronoAlertLabel = document.querySelector("#chrono-alert");
+    const smedStarted = document.querySelector("#smed-started");
+    const operatorsGrid = document.querySelector("#operators-grid");
+    const justificationModal = document.querySelector("#justification-modal");
+    const justificationReason = document.querySelector("#justification-reason");
+    const justificationOtherWrapper = document.querySelector("#justification-other-wrapper");
+    const justificationOther = document.querySelector("#justification-other");
+    const justificationCancel = document.querySelector("#justification-cancel");
+    const justificationConfirm = document.querySelector("#justification-confirm");
+    const settingsOperators = document.querySelector("#settings-operators");
+    const settingsSteps = document.querySelector("#settings-steps");
+    const settingsTarget = document.querySelector("#settings-target");
+    const settingsAlert = document.querySelector("#settings-alert");
+    const settingsIntensity = document.querySelector("#settings-intensity");
+    const settingsApply = document.querySelector("#settings-apply");
+    const settingsLock = document.querySelector("#settings-lock");
+    const settingsForm = document.querySelector("#settings-form");
+    const paramTabButton = document.querySelector('.tab-button[data-target="parametres"]');
+
+    const setActiveTab = (target) => {
+      if (target === "parametres" && paramTabButton?.disabled) {
+        return;
+      }
+      buttons.forEach((button) => {
+        const isActive = button.dataset.target === target;
+        button.classList.toggle("active", isActive);
+        if (isActive) {
+          button.setAttribute("aria-current", "page");
+        } else {
+          button.removeAttribute("aria-current");
+        }
+      });
+      pages.forEach((page) => {
+        page.classList.toggle("active", page.dataset.tab === target);
+      });
+    };
+
+    // Retour visuel tactile renforcé (pressed + halo + ripple).
+    const addRipple = (button, event) => {
+      const rect = button.getBoundingClientRect();
+      const ripple = document.createElement("span");
+      ripple.className = "ripple";
+      ripple.style.left = `${event.clientX - rect.left}px`;
+      ripple.style.top = `${event.clientY - rect.top}px`;
+      button.appendChild(ripple);
+      ripple.addEventListener("animationend", () => ripple.remove());
+    };
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        setActiveTab(button.dataset.target);
+      });
+
+      button.addEventListener("pointerdown", (event) => {
+        button.classList.add("pressed", "halo");
+        addRipple(button, event);
+      });
+
+      const clearPress = () => button.classList.remove("pressed", "halo");
+      button.addEventListener("pointerup", clearPress);
+      button.addEventListener("pointerleave", clearPress);
+      button.addEventListener("pointercancel", clearPress);
+    });
+
+    // Démarrage SMED: date + heure du "Dernier IPC" renseignées.
+    let isSmedStarted = false;
+    let wasSmedStarted = false;
+    let startedToastTimeout = null;
+    let chronoInterval = null;
+    let chronoStartTimestamp = null;
+    let elapsedSeconds = 0;
+    let targetSeconds = 61 * 60;
+    let alertSeconds = 12 * 60;
+    const reasons = [
+      "Manque de matière",
+      "Problème machine",
+      "Attente qualité",
+      "Réglage complémentaire",
+      "Changement d'outil",
+      "Autre"
+    ];
+
+    const settings = {
+      operatorsCount: 3,
+      stepsCount: 5,
+      targetMinutes: 61.0,
+      alertMinutes: 12.0,
+      intensity: "normal"
+    };
+
+    const buildSteps = (count) => (
+      Array.from({ length: count }, (_, index) => {
+        let type = "internal";
+        if (index === 0 || index === 1) {
+          type = "external";
+        } else if (index === 2) {
+          type = "handoff";
+        }
+        return {
+          label: `Action ${index + 1}`,
+          targetMin: 5.0,
+          type
+        };
+      })
+    );
+
+    const buildOperators = (count, steps) => (
+      Array.from({ length: count }, (_, index) => ({
+        id: `op${index + 1}`,
+        name: `Opérateur ${index + 1}`,
+        currentStepIndex: 0,
+        stepStatus: "todo",
+        stepStartTimestamp: null,
+        elapsedSeconds: 0,
+        actualMin: null,
+        steps
+      }))
+    );
+
+    let operators = buildOperators(settings.operatorsCount, buildSteps(settings.stepsCount));
+
+    let operatorInterval = null;
+    let pendingJustification = null;
+
+    const resetOperators = () => {
+      operators = buildOperators(settings.operatorsCount, buildSteps(settings.stepsCount));
+      if (operatorInterval) {
+        clearInterval(operatorInterval);
+        operatorInterval = null;
+      }
+      renderOperators();
+    };
+
+    const startOperatorTick = () => {
+      if (operatorInterval) {
+        return;
+      }
+      operatorInterval = setInterval(() => {
+        if (!isSmedStarted) {
+          return;
+        }
+        let didUpdate = false;
+        operators.forEach((operator) => {
+          if (operator.stepStatus === "running" && operator.stepStartTimestamp) {
+            operator.elapsedSeconds = Math.floor((Date.now() - operator.stepStartTimestamp) / 1000);
+            didUpdate = true;
+          }
+        });
+        if (didUpdate) {
+          renderOperators();
+        }
+      }, 1000);
+    };
+
+    const startAllOperatorsOnSmedStart = () => {
+      operators.forEach((operator) => {
+        const step = operator.steps[operator.currentStepIndex];
+        if (operator.currentStepIndex < operator.steps.length && step && step.type !== "external") {
+          operator.stepStatus = "running";
+          operator.stepStartTimestamp = Date.now();
+          operator.elapsedSeconds = 0;
+          operator.actualMin = null;
+        }
+      });
+      startOperatorTick();
+      renderOperators();
+    };
+
+    const getStepStatusLabel = (operator, isDone, isCurrent) => {
+      if (isDone) {
+        return { label: "Terminé", className: "done" };
+      }
+      if (isCurrent && operator.stepStatus === "running") {
+        return { label: "En cours", className: "running" };
+      }
+      if (isCurrent && operator.stepStatus === "over") {
+        return { label: "Dépassé", className: "over" };
+      }
+      return { label: "À faire", className: "todo" };
+    };
+
+    const formatMinutes = (seconds) => (Math.round((seconds / 60) * 10) / 10).toFixed(1);
+
+    const renderOperators = () => {
+      if (!operatorsGrid) {
+        return;
+      }
+      operatorsGrid.innerHTML = "";
+      operators.forEach((operator) => {
+        const column = document.createElement("div");
+        column.className = "operator-column";
+        column.innerHTML = `<h4>${operator.name}</h4>`;
+
+        const maxUpcoming = 3;
+        const stepsToRender = operator.steps.map((step, index) => {
+          const isCurrent = index === operator.currentStepIndex;
+          const isDone = index < operator.currentStepIndex;
+          const status = getStepStatusLabel(operator, isDone, isCurrent);
+          return {
+            step,
+            index,
+            isCurrent,
+            isDone,
+            status
+          };
+        });
+
+        const currentStep = stepsToRender.find((item) => item.isCurrent);
+        const doneSteps = stepsToRender.filter((item) => item.isDone);
+        const futureSteps = stepsToRender.filter((item) => !item.isDone && !item.isCurrent);
+        const isRunning = currentStep?.status.className === "running";
+
+        const upcomingSlots = Math.max(isRunning ? maxUpcoming : maxUpcoming - 1, 1);
+        const upcomingSteps = [...futureSteps].slice(0, upcomingSlots);
+        const remainingUpcoming = Math.max(futureSteps.length - upcomingSteps.length, 0);
+
+        const orderedSteps = [];
+        if (isRunning && currentStep) {
+          orderedSteps.push(currentStep);
+        } else if (currentStep) {
+          upcomingSteps.unshift(currentStep);
+        }
+        orderedSteps.push(...upcomingSteps);
+
+        orderedSteps.forEach((stepItem) => {
+          const { step, index, isCurrent, isDone, status } = stepItem;
+          const isExternal = step.type === "external";
+          const isHandoff = step.type === "handoff";
+          const stepLabel = step.label;
+          const targetMin = step.targetMin.toFixed(1);
+          const actualMin = isCurrent && operator.actualMin !== null ? operator.actualMin.toFixed(1) : "--";
+          const isFrozenExternal = isSmedStarted && isExternal;
+          const card = document.createElement("div");
+          const handoffStateClass = isHandoff ? (isSmedStarted ? "after-ipc" : "before-ipc") : "";
+          const isCompact = status.className !== "running";
+          const baseClasses = [
+            "operator-card",
+            `step-type-${step.type}`,
+            handoffStateClass,
+            isFrozenExternal ? "external-frozen" : "",
+            isCompact ? "compact" : ""
+          ].filter(Boolean).join(" ");
+          card.className = baseClasses;
+          card.dataset.status = status.className;
+
+          const canValidate = (() => {
+            if (isDone) {
+              return false;
+            }
+            if (!isCurrent) {
+              return false;
+            }
+            if (!isSmedStarted) {
+              return isExternal;
+            }
+            if (isExternal) {
+              return false;
+            }
+            return operator.stepStatus === "running";
+          })();
+
+          const showButton = status.className === "running";
+          card.innerHTML = `
+            <div class="operator-header">
+              <div class="operator-status ${status.className}">${status.label}</div>
+            </div>
+            <div class="operator-step">
+              <strong>${stepLabel}</strong>
+              <span>Étape ${index + 1} / ${operator.steps.length}</span>
+            </div>
+            <div class="operator-chips">
+              <span class="chip">Cible: ${targetMin} min</span>
+              <span class="chip ${actualMin === "--" ? "muted" : ""}">Réel: ${actualMin} min</span>
+            </div>
+            ${showButton ? `
+            <div class="operator-actions">
+              <button class="primary" data-action="validate" data-op="${operator.id}" data-step-index="${index}" ${canValidate ? "" : "disabled"}>Valider</button>
+            </div>
+            ` : ""}
+            <div class="operator-footer">Chrono étape: ${isCurrent ? formatMinutes(operator.elapsedSeconds) : "--"} min</div>
+          `;
+          column.appendChild(card);
+        });
+
+        if (remainingUpcoming > 0) {
+          const indicator = document.createElement("div");
+          indicator.className = "operator-card compact compact-indicator";
+          indicator.dataset.status = "todo";
+          indicator.innerHTML = `
+            <div class="operator-step">
+              <strong>+${remainingUpcoming} étapes</strong>
+              <span>À venir</span>
+            </div>
+          `;
+          column.appendChild(indicator);
+        }
+
+        doneSteps.forEach((stepItem) => {
+          const { step, index, status } = stepItem;
+          const isExternal = step.type === "external";
+          const isHandoff = step.type === "handoff";
+          const stepLabel = step.label;
+          const targetMin = step.targetMin.toFixed(1);
+          const actualMin = stepItem.index === operator.currentStepIndex && operator.actualMin !== null
+            ? operator.actualMin.toFixed(1)
+            : "--";
+          const isFrozenExternal = isSmedStarted && isExternal;
+          const card = document.createElement("div");
+          const handoffStateClass = isHandoff ? (isSmedStarted ? "after-ipc" : "before-ipc") : "";
+          const baseClasses = [
+            "operator-card",
+            "compact",
+            `step-type-${step.type}`,
+            handoffStateClass,
+            isFrozenExternal ? "external-frozen" : ""
+          ].filter(Boolean).join(" ");
+          card.className = baseClasses;
+          card.dataset.status = status.className;
+          card.innerHTML = `
+            <div class="operator-header">
+              <div class="operator-status ${status.className}">${status.label}</div>
+            </div>
+            <div class="operator-step">
+              <strong>${stepLabel}</strong>
+              <span>Étape ${index + 1} / ${operator.steps.length}</span>
+            </div>
+            <div class="operator-chips">
+              <span class="chip">Cible: ${targetMin} min</span>
+              <span class="chip ${actualMin === "--" ? "muted" : ""}">Réel: ${actualMin} min</span>
+            </div>
+            <div class="operator-footer">Chrono étape: -- min</div>
+          `;
+          column.appendChild(card);
+        });
+        operatorsGrid.appendChild(column);
+      });
+    };
+
+    const openJustificationModal = (payload) => {
+      pendingJustification = payload;
+      if (justificationModal) {
+        justificationModal.classList.add("active");
+        justificationModal.setAttribute("aria-hidden", "false");
+      }
+    };
+
+    const closeJustificationModal = () => {
+      pendingJustification = null;
+      if (justificationModal) {
+        justificationModal.classList.remove("active");
+        justificationModal.setAttribute("aria-hidden", "true");
+      }
+      if (justificationReason) {
+        justificationReason.value = "";
+      }
+      if (justificationOther) {
+        justificationOther.value = "";
+      }
+      if (justificationOtherWrapper) {
+        justificationOtherWrapper.hidden = true;
+      }
+    };
+
+    const completeStep = (operator, actualMin, isOver) => {
+      operator.actualMin = actualMin;
+      operator.stepStatus = isOver ? "over" : "done";
+      operator.stepStartTimestamp = null;
+      operator.elapsedSeconds = 0;
+      operator.currentStepIndex += 1;
+      if (operator.currentStepIndex >= operator.steps.length) {
+        operator.stepStatus = "done";
+      } else if (isSmedStarted) {
+        operator.stepStatus = "running";
+        operator.stepStartTimestamp = Date.now();
+        operator.elapsedSeconds = 0;
+        operator.actualMin = null;
+      } else {
+        operator.stepStatus = "todo";
+      }
+      renderOperators();
+    };
+
+    const handleValidate = (operator, stepIndex) => {
+      if (operator.currentStepIndex !== stepIndex) {
+        return;
+      }
+      const step = operator.steps[operator.currentStepIndex];
+      if (!step) {
+        return;
+      }
+      const isExternal = step.type === "external";
+      if (isSmedStarted) {
+        if (isExternal || operator.stepStatus !== "running") {
+          return;
+        }
+      } else if (!isExternal) {
+        return;
+      }
+      const actualMinValue = Number(formatMinutes(operator.elapsedSeconds));
+      const isOver = actualMinValue > step.targetMin;
+      if (isOver) {
+        openJustificationModal({ operatorId: operator.id, actualMin: actualMinValue });
+        return;
+      }
+      completeStep(operator, actualMinValue, false);
+    };
+
+    const initializeReasons = () => {
+      if (!justificationReason) {
+        return;
+      }
+      justificationReason.innerHTML = '<option value="">Sélectionner</option>';
+      reasons.forEach((reason) => {
+        const option = document.createElement("option");
+        option.value = reason;
+        option.textContent = reason;
+        justificationReason.appendChild(option);
+      });
+    };
+
+    const formatTime = (totalSeconds) => {
+      const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+      const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+      return `${hours}:${minutes}`;
+    };
+
+    const updateChronoLabels = () => {
+      if (chronoTargetLabel) {
+        chronoTargetLabel.textContent = `${settings.targetMinutes.toFixed(1)} min`;
+      }
+      if (chronoAlertLabel) {
+        chronoAlertLabel.textContent = `${settings.alertMinutes.toFixed(1)} min`;
+      }
+    };
+
+    const updateChronoDisplay = () => {
+      if (!chronoCard || !chronoTime || !chronoStatus) {
+        return;
+      }
+      const progress = Math.min(elapsedSeconds / targetSeconds, 1);
+      chronoCard.style.setProperty("--chrono-progress", progress);
+      chronoTime.textContent = formatTime(elapsedSeconds);
+
+      let stateClass = "state-ok";
+      if (elapsedSeconds >= targetSeconds) {
+        stateClass = "state-over";
+      } else if (elapsedSeconds >= alertSeconds) {
+        stateClass = "state-warn";
+      }
+
+      chronoCard.classList.remove("state-ok", "state-warn", "state-over");
+      chronoCard.classList.add(stateClass);
+
+      if (!isSmedStarted) {
+        chronoStatus.textContent = "EN ATTENTE";
+      } else if (elapsedSeconds >= targetSeconds) {
+        chronoStatus.textContent = "DEPASSEMENT";
+      } else {
+        chronoStatus.textContent = "EN COURS";
+      }
+    };
+
+    const startChrono = () => {
+      if (chronoInterval) {
+        return;
+      }
+      chronoStartTimestamp = Date.now() - elapsedSeconds * 1000;
+      chronoInterval = setInterval(() => {
+        elapsedSeconds = Math.floor((Date.now() - chronoStartTimestamp) / 1000);
+        updateChronoDisplay();
+      }, 1000);
+      updateChronoDisplay();
+    };
+
+    const stopChrono = (reset = false) => {
+      if (chronoInterval) {
+        clearInterval(chronoInterval);
+        chronoInterval = null;
+      }
+      if (reset) {
+        elapsedSeconds = 0;
+        chronoStartTimestamp = null;
+      }
+      updateChronoDisplay();
+    };
+
+    const updateSmedStarted = () => {
+      const hasDate = Boolean(ipcDate && ipcDate.value);
+      const hasTime = Boolean(ipcTime && ipcTime.value);
+      const newIsSmedStarted = hasDate && hasTime;
+      isSmedStarted = newIsSmedStarted;
+      if (paramTabButton) {
+        paramTabButton.disabled = isSmedStarted;
+        paramTabButton.classList.toggle("disabled", isSmedStarted);
+      }
+      [settingsOperators, settingsSteps, settingsTarget, settingsAlert, settingsIntensity].forEach((field) => {
+        if (field) {
+          field.disabled = isSmedStarted;
+        }
+      });
+      if (settingsLock) {
+        settingsLock.classList.toggle("visible", isSmedStarted);
+      }
+      if (settingsForm) {
+        settingsForm.classList.toggle("settings-disabled", isSmedStarted);
+      }
+      if (settingsApply) {
+        settingsApply.disabled = isSmedStarted || !hasSettingsChanges();
+      }
+      if (isSmedStarted && document.querySelector(".page.active")?.dataset.tab === "parametres") {
+        setActiveTab("smed");
+      }
+      if (smedStarted && !newIsSmedStarted) {
+        smedStarted.classList.remove("visible");
+      }
+      if (!newIsSmedStarted && startedToastTimeout) {
+        clearTimeout(startedToastTimeout);
+        startedToastTimeout = null;
+      }
+      if (!wasSmedStarted && newIsSmedStarted && smedStarted) {
+        if (startedToastTimeout) {
+          clearTimeout(startedToastTimeout);
+          startedToastTimeout = null;
+        }
+        smedStarted.classList.add("visible");
+        startedToastTimeout = setTimeout(() => {
+          smedStarted.classList.remove("visible");
+          startedToastTimeout = null;
+        }, 5000);
+        startAllOperatorsOnSmedStart();
+      }
+      if (isSmedStarted) {
+        startChrono();
+        startOperatorTick();
+      } else {
+        stopChrono(true);
+      }
+      wasSmedStarted = newIsSmedStarted;
+      renderOperators();
+    };
+
+    const readSettingsValues = () => {
+      const operatorsCount = Math.max(1, Number(settingsOperators?.value || settings.operatorsCount));
+      const stepsCount = Math.max(1, Number(settingsSteps?.value || settings.stepsCount));
+      const targetMinutes = Math.max(1, Number(settingsTarget?.value || settings.targetMinutes));
+      const alertMinutes = Math.max(0.1, Number(settingsAlert?.value || settings.alertMinutes));
+      const intensity = settingsIntensity?.value || settings.intensity;
+      return {
+        operatorsCount,
+        stepsCount,
+        targetMinutes,
+        alertMinutes,
+        intensity
+      };
+    };
+
+    const hasSettingsChanges = () => {
+      const values = readSettingsValues();
+      return (
+        values.operatorsCount !== settings.operatorsCount ||
+        values.stepsCount !== settings.stepsCount ||
+        values.targetMinutes !== settings.targetMinutes ||
+        values.alertMinutes !== settings.alertMinutes ||
+        values.intensity !== settings.intensity
+      );
+    };
+
+    const syncSettingsForm = () => {
+      document.body.dataset.intensity = settings.intensity;
+      if (settingsOperators) {
+        settingsOperators.value = String(settings.operatorsCount);
+      }
+      if (settingsSteps) {
+        settingsSteps.value = String(settings.stepsCount);
+      }
+      if (settingsTarget) {
+        settingsTarget.value = settings.targetMinutes.toFixed(1);
+      }
+      if (settingsAlert) {
+        settingsAlert.value = settings.alertMinutes.toFixed(1);
+        settingsAlert.max = Math.max(settings.targetMinutes - 0.1, 0.1).toString();
+      }
+      if (settingsIntensity) {
+        settingsIntensity.value = settings.intensity;
+      }
+      updateChronoLabels();
+    };
+
+    const applySettings = () => {
+      if (isSmedStarted) {
+        return;
+      }
+      const values = readSettingsValues();
+      const safeAlert = Math.min(values.alertMinutes, Math.max(values.targetMinutes - 0.1, 0.1));
+      settings.operatorsCount = values.operatorsCount;
+      settings.stepsCount = values.stepsCount;
+      settings.targetMinutes = values.targetMinutes;
+      settings.alertMinutes = safeAlert;
+      settings.intensity = values.intensity;
+      targetSeconds = settings.targetMinutes * 60;
+      alertSeconds = settings.alertMinutes * 60;
+      document.body.dataset.intensity = settings.intensity;
+      syncSettingsForm();
+      resetOperators();
+      stopChrono(true);
+      updateChronoDisplay();
+      if (settingsApply) {
+        settingsApply.disabled = true;
+      }
+      setActiveTab("smed");
+    };
+
+    const handleSettingsInput = () => {
+      if (settingsAlert && settingsTarget) {
+        const targetValue = Math.max(1, Number(settingsTarget.value || settings.targetMinutes));
+        settingsAlert.max = Math.max(targetValue - 0.1, 0.1).toString();
+      }
+      if (settingsApply) {
+        settingsApply.disabled = isSmedStarted || !hasSettingsChanges();
+      }
+    };
+
+    if (ipcDate && ipcTime) {
+      ipcDate.addEventListener("input", updateSmedStarted);
+      ipcTime.addEventListener("input", updateSmedStarted);
+    }
+
+    if (settingsOperators) {
+      settingsOperators.addEventListener("input", handleSettingsInput);
+    }
+    if (settingsSteps) {
+      settingsSteps.addEventListener("input", handleSettingsInput);
+    }
+    if (settingsTarget) {
+      settingsTarget.addEventListener("input", handleSettingsInput);
+    }
+    if (settingsAlert) {
+      settingsAlert.addEventListener("input", handleSettingsInput);
+    }
+    if (settingsIntensity) {
+      settingsIntensity.addEventListener("change", handleSettingsInput);
+    }
+
+    if (settingsApply) {
+      settingsApply.addEventListener("click", applySettings);
+    }
+
+    if (operatorsGrid) {
+      operatorsGrid.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) {
+          return;
+        }
+        const action = target.dataset.action;
+        const opId = target.dataset.op;
+        const stepIndex = Number(target.dataset.stepIndex);
+        if (!action || !opId) {
+          return;
+        }
+        const operator = operators.find((item) => item.id === opId);
+        if (!operator) {
+          return;
+        }
+        if (action === "validate") {
+          if (Number.isNaN(stepIndex)) {
+            return;
+          }
+          handleValidate(operator, stepIndex);
+        }
+      });
+    }
+
+    if (justificationReason) {
+      justificationReason.addEventListener("change", () => {
+        if (!justificationOtherWrapper || !justificationOther) {
+          return;
+        }
+        const isOther = justificationReason.value === "Autre";
+        justificationOtherWrapper.hidden = !isOther;
+        if (!isOther) {
+          justificationOther.value = "";
+        }
+      });
+    }
+
+    if (justificationCancel) {
+      justificationCancel.addEventListener("click", () => {
+        closeJustificationModal();
+      });
+    }
+
+    if (justificationConfirm) {
+      justificationConfirm.addEventListener("click", () => {
+        if (!pendingJustification) {
+          closeJustificationModal();
+          return;
+        }
+        if (!justificationReason) {
+          return;
+        }
+        const selectedReason = justificationReason.value;
+        if (!selectedReason) {
+          return;
+        }
+        if (selectedReason === "Autre" && (!justificationOther || !justificationOther.value.trim())) {
+          return;
+        }
+        const operator = operators.find((item) => item.id === pendingJustification.operatorId);
+        if (operator) {
+          completeStep(operator, pendingJustification.actualMin, true);
+        }
+        closeJustificationModal();
+      });
+    }
+
+    if (resetSmedButton) {
+      resetSmedButton.addEventListener("click", () => {
+        const shouldReset = window.confirm("Confirmer la remise à zéro du SMED ?");
+        if (!shouldReset) {
+          return;
+        }
+        if (ipcDate) {
+          ipcDate.value = "";
+        }
+        if (ipcTime) {
+          ipcTime.value = "";
+        }
+        const ligneInput = document.querySelector("#ligne-input");
+        const poInput = document.querySelector("#po-input");
+        if (ligneInput) {
+          ligneInput.value = "";
+        }
+        if (poInput) {
+          poInput.value = "";
+        }
+        isSmedStarted = false;
+        wasSmedStarted = false;
+        if (startedToastTimeout) {
+          clearTimeout(startedToastTimeout);
+          startedToastTimeout = null;
+        }
+        if (smedStarted) {
+          smedStarted.classList.remove("visible");
+        }
+        resetOperators();
+        updateSmedStarted();
+      });
+    }
+
+    // Date/heure en direct (locale fr-FR, mise à jour chaque seconde).
+    const updateDateTime = () => {
+      if (!headerDateTime) {
+        return;
+      }
+      const now = new Date();
+      const time = now.toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      });
+      const date = now.toLocaleDateString("fr-FR");
+      headerDateTime.textContent = `${time} – ${date}`;
+    };
+
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+    syncSettingsForm();
+    updateSmedStarted();
+    initializeReasons();
+    renderOperators();
+  </script>
+</body>
+</html>
