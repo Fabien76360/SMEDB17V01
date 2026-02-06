@@ -4454,6 +4454,30 @@ html += `
       const durationRealMin = isSmedFinished && lastIpc && firstIpc ? (firstIpc.getTime() - lastIpc.getTime()) / 60000 : null;
       const gapMin = durationRealMin === null ? null : durationRealMin - durationTargetMin;
 
+      const pauseEvents = (Array.isArray(sessionEvents) ? sessionEvents : [])
+        .filter((ev) => ev && (ev.type === "pause" || ev.type === "resume") && typeof ev.at === "number")
+        .sort((a, b) => a.at - b.at);
+      const pausePairs = [];
+      for (let i = 0; i < pauseEvents.length; i += 1) {
+        const pauseEvent = pauseEvents[i];
+        if (!pauseEvent || pauseEvent.type !== "pause") {
+          continue;
+        }
+        const resumeEvent = pauseEvents.slice(i + 1).find((ev) => ev.type === "resume");
+        if (!resumeEvent) {
+          continue;
+        }
+        const startMs = pauseEvent.at;
+        const endMs = resumeEvent.at;
+        const durationMs = endMs - startMs;
+        if (durationMs <= 0) {
+          continue;
+        }
+        const note = resumeEvent.payload && resumeEvent.payload.note ? String(resumeEvent.payload.note) : "";
+        pausePairs.push({ startMs, endMs, durationMs, note });
+      }
+      const totalPauseMin = pausePairs.reduce((sum, item) => sum + (item.durationMs / 60000), 0);
+
       const steps = buildStepsExport().map((row) => {
         const operatorIndex = row.operatorIndex ?? (String(row.operator || "").match(/(\d+)/)?.[1] ? Number(String(row.operator).match(/(\d+)/)[1]) : 1);
         const delta = row.realMin === null || row.realMin === undefined ? null : row.realMin - row.targetMin;
@@ -4502,6 +4526,17 @@ html += `
         .join("") || `<div class="pill">—</div>`;
 
       const notesHtml = allNotes.map((n) => `<div class="note"><div class="meta">${formatTimeOnly(new Date(n.at))} , Op ${n.operatorIndex} , ${escapeHtml(n.stepName)}</div><div>${escapeHtml(n.text)}</div></div>`).join("") || `<div class="note"><div class="meta">—</div><div>—</div></div>`;
+
+      const pausesTotalText = totalPauseMin > 0 ? `${totalPauseMin.toFixed(1)} min` : "—";
+      const pausesHtml = pausePairs.length
+        ? pausePairs.map((item) => {
+          const startText = formatDateTime(new Date(item.startMs));
+          const endText = formatDateTime(new Date(item.endMs));
+          const durationText = `${(item.durationMs / 60000).toFixed(1)} min`;
+          const noteText = item.note ? ` , ${escapeHtml(item.note)}` : "";
+          return `<div>${startText} → ${endText} , ${durationText}${noteText}</div>`;
+        }).join("")
+        : `<div>—</div>`;
 
       const stepsRows = steps
         .slice()
@@ -4671,6 +4706,10 @@ html += `
       <div class="value">${gapMin === null ? "—" : gapText}</div>
       <div class="sub">${topDriftHtml}</div>
     </div>
+    <div class="tile">
+      <div class="label">Temps en pause</div>
+      <div class="value">${pausesTotalText}</div>
+    </div>
   </div>
 
   <div class="section">
@@ -4683,6 +4722,11 @@ html += `
   <div class="section">
     <div class="h">Notes terrain (top 10)</div>
     <div class="notes">${notesHtml}</div>
+  </div>
+
+  <div class="section">
+    <div class="h">Pauses</div>
+    <div class="notes">${pausesHtml}</div>
   </div>
 
   <div class="section">
