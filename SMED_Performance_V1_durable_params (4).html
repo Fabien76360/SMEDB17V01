@@ -1899,6 +1899,14 @@
       </div>
 
       <div class="analysis-card">
+        <h3>Pauses</h3>
+        <div class="mini-title">Temps total en pause</div>
+        <div class="mini-table" id="analysis-pauses-total"></div>
+        <div class="mini-title" style="margin-top: 14px;">Liste des pauses</div>
+        <div class="notes-list" id="analysis-pauses-list"></div>
+      </div>
+
+      <div class="analysis-card">
         <h3>Timeline (étapes + events)</h3>
         <div class="timeline" id="analysis-timeline"></div>
         <div class="mini-title" style="margin-top: 14px;">Notes terrain</div>
@@ -2382,6 +2390,8 @@
     const analysisByType = document.querySelector("#analysis-by-type");
     const analysisByOperator = document.querySelector("#analysis-by-operator");
     const analysisTopOver = document.querySelector("#analysis-top-over");
+    const analysisPausesTotal = document.querySelector("#analysis-pauses-total");
+    const analysisPausesList = document.querySelector("#analysis-pauses-list");
     const analysisTimeline = document.querySelector("#analysis-timeline");
     const analysisNotesGlobal = document.querySelector("#analysis-notes-global");
     const analysisStepsBody = document.querySelector("#analysis-steps-body");
@@ -2721,6 +2731,9 @@
     };
 
     const handleValidate = (operator, stepIndex) => {
+      if (isSmedPaused) {
+        return;
+      }
       const step = operator.steps[stepIndex];
       if (!step || step.status !== "running") {
         return;
@@ -2881,10 +2894,11 @@
           `;
 
           if (isDone && stepIndex === lastDoneIndex) {
+            const undoDisabled = isSmedPaused ? "disabled" : "";
             html += `
               <div class="step-actions">
                 <div class="chip-bar">
-                  <button class="chip-button undo" data-action="undo-last" data-op="${operator.id}">Annuler</button>
+                  <button class="chip-button undo" data-action="undo-last" data-op="${operator.id}" ${undoDisabled}>Annuler</button>
                 </div>
               </div>
             `;
@@ -2894,7 +2908,7 @@
             const canValidate = isSmedStarted || step.type === "external";
             const actions = Array.isArray(step.actions) ? step.actions : [];
             const done = Array.isArray(step.actionsDone) ? step.actionsDone : [];
-            const disabled = !canValidate ? "disabled" : "";
+            const disabled = !canValidate || isSmedPaused ? "disabled" : "";
 html += `
               <div class="step-actions">
                 <div class="chip-bar">
@@ -3144,6 +3158,46 @@ html += `
         analysisGapDuration.textContent = `${gap.toFixed(1)} min`;
       }
 
+      const pauseEvents = (Array.isArray(sessionEvents) ? sessionEvents : [])
+        .filter((ev) => ev && (ev.type === "pause" || ev.type === "resume") && typeof ev.at === "number")
+        .sort((a, b) => a.at - b.at);
+      const pausePairs = [];
+      for (let i = 0; i < pauseEvents.length; i += 1) {
+        const pauseEvent = pauseEvents[i];
+        if (!pauseEvent || pauseEvent.type !== "pause") {
+          continue;
+        }
+        const resumeEvent = pauseEvents.slice(i + 1).find((ev) => ev.type === "resume");
+        if (!resumeEvent) {
+          continue;
+        }
+        const startMs = pauseEvent.at;
+        const endMs = resumeEvent.at;
+        const durationMs = endMs - startMs;
+        if (durationMs <= 0) {
+          continue;
+        }
+        const note = resumeEvent.payload && resumeEvent.payload.note ? String(resumeEvent.payload.note) : "";
+        pausePairs.push({ startMs, endMs, durationMs, note });
+      }
+      const totalPauseMin = pausePairs.reduce((sum, item) => sum + (item.durationMs / 60000), 0);
+
+      if (analysisPausesTotal) {
+        const totalText = totalPauseMin > 0 ? `${totalPauseMin.toFixed(1)} min` : "—";
+        analysisPausesTotal.innerHTML = `<div class="mini-row"><div>Total</div><div>${totalText}</div></div>`;
+      }
+      if (analysisPausesList) {
+        analysisPausesList.innerHTML = pausePairs.length
+          ? pausePairs.map((item) => {
+            const startText = formatDateTime(new Date(item.startMs));
+            const endText = formatDateTime(new Date(item.endMs));
+            const durationText = `${(item.durationMs / 60000).toFixed(1)} min`;
+            const noteText = item.note ? ` , ${escapeHtml(item.note)}` : "";
+            return `<div class="note-card"><div class="meta">${startText} → ${endText}</div><div>${durationText}${noteText}</div></div>`;
+          }).join("")
+          : `<div class="note-card"><div class="meta">—</div><div>—</div></div>`;
+      }
+
       const byType = { external: { min: 0 }, handoff: { min: 0 }, internal: { min: 0 } };
       const byOperator = {};
       let totalSmedReal = 0;
@@ -3347,7 +3401,9 @@ html += `
       updatePauseButton();
       if (isSmedStarted && !isSmedFinished) {
         startChrono();
-        startOperatorTick();
+        if (!isSmedPaused) {
+          startOperatorTick();
+        }
       } else if (isSmedStarted && isSmedFinished) {
         stopChrono(false);
         stopOperatorTick();
@@ -3880,10 +3936,10 @@ html += `
         if (!operator) {
           return;
         }
-        if (action === "toggle-action") {
-          const actionIndex = Number(target.dataset.actionIndex);
-          const step = operator.steps[stepIndex];
-          if (step && Array.isArray(step.actionsDone) && !Number.isNaN(actionIndex)) {
+      if (action === "toggle-action") {
+        const actionIndex = Number(target.dataset.actionIndex);
+        const step = operator.steps[stepIndex];
+        if (step && Array.isArray(step.actionsDone) && !Number.isNaN(actionIndex)) {
             step.actionsDone[actionIndex] = target.checked;
             renderOperators();
             persistSave("active");
@@ -3891,6 +3947,9 @@ html += `
           return;
         }
         if (action === "undo-last") {
+          if (isSmedPaused) {
+            return;
+          }
           const hasDone = operator.steps.some((item) => item.status === "done");
           if (!hasDone) {
             return;
@@ -3943,6 +4002,9 @@ html += `
         }
         if (action === "validate") {
           if (Number.isNaN(stepIndex)) {
+            return;
+          }
+          if (isSmedPaused) {
             return;
           }
           handleValidate(operator, stepIndex);
@@ -4052,7 +4114,10 @@ html += `
           state.marks.push({ kind: "pause", t: pauseStartTimestamp, label: "Pause SMED", note: "" });
           sessionEvents.push({ type: "pause", at: pauseStartTimestamp, operatorIndex: null, stepId: null, payload: {} });
           updatePauseButton();
+          stopOperatorTick();
           updateChronoDisplay();
+          renderOperators();
+          renderAnalysis();
           persistSave("active");
           return;
         }
@@ -4062,8 +4127,16 @@ html += `
         }
         const resumeTimestamp = Date.now();
         isSmedPaused = false;
-        if (pauseStartTimestamp) {
-          pausedDurationMs += resumeTimestamp - pauseStartTimestamp;
+        const deltaPauseMs = pauseStartTimestamp ? resumeTimestamp - pauseStartTimestamp : 0;
+        if (deltaPauseMs > 0) {
+          pausedDurationMs += deltaPauseMs;
+          operators.forEach((operator) => {
+            operator.steps.forEach((step) => {
+              if (step.status === "running" && typeof step.startTime === "number") {
+                step.startTime += deltaPauseMs;
+              }
+            });
+          });
         }
         pauseStartTimestamp = null;
         if (!state || typeof state !== "object") {
@@ -4076,6 +4149,11 @@ html += `
         sessionEvents.push({ type: "resume", at: resumeTimestamp, operatorIndex: null, stepId: null, payload: { note: reason.trim() } });
         updatePauseButton();
         updateChronoDisplay();
+        renderOperators();
+        renderAnalysis();
+        if (isSmedStarted && !isSmedFinished) {
+          startOperatorTick();
+        }
         persistSave("active");
       });
     }
@@ -4399,6 +4477,35 @@ html += `
         };
       });
 
+      const pauseEvents = (Array.isArray(sessionEvents) ? sessionEvents : [])
+        .filter((ev) => ev && (ev.type === "pause" || ev.type === "resume") && typeof ev.at === "number")
+        .sort((a, b) => a.at - b.at);
+      const pausePairs = [];
+      for (let i = 0; i < pauseEvents.length; i += 1) {
+        const pauseEvent = pauseEvents[i];
+        if (!pauseEvent || pauseEvent.type !== "pause") {
+          continue;
+        }
+        const resumeEvent = pauseEvents.slice(i + 1).find((ev) => ev.type === "resume");
+        if (!resumeEvent) {
+          continue;
+        }
+        const startMs = pauseEvent.at;
+        const endMs = resumeEvent.at;
+        const durationMs = endMs - startMs;
+        if (durationMs <= 0) {
+          continue;
+        }
+        const note = resumeEvent.payload && resumeEvent.payload.note ? String(resumeEvent.payload.note) : "";
+        pausePairs.push({ startMs, endMs, durationMs, note });
+      }
+      const pauses = pausePairs.map((item) => ({
+        startTs: new Date(item.startMs).toISOString(),
+        endTs: new Date(item.endMs).toISOString(),
+        durationMs: item.durationMs,
+        reason: item.note
+      }));
+
       const payload = {
         meta: {
           toolName: "SMED Maquette",
@@ -4427,7 +4534,8 @@ html += `
           internalRealMin: realByType.internal
         },
         steps,
-        events
+        events,
+        pauses
       };
 
       const lastIpcForName = lastIpc || new Date();
