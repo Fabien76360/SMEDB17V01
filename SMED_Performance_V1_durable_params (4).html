@@ -3286,9 +3286,27 @@ html += `
       }
     };
 
+    const areAllExternalTasksDone = () => {
+      if (!Array.isArray(operators) || operators.length === 0) {
+        const hasExternalSteps = Array.isArray(settings?.standardSteps)
+          && settings.standardSteps.some((step) => step?.type === "external");
+        return !hasExternalSteps;
+      }
+      const externalSteps = operators.flatMap((operator) => (Array.isArray(operator.steps) ? operator.steps : []))
+        .filter((step) => step?.type === "external");
+      if (externalSteps.length === 0) {
+        return true;
+      }
+      return externalSteps.every((step) => step && step.status === "done");
+    };
+
     const updateSmedStarted = () => {
       const hasDate = Boolean(ipcDate && ipcDate.value);
       const hasTime = Boolean(ipcTime && ipcTime.value);
+      if (!isSmedStarted && hasDate && hasTime && !areAllExternalTasksDone()) {
+        alert("Impossible de démarrer: valider toutes les tâches externes avant de lancer le chrono.");
+        return;
+      }
       const newIsSmedStarted = hasDate && hasTime;
       isSmedStarted = newIsSmedStarted;
       if (productInput) {
