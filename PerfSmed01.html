@@ -1,0 +1,4885 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Maquette SMED</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f5f2;
+      --surface: #ffffff;
+      --surface-muted: #f0f1f4;
+      --text: #152033;
+      --text-muted: #5a6472;
+      --primary: #2a56ff;
+      --accent: #ff7a45;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warn: #f59e0b;
+      --chrono-ok: #2f8a57;
+      --chrono-warn: #d6a020;
+      --chrono-over: #c75757;
+      --chrono-over-base: #f8e9e9;
+      --reset-bg: #fdeeee;
+      --reset-border: rgba(161, 72, 72, 0.35);
+      --reset-text: #7b2b2b;
+      --border: rgba(21, 32, 51, 0.12);
+      --shadow-sm: 0 1px 2px rgba(21, 32, 51, 0.06), 0 4px 10px rgba(21, 32, 51, 0.06);
+      --shadow-md: 0 8px 24px rgba(21, 32, 51, 0.1);
+      --shadow-lg: 0 14px 40px rgba(21, 32, 51, 0.14);
+      --glow: 0 0 0 3px rgba(43, 58, 143, 0.1);
+      --radius: 18px;
+      --focus: #ffbf3f;
+      --header-height: 72px;
+      --tabbar-height: 64px;
+      --sticky-top: calc(var(--header-height) + var(--tabbar-height) + 8px);
+    }
+
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(31, 75, 153, 0.08), transparent 60%),
+        radial-gradient(900px 500px at 90% 0%, rgba(214, 160, 32, 0.08), transparent 55%),
+        radial-gradient(1000px 600px at 50% 110%, rgba(255, 170, 90, 0.1), transparent 60%),
+        var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 1));
+      height: var(--header-height);
+      padding: 8px 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-md);
+      z-index: 20;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0.2px;
+      font-weight: 700;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .subtitle-line {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: baseline;
+    }
+
+    .subtitle-line span:first-child {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(42, 86, 255, 0.1);
+      border: 1px solid rgba(42, 86, 255, 0.18);
+      color: rgba(21, 32, 51, 0.8);
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+
+    .datetime-inline {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.4px;
+      min-width: 170px;
+      display: inline-block;
+    }
+
+    main {
+      padding: calc(var(--header-height) + var(--tabbar-height) + 16px) 20px 32px;
+      min-height: 100vh;
+    }
+
+    @media (max-height: 700px) {
+      :root {
+        --header-height: 60px;
+        --tabbar-height: 56px;
+      }
+
+      header {
+        padding: 8px 22px;
+      }
+
+      header h1 {
+        font-size: 20px;
+      }
+
+      .datetime-inline {
+        min-width: 160px;
+      }
+
+      main {
+        padding: calc(var(--header-height) + var(--tabbar-height) + 12px) 16px 24px;
+      }
+    }
+
+    .page {
+      display: none;
+      animation: fadeIn 0.2s ease-in;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .page h2 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    .id-block {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: minmax(180px, 1.1fr) minmax(220px, 1.7fr) minmax(180px, 1.2fr) minmax(160px, 1fr) minmax(130px, 0.8fr) minmax(150px, 0.7fr);
+      grid-template-areas: "ligne po product ipc-date ipc-time actions";
+      margin-bottom: 16px;
+      max-width: 1280px;
+    }
+
+    .field.product {
+      grid-area: product;
+    }
+
+    @media (max-width: 980px) {
+      .id-block {
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+          "ligne po"
+          "product product"
+          "ipc-date ipc-time"
+          "actions actions";
+      }
+    }
+
+    .id-block > * {
+      min-width: 0;
+    }
+
+    .field.ligne {
+      grid-area: ligne;
+    }
+
+    .field.po {
+      grid-area: po;
+    }
+
+    .field.date {
+      grid-area: ipc-date;
+    }
+
+    .field.time {
+      grid-area: ipc-time;
+    }
+
+    .field.actions-field {
+      grid-area: actions;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .field label {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .field input {
+      height: 44px;
+      min-height: 44px;
+      padding: 0 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 16px;
+    }
+
+    .field input[type="date"],
+    .field input[type="time"] {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .field.wide,
+    .field.date,
+    .field.time,
+    .field.actions-field {
+      width: 100%;
+    }
+
+    .actions-wrap {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+
+    .actions-wrap > * {
+      min-width: 0;
+    }
+
+    .field input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .field input:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .reset-button {
+      height: 44px;
+      min-height: 44px;
+      padding: 0 14px;
+      border-radius: 12px;
+      border: 1px solid var(--reset-border);
+      background: var(--reset-bg);
+      color: var(--reset-text);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
+    .reset-button:active {
+      transform: scale(0.98);
+    }
+
+    .reset-button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+      box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    .chrono-card {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 14px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      min-height: 44px;
+      flex: 1 1 auto;
+      width: 100%;
+      min-width: 0;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .chrono-bar {
+      position: sticky;
+      top: var(--sticky-top);
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(21, 32, 51, 0.08);
+      border-radius: 20px;
+      padding: 10px 16px;
+      box-shadow: var(--shadow-md);
+      backdrop-filter: blur(40px);
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    body[data-intensity="medium"] .chrono-bar.warn,
+    body[data-intensity="high"] .chrono-bar.warn {
+      animation: warningPulse 1.4s ease-in-out infinite;
+    }
+
+    body[data-intensity="medium"] .chrono-bar.over,
+    body[data-intensity="high"] .chrono-bar.over {
+      animation: overPulse 1s ease-in-out infinite;
+    }
+
+    @keyframes warningPulse {
+      0%,
+      100% {
+        background: rgba(255, 255, 255, 0.82);
+        box-shadow: var(--shadow-md);
+      }
+
+      50% {
+        background: rgba(255, 250, 230, 0.9);
+        box-shadow: var(--shadow-md), 0 0 16px rgba(245, 158, 11, 0.15);
+      }
+    }
+
+    @keyframes overPulse {
+      0%,
+      100% {
+        background: var(--chrono-over-base);
+        box-shadow: var(--shadow-md);
+      }
+
+      50% {
+        background: rgba(248, 233, 233, 1);
+        box-shadow: var(--shadow-md), 0 0 16px rgba(239, 68, 68, 0.18);
+      }
+    }
+
+    .chrono-bar.over {
+      background: var(--chrono-over-base);
+      border-color: rgba(199, 87, 87, 0.2);
+    }
+
+    .chrono-bar::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.8) 50%, transparent 100%);
+      transform: translateX(-100%);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    body[data-intensity="high"] .chrono-bar.warn::before,
+    body[data-intensity="high"] .chrono-bar.over::before {
+      animation: shimmer 2.5s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+      0% {
+        transform: translateX(-100%);
+        opacity: 0;
+      }
+
+      50% {
+        transform: translateX(100%);
+        opacity: 0.5;
+      }
+
+      100% {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+
+    .chrono-left {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .chrono-right {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex: 0 0 auto;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .chrono-label {
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .chrono-time {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 20px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.4px;
+      color: var(--chrono-ok);
+    }
+
+    .chrono-bar.warn .chrono-time {
+      color: var(--chrono-warn);
+    }
+
+    .chrono-bar.over .chrono-time {
+      color: var(--chrono-over);
+    }
+
+    .chrono-icon {
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .chrono-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+
+    .started-toast {
+      position: fixed;
+      top: calc(var(--header-height) + var(--tabbar-height) + 32px);
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      opacity: 0;
+      background: linear-gradient(135deg, rgba(42, 86, 255, 0.98), rgba(42, 86, 255, 1));
+      color: #ffffff;
+      padding: 12px 24px;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      pointer-events: none;
+      z-index: 200;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .started-toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .operators-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      align-items: start;
+    }
+
+    .operator-card {
+      background: var(--surface);
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      padding: 16px 14px 10px;
+      min-width: 0;
+    }
+
+    .operator-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .operator-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .operator-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .operator-status .icon {
+      width: 18px;
+      height: 18px;
+    }
+
+    .operator-status svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+
+    .operator-status.idle {
+      color: var(--text-muted);
+    }
+
+    .operator-status.active {
+      color: var(--primary);
+    }
+
+    .operator-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .step-card {
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .step-card.running {
+      background: linear-gradient(135deg, rgba(42, 86, 255, 0.05), rgba(42, 86, 255, 0.08));
+      border-color: rgba(42, 86, 255, 0.3);
+      box-shadow: var(--shadow-sm), 0 0 0 3px rgba(42, 86, 255, 0.08);
+    }
+
+    body[data-intensity="medium"] .step-card.running,
+    body[data-intensity="high"] .step-card.running {
+      animation: runningGlow 1.6s ease-in-out infinite;
+    }
+
+    @keyframes runningGlow {
+      0%,
+      100% {
+        box-shadow: var(--shadow-sm), 0 0 0 3px rgba(42, 86, 255, 0.08);
+      }
+
+      50% {
+        box-shadow: var(--shadow-sm), 0 0 0 3px rgba(42, 86, 255, 0.14), 0 0 12px rgba(42, 86, 255, 0.1);
+      }
+    }
+
+    .step-card.done {
+      background: var(--surface-muted);
+      opacity: 0.7;
+    }
+
+    .step-card.compact {
+      padding: 8px 12px;
+      cursor: default;
+    }
+
+    .step-card.full {
+      padding: 14px;
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 0;
+    }
+
+    .step-card.full .step-header {
+      margin-bottom: 12px;
+    }
+
+    .step-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+    }
+
+    .step-card.running .step-icon {
+      color: var(--primary);
+    }
+
+    .step-card.done .step-icon {
+      color: var(--success);
+    }
+
+    .step-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+
+    .step-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .step-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .step-card.done .step-name {
+      color: var(--text-muted);
+    }
+
+    .step-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.2;
+    }
+
+    .step-timer {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 15px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.3px;
+      color: var(--text);
+      margin-left: auto;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .step-target {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .note-quick {
+      margin-left: 10px;
+      border-radius: 999px;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      background: var(--surface-muted);
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      min-height: 34px;
+      align-self: center;
+    }
+    .note-quick:active { transform: translateY(1px); }
+
+    .step-card.running .step-timer {
+      color: var(--primary);
+    }
+
+    .step-card.done .step-timer {
+      color: var(--text-muted);
+    }
+
+    .step-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .step-actions .action-list {
+      max-height: 140px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .step-actions .step-button {
+      align-self: flex-end;
+    }
+
+    .chip-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .chip-button {
+      border-radius: 999px;
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      background: var(--surface-muted);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 40px;
+    }
+
+    .chip-button.note {
+      color: var(--primary);
+    }
+
+    .chip-button.undo {
+      color: var(--warn);
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .chip-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .note-indicator {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(42, 86, 255, 0.12);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 6px;
+    }
+
+    :root {
+      --type-external: #3aa0f3;
+      --type-internal: #22c55e;
+      --type-external-bg: rgba(58, 160, 243, 0.1);
+      --type-internal-bg: rgba(34, 197, 94, 0.12);
+    }
+
+    .step-card[data-type="external"] {
+      border-left: 4px solid var(--type-external);
+    }
+
+    .step-card[data-type="internal"] {
+      border-left: 4px solid var(--type-internal);
+    }
+
+    .step-card.running[data-type="external"] {
+      background: var(--type-external-bg);
+    }
+
+    .step-card.running[data-type="internal"] {
+      background: var(--type-internal-bg);
+    }
+
+    .step-button {
+      padding: 10px 18px;
+      border-radius: 10px;
+      border: none;
+      background: var(--primary);
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+      box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .step-button:hover {
+      background: rgba(42, 86, 255, 0.9);
+    }
+
+    .step-button:active {
+      transform: scale(0.98);
+    }
+
+    .step-button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .step-button:disabled {
+      background: var(--surface-muted);
+      color: var(--text-muted);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(21, 32, 51, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+      backdrop-filter: blur(8px);
+      animation: fadeInOverlay 0.2s ease;
+    }
+
+    .modal-overlay.visible {
+      display: flex;
+    }
+
+    @keyframes fadeInOverlay {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .modal {
+      background: var(--surface);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-lg);
+      padding: 24px;
+      max-width: 480px;
+      width: 90%;
+      animation: fadeInModal 0.2s ease;
+    }
+
+    @keyframes fadeInModal {
+      from {
+        opacity: 0;
+        transform: translateY(-16px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-header {
+      margin-bottom: 16px;
+    }
+
+    .modal-title {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0 0 4px 0;
+    }
+
+    .modal-subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    .modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .modal-field label {
+      display: block;
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .modal-field select,
+    .modal-field input,
+    .modal-field textarea {
+      width: 100%;
+      height: 44px;
+      padding: 0 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 16px;
+    }
+
+    .modal-field textarea {
+      height: auto;
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    .modal-field select:focus-visible,
+    .modal-field input:focus-visible,
+    .modal-field textarea:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .modal-button {
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+      border: none;
+    }
+
+    .modal-button.secondary {
+      background: var(--surface-muted);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .modal-button.secondary:hover {
+      background: rgba(240, 241, 244, 0.7);
+    }
+
+    .modal-button.primary {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .modal-button.primary:hover {
+      background: rgba(42, 86, 255, 0.9);
+    }
+
+    .modal-button:active {
+      transform: scale(0.98);
+    }
+
+    .modal-button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .tabbar {
+      position: fixed;
+      top: var(--header-height);
+      left: 0;
+      right: 0;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 1));
+      height: var(--tabbar-height);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      z-index: 15;
+      box-shadow: 0 4px 10px rgba(21, 32, 51, 0.04);
+      backdrop-filter: blur(20px);
+    }
+
+    .tabbar-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 12px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.14s ease;
+    }
+
+    .tabbar-button:hover {
+      background: rgba(21, 32, 51, 0.04);
+    }
+
+    .tabbar-button.active {
+      background: rgba(42, 86, 255, 0.1);
+      border-color: rgba(42, 86, 255, 0.2);
+      color: var(--primary);
+    }
+
+    .tabbar-button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .tabbar-button:active {
+      transform: scale(0.98);
+    }
+
+    .tabbar-button.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .tabbar-button.disabled:hover {
+      background: transparent;
+    }
+
+    .tabbar-icon {
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tabbar-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+
+    .settings-notice {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(42, 86, 255, 0.08);
+      border: 1px solid rgba(42, 86, 255, 0.15);
+      margin-bottom: 16px;
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    .settings-notice .icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      color: var(--primary);
+    }
+
+    .settings-notice svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+
+    .settings-form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-width: 600px;
+    }
+
+    .settings-form.settings-disabled {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .settings-field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .settings-field label {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .settings-field input,
+    .settings-field select {
+      height: 44px;
+      padding: 0 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 16px;
+    }
+
+    .settings-field input:focus-visible,
+    .settings-field select:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .settings-field input:disabled,
+    .settings-field select:disabled {
+      background: var(--surface-muted);
+      cursor: not-allowed;
+    }
+
+    .settings-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .settings-button {
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+      border: none;
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .settings-button:hover {
+      background: rgba(42, 86, 255, 0.9);
+    }
+
+    .settings-button:active {
+      transform: scale(0.98);
+    }
+
+    .settings-button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .settings-button:disabled {
+      background: var(--surface-muted);
+      color: var(--text-muted);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .analysis-header {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .analysis-card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .analysis-card h3 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .analysis-value {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .analysis-section {
+      margin-bottom: 24px;
+    }
+
+    .analysis-section h3 {
+      margin-bottom: 12px;
+      font-size: 18px;
+    }
+
+    .analysis-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+
+    .analysis-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+    }
+
+    .analysis-table th,
+    .analysis-table td {
+      padding: 12px 14px;
+      font-size: 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .analysis-table th {
+      background: rgba(42, 86, 255, 0.08);
+      font-weight: 700;
+    }
+
+    .analysis-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .analysis-export {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .analysis-button {
+      padding: 10px 18px;
+      border-radius: 12px;
+      border: 1px solid rgba(42, 86, 255, 0.2);
+      background: rgba(42, 86, 255, 0.08);
+      color: var(--primary);
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+    }
+
+    .analysis-button:hover {
+      background: rgba(42, 86, 255, 0.14);
+    }
+
+    .analysis-button:active {
+      transform: scale(0.98);
+    }
+
+    .analysis-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .timeline-item {
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      display: grid;
+      gap: 6px;
+    }
+
+    .timeline-item strong {
+      font-size: 14px;
+    }
+
+    .analysis-muted {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .analysis-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(255, 122, 69, 0.12);
+      color: var(--accent);
+    }
+
+    .analysis-pill.done {
+      background: rgba(34, 197, 94, 0.12);
+      color: var(--success);
+    }
+
+    .standard-step-card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 12px;
+      background: var(--surface);
+      display: grid;
+      gap: 10px;
+    }
+
+    .standard-step-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .standard-step-row label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .standard-step-row input,
+    .standard-step-row select {
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      padding: 0 10px;
+      font-size: 14px;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .standard-step-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .standard-steps-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+
+    .standard-column {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .standard-column h4 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .action-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .action-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .action-item input[type="text"] {
+      min-width: 0;
+    }
+
+    
+
+    /* Runtime checkbox list: keep text aligned with checkbox (avoid grid layout shift) */
+    label.action-item {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 12px;
+    }
+    label.action-item input[type="checkbox"] {
+      width: 22px;
+      height: 22px;
+      flex: 0 0 22px;
+      accent-color: var(--primary);
+    }
+    label.action-item span {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+@media (max-width: 520px) {
+      .action-item {
+        grid-template-columns: 1fr;
+      }
+
+      .action-item .analysis-button {
+        width: 100%;
+      }
+    }
+
+    .inline-error {
+      color: var(--danger);
+      font-size: 13px;
+      margin-top: 6px;
+    }
+
+    .warning-text {
+      color: var(--warn);
+      font-weight: 600;
+    }
+
+    .finish-smed-button {
+      background: var(--accent);
+      color: #ffffff;
+      border: none;
+      box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .finish-smed-button:hover {
+      background: rgba(255, 122, 69, 0.9);
+    }
+
+    .finish-smed-button.hidden {
+      display: none;
+    }
+  
+    .analysis-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 1200px;
+    }
+
+    .analysis-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .analysis-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .analysis-subtitle {
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-size: 13px;
+    }
+
+    .analysis-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .analysis-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .kpi-tile {
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: var(--surface-muted);
+      border: 1px solid var(--border);
+    }
+
+    .kpi-label {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .kpi-value {
+      font-size: 18px;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+
+    .analysis-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 860px) {
+      .analysis-split {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .mini-title {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .mini-table {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    .mini-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(21, 32, 51, 0.08);
+    }
+
+    
+
+    .mini-row > div:first-child {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .mini-row > div:last-child {
+      flex: 0 0 auto;
+      text-align: right;
+      white-space: nowrap;
+    }
+.mini-row:last-child {
+      border-bottom: none;
+    }
+
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .timeline-item {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.65);
+      display: grid;
+      gap: 6px;
+    }
+
+    .timeline-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: baseline;
+    }
+
+    .timeline-title {
+      font-weight: 700;
+    }
+
+    .timeline-meta {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .timeline-notes {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 2px;
+      padding-left: 12px;
+      border-left: 2px solid rgba(21, 32, 51, 0.12);
+    }
+
+    .note-line {
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .notes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .note-card {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.65);
+      display: grid;
+      gap: 4px;
+    }
+
+    .note-card .meta {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .analysis-table th,
+    .analysis-table td {
+      vertical-align: top;
+    }
+
+    .analysis-hint {
+      color: var(--text-muted);
+      font-size: 12px;
+      margin-top: 10px;
+    }
+
+  
+    .standard-column {
+      position: relative;
+    }
+
+    .standard-column > .standard-step-row:first-child {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(21, 32, 51, 0.08);
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+    }
+
+    .standard-col-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .standard-col-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .col-pct {
+      border-radius: 999px;
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      font-weight: 700;
+    }
+
+    .badge-amber {
+      background: rgba(245, 158, 11, 0.18);
+      border-color: rgba(245, 158, 11, 0.35);
+      color: #92400e;
+    }
+
+    .badge-neutral {
+      background: rgba(21, 32, 51, 0.06);
+    }
+
+    .standard-step-card .drag-handle {
+      opacity: 0.6;
+      font-size: 16px;
+      line-height: 1;
+      padding: 6px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(21, 32, 51, 0.12);
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+  
+    /* V1 Data Persistence (anti-F5) */
+    .resume-banner{
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      width: min(920px, calc(100% - 20px));
+      background: rgba(255,255,255,0.96);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow-md);
+      padding: 12px 12px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      backdrop-filter: blur(6px);
+    }
+    .resume-banner.visible{ display:flex; }
+    .resume-banner .resume-text{
+      flex: 1 1 auto;
+      font-weight: 650;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .resume-banner .resume-sub{
+      display:block;
+      margin-top: 2px;
+      font-size: 12px;
+      font-weight: 550;
+      color: var(--text-muted);
+    }
+    .resume-banner .resume-actions{
+      display:flex;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+    .resume-banner .resume-btn{
+      appearance:none;
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight: 700;
+      cursor: pointer;
+      min-width: 120px;
+    }
+    .resume-banner .resume-btn.primary{
+      background: var(--primary);
+      border-color: rgba(42,86,255,0.35);
+      color: #fff;
+    }
+    .resume-banner .resume-btn.secondary{
+      background: #fff;
+      color: var(--text);
+    }
+
+  
+/* HOTFIX V1 – Paramètres : opérateurs côte à côte (force horizontal) */
+#parameters .operators,
+#parameters .operators-container,
+#parameters .operators-list {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 16px;
+  overflow-x: auto;
+  align-items: stretch;
+}
+
+#parameters .operator-column,
+#parameters .operator,
+#parameters .operator-card {
+  flex: 0 0 320px;
+  max-width: 320px;
+}
+
+</style>
+</head>
+<body data-intensity="medium">
+  <header>
+    <h1>Suivi SMED</h1>
+    <p class="subtitle-line">
+      <span id="header-ligne">—</span>
+      <span class="datetime-inline" id="header-datetime">—</span>
+    </p>
+  </header>
+  <div class="tabbar">
+    <button class="tabbar-button active" data-tab="smed">
+      <span class="tabbar-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
+      </span>
+      SMED
+    </button>
+    <button class="tabbar-button" data-tab="analyse">
+      <span class="tabbar-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 17h2v2H3v-2zm4-6h2v8H7v-8zm4-4h2v12h-2V7zm4 6h2v6h-2v-6zm4-10h2v16h-2V3z"/>
+        </svg>
+      </span>
+      Analyse
+    </button>
+    <button class="tabbar-button" data-tab="parametres" id="param-tab-button">
+      <span class="tabbar-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+        </svg>
+      </span>
+      Paramètres
+    </button>
+  </div>
+  <main>
+    <div class="page active" data-tab="smed">
+      <div class="id-block">
+        <div class="field ligne">
+          <label for="ligne-input">Ligne</label>
+          <input type="text" id="ligne-input" placeholder="Ex: L2">
+        </div>
+        <div class="field po">
+          <label for="po-input">PO</label>
+          <input type="text" id="po-input" placeholder="Ex: OF-24-0042">
+        </div>
+        
+        
+<div class="field date">
+          <label for="ipc-date">Date IPC</label>
+          <input type="date" id="ipc-date">
+        </div>
+        <div class="field time">
+          <label for="ipc-time">Heure IPC</label>
+          <input type="time" id="ipc-time" step="60">
+        </div>
+        <div class="field actions-field">
+          <label>&nbsp;</label>
+          <div class="actions-wrap main-actions">
+            <button class="reset-button" id="reset-smed-button">
+              Réinitialiser
+            </button>
+            <button class="reset-button" id="pause-smed-button" hidden>
+              ⏸ Pause SMED
+            </button>
+            <button class="reset-button finish-smed-button hidden" id="finish-smed-button">
+              Terminer
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="chrono-bar" id="chrono-bar">
+        <div class="chrono-left">
+          <div class="chrono-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42A8.962 8.962 0 0 0 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9a8.994 8.994 0 0 0 7.03-14.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+            </svg>
+          </div>
+          <span class="chrono-label">Temps écoulé</span>
+          <span class="chrono-time" id="chrono-time">00:00</span>
+        </div>
+        <div class="chrono-right">
+          <span class="chrono-label">Objectif</span>
+          <span class="chrono-time" id="chrono-target">00:00</span>
+        </div>
+      </div>
+      <div class="operators-grid" id="operators-grid"></div>
+    </div>
+    
+  <div class="page" data-tab="analyse">
+    <div class="analysis-layout">
+      <div class="analysis-card">
+        <div class="analysis-header">
+          <div>
+            <div class="analysis-title">Résumé session</div>
+            <div class="analysis-subtitle" id="analysis-context">—</div>
+          </div>
+          <div class="analysis-actions">
+            <button class="analysis-button" type="button" id="analysis-export-json">Export JSON</button>
+            <button class="analysis-button" type="button" id="analysis-export-csv">Export CSV</button>
+            <button class="analysis-button" type="button" id="analysis-export-report">Rapport manager</button>
+            <button class="analysis-button" type="button" id="analysis-print">Imprimer</button>
+          </div>
+        </div>
+        <div class="analysis-kpi-grid">
+          <div class="kpi-tile">
+            <div class="kpi-label">Dernier IPC (début)</div>
+            <div class="kpi-value" id="analysis-last-ipc">—</div>
+          </div>
+          <div class="kpi-tile">
+            <div class="kpi-label">Premier IPC (fin)</div>
+            <div class="kpi-value" id="analysis-first-ipc">—</div>
+          </div>
+          <div class="kpi-tile">
+            <div class="kpi-label">Statut</div>
+            <div class="kpi-value" id="analysis-status">—</div>
+          </div>
+          <div class="kpi-tile">
+            <div class="kpi-label">Durée réelle</div>
+            <div class="kpi-value" id="analysis-real-duration">—</div>
+          </div>
+          <div class="kpi-tile">
+            <div class="kpi-label">Durée cible SMED</div>
+            <div class="kpi-value" id="analysis-target-duration">—</div>
+          </div>
+          <div class="kpi-tile">
+            <div class="kpi-label">Écart</div>
+            <div class="kpi-value" id="analysis-gap-duration">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="analysis-card">
+        <h3>KPI Lean</h3>
+        <div class="analysis-split">
+          <div>
+            <div class="mini-title">Répartition par type (réel)</div>
+            <div class="mini-table" id="analysis-by-type"></div>
+          </div>
+          <div>
+            <div class="mini-title">Répartition par opérateur (Interne)</div>
+            <div class="mini-table" id="analysis-by-operator"></div>
+          </div>
+        </div>
+        <div class="mini-title" style="margin-top: 14px;">Top 5 dépassements (réel - cible)</div>
+        <div class="mini-table" id="analysis-top-over"></div>
+      </div>
+
+      <div class="analysis-card">
+        <h3>Timeline (étapes + events)</h3>
+        <div class="timeline" id="analysis-timeline"></div>
+        <div class="mini-title" style="margin-top: 14px;">Notes terrain</div>
+        <div class="notes-list" id="analysis-notes-global"></div>
+      </div>
+
+      <div class="analysis-card">
+        <h3>Détail étapes</h3>
+        <div class="table-wrap">
+          <table class="analysis-table">
+            <thead>
+              <tr>
+                <th>Opérateur</th>
+                <th>Ordre</th>
+                <th>Étape</th>
+                <th>Type</th>
+                <th>Cible</th>
+                <th>Réel</th>
+                <th>Écart</th>
+                <th>Justification</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="analysis-steps-body"></tbody>
+          </table>
+        </div>
+        <div class="analysis-hint">Tri: écart décroissant (V1).</div>
+      </div>
+    </div>
+  </div>
+<div class="page" data-tab="parametres">
+      <h2>Paramètres</h2>
+      <div class="settings-notice" id="settings-lock" style="display: none;">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+          </svg>
+        </div>
+        <div>Les paramètres sont verrouillés car le SMED a démarré. Réinitialisez le SMED pour modifier la configuration.</div>
+      </div>
+      <div class="settings-form" id="settings-form">
+        <div class="analysis-card">
+          <h3>Organisation</h3>
+          <div class="settings-field">
+            <label>Nombre d'opérateurs</label>
+            <div class="actions-wrap">
+              <button class="settings-button" type="button" data-stepper="operators" data-action="minus">-</button>
+              <span class="analysis-value" id="operators-count-display">3</span>
+              <button class="settings-button" type="button" data-stepper="operators" data-action="plus">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="analysis-card">
+          <h3>Étapes</h3>
+          <div class="standard-steps-grid" id="standard-steps-list"></div>
+          <div class="analysis-export">
+            <button class="analysis-button" type="button" id="add-standard-step">Ajouter une étape</button>
+            <button class="analysis-button" type="button" id="reset-standard-steps">Réinitialiser le standard</button>
+          </div>
+        </div>
+        <div class="analysis-card">
+          <h3>Cadence SMED</h3>
+          <div class="settings-field">
+            <label>Durée cible SMED</label>
+            <div class="analysis-value" id="target-smed-display">—</div>
+          </div>
+          <div class="settings-field">
+            <label>Seuil d'alerte (minutes)</label>
+            <div class="actions-wrap">
+              <button class="settings-button" type="button" data-stepper="alert" data-action="minus">-</button>
+              <span class="analysis-value" id="alert-threshold-display">—</span>
+              <button class="settings-button" type="button" data-stepper="alert" data-action="plus">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="analysis-card">
+          <h3>Cohérence du standard</h3>
+          <div class="analysis-section">
+            <h3>Répartition par type</h3>
+            <table class="analysis-table" id="consistency-type-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Minutes</th>
+                  <th>% global</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="analysis-section">
+            <h3>Répartition par opérateur (SMED)</h3>
+            <table class="analysis-table" id="consistency-operator-table">
+              <thead>
+                <tr>
+                  <th>Opérateur</th>
+                  <th>Minutes</th>
+                  <th>% SMED</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="analysis-section">
+            <h3>Alertes</h3>
+            <div id="consistency-alerts" class="analysis-muted"></div>
+          </div>
+        </div>
+        <div class="analysis-card">
+          <h3>Justifications</h3>
+          <div class="action-list" id="justification-list"></div>
+          <div class="analysis-export">
+            <button class="analysis-button" type="button" id="add-justification">Ajouter une raison</button>
+          </div>
+        </div>
+        <div class="settings-actions">
+          <button type="button" class="settings-button" id="settings-apply">Appliquer</button>
+          <button type="button" class="settings-button" id="settings-cancel">Annuler</button>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div class="modal-overlay" id="justification-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Justification requise</h3>
+        <p class="modal-subtitle">L’étape dépasse le standard. Une justification est requise.</p>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label for="justification-reason">Raison</label>
+          <select id="justification-reason">
+            <option value="">-- Sélectionnez --</option>
+          </select>
+        </div>
+        <div class="analysis-muted" id="justification-empty" hidden>Aucune raison configurée dans Paramètres.</div>
+        <div class="inline-error" id="justification-error" hidden>Veuillez sélectionner une raison.</div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-button secondary" id="justification-cancel">Annuler</button>
+        <button class="modal-button primary" id="justification-confirm">Confirmer</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="finish-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Fin de SMED</h3>
+        <p class="modal-subtitle">Saisir la date et l'heure du Premier IPC (PO N+1).</p>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label for="finish-date">Date Premier IPC (PO N+1)</label>
+          <input type="date" id="finish-date">
+        </div>
+        <div class="modal-field">
+          <label for="finish-time">Heure Premier IPC (PO N+1)</label>
+          <input type="time" id="finish-time" step="60">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-button secondary" id="finish-cancel">Annuler</button>
+        <button class="modal-button primary" id="finish-confirm">Valider</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="note-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Note terrain</h3>
+        <p class="modal-subtitle">Ajouter une note pour l’étape en cours.</p>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label for="note-text">Note</label>
+          <textarea id="note-text" rows="4" placeholder="Saisir une note..."></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-button secondary" id="note-cancel">Annuler</button>
+        <button class="modal-button primary" id="note-save">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+  <div class="started-toast" id="smed-started">
+    ✓ SMED démarré
+  </div>
+  <div class="started-toast" id="smed-finished">
+    Le changement de production est terminé
+  </div>
+  <script>
+    const createDefaultStandardSteps = (operatorsCount) => {
+      const types = ["external", "internal", "internal", "external", "internal", "internal"];
+      const targets = {
+        external: 5,
+        internal: 12
+      }
+      return types.map((type, index) => ({
+        id: `std-${index + 1}`,
+        order: index + 1,
+        name: `Étape ${index + 1}`,
+        type,
+        targetMin: targets[type],
+        operatorIndex: ((index % operatorsCount) + 1),
+        actions: []
+      }));
+    };
+
+    let settings = {
+      operatorsCount: 3,
+      alertMinutes: 12,
+      standardSteps: createDefaultStandardSteps(3),
+      justificationReasons: [
+        "Optimisation du procédé",
+        "Expérience de l'opérateur",
+        "Outils/équipements adaptés",
+        "Conditions favorables"
+      ]
+    };
+
+    let draftOperatorsCount = settings.operatorsCount;
+    let draftAlertMinutes = settings.alertMinutes;
+    let draftStandardSteps = JSON.parse(JSON.stringify(settings.standardSteps));
+    let draftJustificationReasons = [...settings.justificationReasons];
+
+    let standardStepCounter = settings.standardSteps.length + 1;
+
+    let targetSeconds = 0;
+    let alertSeconds = settings.alertMinutes * 60;
+
+    let operators = [];
+
+    let chronoStartTimestamp = null;
+    let chronoInterval = null;
+
+    let isSmedStarted = false;
+    let wasSmedStarted = false;
+    let isSmedFinished = false;
+    let firstIpcTimestamp = null;
+
+    let operatorTickIntervals = [];
+
+    let pendingJustification = null;
+
+    let startedToastTimeout = null;
+    let sessionEvents = [];
+    let state = { marks: [] };
+    let isSmedPaused = false;
+    let pauseStartTimestamp = null;
+    let pausedDurationMs = 0;
+    let pendingNote = null;
+
+    // --- V1 Persistence (localStorage) ---
+    const PERSIST_NS = "SMED_V1R3";
+    const persistKeyActive = () => `${PERSIST_NS}:active`;
+    const persistKeyLastCompleted = () => `${PERSIST_NS}:lastCompleted`;
+    const persistKeySettings = () => `${PERSIST_NS}:settings`;
+
+    const persistSerialize = () => ({
+      settings,
+      operators,
+      isSmedStarted,
+      wasSmedStarted,
+      isSmedFinished,
+      firstIpcTimestamp,
+      targetSeconds,
+      alertSeconds,
+      sessionEvents,
+      state,
+      isSmedPaused,
+      pauseStartTimestamp,
+      pausedDurationMs,
+      // context inputs are read from DOM on restore
+      ipcDate: ipcDate?.value || "",
+      ipcTime: ipcTime?.value || "",
+      ligne: document.querySelector("#ligne-input")?.value || "",
+      po: document.querySelector("#po-input")?.value || ""
+    });
+
+    const persistApply = (snap) => {
+      if (!snap || typeof snap !== "object") return;
+      if (snap.settings) settings = snap.settings;
+      if (Array.isArray(snap.operators)) operators = snap.operators;
+      isSmedStarted = Boolean(snap.isSmedStarted);
+      wasSmedStarted = Boolean(snap.wasSmedStarted);
+      isSmedFinished = Boolean(snap.isSmedFinished);
+      firstIpcTimestamp = typeof snap.firstIpcTimestamp === "number" ? snap.firstIpcTimestamp : null;
+      targetSeconds = typeof snap.targetSeconds === "number" ? snap.targetSeconds : targetSeconds;
+      alertSeconds = typeof snap.alertSeconds === "number" ? snap.alertSeconds : alertSeconds;
+      sessionEvents = Array.isArray(snap.sessionEvents) ? snap.sessionEvents : sessionEvents;
+      if (snap.state && typeof snap.state === "object") {
+        state = snap.state;
+        if (!Array.isArray(state.marks)) {
+          state.marks = [];
+        }
+      }
+      isSmedPaused = Boolean(snap.isSmedPaused);
+      pauseStartTimestamp = typeof snap.pauseStartTimestamp === "number" ? snap.pauseStartTimestamp : null;
+      pausedDurationMs = typeof snap.pausedDurationMs === "number" ? snap.pausedDurationMs : 0;
+
+      // restore DOM fields if present
+      const li = document.querySelector("#ligne-input");
+      const pi = document.querySelector("#po-input");
+      if (li && typeof snap.ligne === "string") li.value = snap.ligne;
+      if (pi && typeof snap.po === "string") pi.value = snap.po;
+      if (ipcDate && typeof snap.ipcDate === "string") ipcDate.value = snap.ipcDate;
+      if (ipcTime && typeof snap.ipcTime === "string") ipcTime.value = snap.ipcTime;
+    };
+
+    const persistSave = (mode = "active") => {
+      try {
+        const data = persistSerialize();
+        if (mode === "completed") {
+          // Save settings "en dur" even when completing a session
+          persistSaveSettings();
+          localStorage.setItem(persistKeyLastCompleted(), JSON.stringify(data));
+          localStorage.removeItem(persistKeyActive());
+        } else {
+          localStorage.setItem(persistKeyActive(), JSON.stringify(data));
+        }
+      } catch (e) { /* no-op */ }
+    };
+
+    // Durable settings persistence (independent from SMED session)
+    // Goal: user can change parameters once and keep them "en dur" even after ending/resetting a SMED session.
+    function persistSettingsSerialize() { return { settings }; }
+
+    function persistSaveSettings() {
+      try {
+        localStorage.setItem(persistKeySettings(), JSON.stringify(persistSettingsSerialize()));
+      } catch (e) { /* no-op */ }
+    }
+
+    function persistApplySettings(snap) {
+      if (!snap || typeof snap !== "object") return;
+      if (snap.settings && typeof snap.settings === "object") {
+        // Merge on top of current defaults to keep any new fields
+        settings = { ...settings, ...snap.settings };
+        // Basic guards
+        if (!Number.isFinite(settings.operatorsCount) || settings.operatorsCount < 1) settings.operatorsCount = 3;
+        if (!Number.isFinite(settings.alertMinutes) || settings.alertMinutes < 0) settings.alertMinutes = 12;
+        if (!Array.isArray(settings.standardSteps) || !settings.standardSteps.length) {
+          settings.standardSteps = createDefaultStandardSteps(settings.operatorsCount);
+        }
+        if (!Array.isArray(settings.justificationReasons)) settings.justificationReasons = [];
+      }
+      // Keep drafts aligned with persisted settings so the UI reflects saved values
+      draftOperatorsCount = settings.operatorsCount;
+      draftAlertMinutes = settings.alertMinutes;
+      draftStandardSteps = JSON.parse(JSON.stringify(settings.standardSteps));
+      draftJustificationReasons = [...settings.justificationReasons];
+
+      normalizeOperatorIndex(settings.standardSteps, settings.operatorsCount);
+      targetSeconds = getTargetSecondsFromStandard(settings.standardSteps);
+      alertSeconds = settings.alertMinutes * 60;
+    }
+
+    function persistLoadSettings() {
+      try {
+        const raw = localStorage.getItem(persistKeySettings());
+        if (!raw) return false;
+        const snap = JSON.parse(raw);
+        if (!snap || typeof snap !== "object") return false;
+        persistApplySettings(snap);
+        return true;
+      } catch (e) { return false; }
+    }
+
+
+    const persistLoad = () => {
+      try {
+        const raw = localStorage.getItem(persistKeyActive());
+        if (!raw) return false;
+        const snap = JSON.parse(raw);
+
+        // Basic validation to avoid loading corrupted/old snapshots
+        const opsOk = Array.isArray(snap.operators) && snap.operators.length >= 1;
+        const tgtOk = typeof snap.targetSeconds === "number" && snap.targetSeconds > 0;
+        const stOk = snap.isSmedStarted === true || snap.isSmedStarted === false;
+
+        if (!opsOk || !stOk) {
+          // Corrupted snapshot: clear and ignore
+          try { localStorage.removeItem(persistKeyActive()); } catch (e) {}
+          return false;
+        }
+
+        // Normalize legacy step types
+        if (Array.isArray(snap.operators)) {
+          for (const op of snap.operators) {
+            if (op && Array.isArray(op.steps)) {
+              for (const s of op.steps) {
+                if (!s || typeof s !== "object") continue;
+                const t = (s.type || "").toString().toLowerCase();
+                if (t === "overlap" || t === "overlapping") s.type = "internal";
+              }
+            }
+          }
+        }
+
+        persistApply(snap);
+        // If targetSeconds got corrupted to 0, keep current computed default
+        if (!tgtOk) {
+          // keep existing targetSeconds
+        }
+        return true;
+      } catch (e) { 
+        try { localStorage.removeItem(persistKeyActive()); } catch (e2) {}
+        return false; 
+      }
+    };
+
+    const persistClear = () => {
+      try { localStorage.removeItem(persistKeyActive()); } catch (e) {}
+    };
+
+    let persistAutosaveInterval = null;
+    const persistStartAutosave = () => {
+      if (persistAutosaveInterval) return;
+      persistAutosaveInterval = setInterval(() => persistSave("active"), 5000);
+    };
+    const persistStopAutosave = () => {
+      if (persistAutosaveInterval) {
+        clearInterval(persistAutosaveInterval);
+        persistAutosaveInterval = null;
+      }
+    };
+    // --- end persistence ---
+
+    const headerDateTime = document.querySelector("#header-datetime");
+    const headerLigne = document.querySelector("#header-ligne");
+    const ipcDate = document.querySelector("#ipc-date");
+    const ipcTime = document.querySelector("#ipc-time");
+    const chronoBar = document.querySelector("#chrono-bar");
+    const chronoTime = document.querySelector("#chrono-time");
+    const chronoTarget = document.querySelector("#chrono-target");
+    const operatorsGrid = document.querySelector("#operators-grid");
+    const pauseSmedButton = document.querySelector("#pause-smed-button");
+    const justificationModal = document.querySelector("#justification-modal");
+    const justificationReason = document.querySelector("#justification-reason");
+    const justificationEmpty = document.querySelector("#justification-empty");
+    const justificationError = document.querySelector("#justification-error");
+    const justificationCancel = document.querySelector("#justification-cancel");
+    const justificationConfirm = document.querySelector("#justification-confirm");
+    const resetSmedButton = document.querySelector("#reset-smed-button");
+    const finishSmedButton = document.querySelector("#finish-smed-button");
+    const smedStarted = document.querySelector("#smed-started");
+    const smedFinished = document.querySelector("#smed-finished");
+    const finishModal = document.querySelector("#finish-modal");
+    const finishDate = document.querySelector("#finish-date");
+    const finishTime = document.querySelector("#finish-time");
+    const finishCancel = document.querySelector("#finish-cancel");
+    const finishConfirm = document.querySelector("#finish-confirm");
+    const noteModal = document.querySelector("#note-modal");
+    const noteText = document.querySelector("#note-text");
+    const noteCancel = document.querySelector("#note-cancel");
+    const noteSave = document.querySelector("#note-save");
+    const settingsApply = document.querySelector("#settings-apply");
+    const settingsCancel = document.querySelector("#settings-cancel");
+    const settingsForm = document.querySelector("#settings-form");
+    const settingsLock = document.querySelector("#settings-lock");
+    const paramTabButton = document.querySelector("#param-tab-button");
+    const operatorsCountDisplay = document.querySelector("#operators-count-display");
+    const standardStepsList = document.querySelector("#standard-steps-list");
+    const addStandardStepButton = document.querySelector("#add-standard-step");
+    const resetStandardStepsButton = document.querySelector("#reset-standard-steps");
+    const justificationList = document.querySelector("#justification-list");
+    const addJustificationButton = document.querySelector("#add-justification");
+    const targetSmedDisplay = document.querySelector("#target-smed-display");
+    const alertThresholdDisplay = document.querySelector("#alert-threshold-display");
+    const consistencyTypeTable = document.querySelector("#consistency-type-table tbody");
+    const consistencyOperatorTable = document.querySelector("#consistency-operator-table tbody");
+    const consistencyAlerts = document.querySelector("#consistency-alerts");
+    const analysisContext = document.querySelector("#analysis-context");
+    const analysisLastIpc = document.querySelector("#analysis-last-ipc");
+    const analysisFirstIpc = document.querySelector("#analysis-first-ipc");
+    const analysisStatus = document.querySelector("#analysis-status");
+    const analysisRealDuration = document.querySelector("#analysis-real-duration");
+    const analysisTargetDuration = document.querySelector("#analysis-target-duration");
+    const analysisGapDuration = document.querySelector("#analysis-gap-duration");
+    const analysisByType = document.querySelector("#analysis-by-type");
+    const analysisByOperator = document.querySelector("#analysis-by-operator");
+    const analysisTopOver = document.querySelector("#analysis-top-over");
+    const analysisTimeline = document.querySelector("#analysis-timeline");
+    const analysisNotesGlobal = document.querySelector("#analysis-notes-global");
+    const analysisStepsBody = document.querySelector("#analysis-steps-body");
+
+    const exportCsvButton = document.querySelector("#analysis-export-csv");
+    const exportJsonButton = document.querySelector("#analysis-export-json");
+    const exportReportButton = document.querySelector("#analysis-export-report");
+    const analysisPrintButton = document.querySelector("#analysis-print");
+
+    const tabButtons = document.querySelectorAll(".tabbar-button");
+
+    const setActiveTab = (tab) => {
+      const pages = document.querySelectorAll(".page");
+      pages.forEach((page) => {
+        page.classList.toggle("active", page.dataset.tab === tab);
+      });
+      tabButtons.forEach((button) => {
+        button.classList.toggle("active", button.dataset.tab === tab);
+      });
+      if (tab === "analyse") {
+        renderAnalysis();
+      }
+    };
+
+    tabButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        if (button.classList.contains("disabled")) {
+          return;
+        }
+        const tab = button.dataset.tab;
+        if (tab) {
+          setActiveTab(tab);
+        }
+      });
+    });
+
+    const ligneInput = document.querySelector("#ligne-input");
+    const productInput = document.querySelector("#product-input");
+
+    const updateHeaderLigne = () => {
+      if (!ligneInput || !headerLigne) {
+        return;
+      }
+      const value = ligneInput.value.trim();
+      headerLigne.textContent = value || "—";
+    };
+
+    if (ligneInput) {
+      ligneInput.addEventListener("input", updateHeaderLigne);
+    }
+
+    updateHeaderLigne();
+
+    const generateOperators = () => {
+      const newOperators = [];
+      for (let i = 1; i <= settings.operatorsCount; i++) {
+        const steps = settings.standardSteps
+          .filter((step) => step.operatorIndex === i)
+          .map((step) => ({
+            id: step.id,
+            order: step.order,
+            name: step.name,
+            type: step.type,
+            targetSeconds: step.targetMin * 60,
+            status: "todo",
+            startTime: null,
+            elapsedSeconds: 0,
+            endTime: null,
+            justification: "",
+            actions: step.actions ? [...step.actions] : [],
+            actionsDone: step.actions ? step.actions.map(() => false) : [],
+            notes: []
+          }));
+        newOperators.push({
+          id: `operator-${i}`,
+          name: `Opérateur ${i}`,
+          steps
+        });
+      }
+      return newOperators;
+    };
+
+    const resetOperators = () => {
+      operators = generateOperators();
+      stopOperatorTick();
+      renderOperators();
+    };
+
+    const formatTime = (seconds) => {
+      const min = Math.floor(seconds / 60);
+      const sec = Math.floor(seconds % 60);
+      return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+    };
+
+    const getTargetSecondsFromStandard = (steps) => {
+      const totalsByOperator = {};
+      steps.forEach((step) => {
+        if (step.type !== "internal") {
+          return;
+        }
+        const operatorIndex = typeof step.operatorIndex === "number" ? step.operatorIndex : 1;
+        const targetMin = Number(step.targetMin);
+        if (!Number.isFinite(targetMin)) {
+          return;
+        }
+        totalsByOperator[operatorIndex] = (totalsByOperator[operatorIndex] || 0) + (targetMin * 60);
+      });
+      const values = Object.values(totalsByOperator);
+      return values.length ? Math.max(...values) : 0;
+    };
+
+    const clampOperatorCount = (value) => Math.min(6, Math.max(1, value));
+
+    const clampTargetMin = (type, value) => {
+      const max = 60;
+      if (type === "external") {
+        return Math.min(max, Math.max(0, value));
+      }
+      return Math.min(max, Math.max(1, value));
+    };
+
+    const normalizeOperatorIndex = (steps, operatorsCount) => {
+      steps.forEach((step) => {
+        if (step.operatorIndex > operatorsCount) {
+          step.operatorIndex = 1;
+        }
+      });
+    };
+
+    targetSeconds = getTargetSecondsFromStandard(settings.standardSteps);
+
+    const formatMinutes = (minutes) => `${minutes.toFixed(1)} min`;
+
+    const toDateTimeInputValue = (date) => ({
+      date: date.toISOString().slice(0, 10),
+      time: date.toTimeString().slice(0, 5)
+    });
+
+    const formatDateTime = (date) => {
+      if (!date) {
+        return "—";
+      }
+      return date.toLocaleString("fr-FR", {
+        dateStyle: "short",
+        timeStyle: "short"
+      });
+    };
+
+    const getLastIpcDateTime = () => {
+      if (!ipcDate?.value || !ipcTime?.value) {
+        return null;
+      }
+      const value = new Date(`${ipcDate.value}T${ipcTime.value}`);
+      return Number.isNaN(value.getTime()) ? null : value;
+    };
+
+    const getFirstIpcDateTime = () => {
+      if (!firstIpcTimestamp) {
+        return null;
+      }
+      const value = new Date(firstIpcTimestamp);
+      return Number.isNaN(value.getTime()) ? null : value;
+    };
+
+    const updateChronoLabels = () => {
+      if (!chronoTarget) {
+        return;
+      }
+      chronoTarget.textContent = formatTime(targetSeconds);
+    };
+
+    const updateChronoDisplay = () => {
+      if (!chronoBar || !chronoTime) {
+        return;
+      }
+      const now = Date.now();
+      const pausedMs = pausedDurationMs + (isSmedPaused && pauseStartTimestamp ? (now - pauseStartTimestamp) : 0);
+      const elapsed = chronoStartTimestamp !== null ? Math.floor(Math.max(0, now - chronoStartTimestamp - pausedMs) / 1000) : 0;
+      chronoTime.textContent = formatTime(elapsed);
+      if (!isSmedStarted) {
+        chronoBar.classList.remove("warn", "over");
+        return;
+      }
+      const warn = elapsed >= alertSeconds && elapsed < targetSeconds;
+      const over = elapsed >= targetSeconds;
+      chronoBar.classList.toggle("warn", warn);
+      chronoBar.classList.toggle("over", over);
+    };
+
+    const startChrono = () => {
+      if (chronoInterval) {
+        return;
+      }
+      chronoStartTimestamp = Date.now();
+      updateChronoDisplay();
+      chronoInterval = setInterval(updateChronoDisplay, 1000);
+    };
+
+    const stopChrono = (reset = false) => {
+      if (chronoInterval) {
+        clearInterval(chronoInterval);
+        chronoInterval = null;
+      }
+      if (reset) {
+        chronoStartTimestamp = null;
+      }
+      updateChronoDisplay();
+    };
+
+    const updatePauseButton = () => {
+      if (!pauseSmedButton) {
+        return;
+      }
+      const shouldShow = isSmedStarted && !isSmedFinished;
+      pauseSmedButton.hidden = !shouldShow;
+      pauseSmedButton.disabled = !shouldShow;
+      pauseSmedButton.textContent = isSmedPaused ? "▶ Reprendre SMED" : "⏸ Pause SMED";
+    };
+
+    const renderStepIcon = (step) => {
+      let icon = "";
+      if (step.status === "done") {
+        icon = `
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+        `;
+      } else if (step.type === "external") {
+        icon = `
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+          </svg>
+        `;
+      } else {
+        icon = `
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+        `;
+      }
+      return icon;
+    };
+
+    const getStepTypeLabel = (type) => {
+      const labels = {
+        external: "Externe",
+        internal: "Interne"
+      };
+      return labels[type] || type;
+    };
+
+    const getCompletedCount = (operator) => {
+      return operator.steps.filter((step) => step.status === "done").length;
+    };
+
+    const isOperatorIdle = (operator) => {
+      return operator.steps.every((step) => step.status !== "running");
+    };
+
+    const initializeReasons = () => {
+      if (!justificationReason) {
+        return;
+      }
+      justificationReason.innerHTML = `
+        <option value="">-- Sélectionnez --</option>
+        ${settings.justificationReasons.map((reason) => `<option value="${reason}">${reason}</option>`).join("")}
+      `;
+      justificationReason.selectedIndex = 0;
+      if (justificationError) {
+        justificationError.hidden = true;
+      }
+      if (justificationEmpty) {
+        justificationEmpty.hidden = settings.justificationReasons.length > 0;
+      }
+    };
+
+    const openJustificationModal = (operator, actualMin) => {
+      pendingJustification = {
+        operatorId: operator.id,
+        actualMin
+      };
+      initializeReasons();
+      if (justificationModal) {
+        justificationModal.classList.add("visible");
+      }
+    };
+
+    const closeJustificationModal = () => {
+      pendingJustification = null;
+      if (justificationModal) {
+        justificationModal.classList.remove("visible");
+      }
+    };
+
+    const completeStep = (operator, actualMin, forced = false) => {
+      const runningIndex = operator.steps.findIndex((step) => step.status === "running");
+      if (runningIndex === -1) {
+        return;
+      }
+      const step = operator.steps[runningIndex];
+      const targetMin = step.targetSeconds / 60;
+      if (!forced && targetMin > 0 && actualMin > targetMin) {
+        openJustificationModal(operator, actualMin);
+        return;
+      }
+      step.status = "done";
+      step.elapsedSeconds = actualMin * 60;
+      step.endTime = Date.now();
+      if (isSmedStarted) {
+        const nextInternalIndex = operator.steps.findIndex(
+          (s, idx) => idx > runningIndex && s.type === "internal" && s.status === "todo"
+        );
+        if (nextInternalIndex !== -1) {
+          operator.steps[nextInternalIndex].status = "running";
+          operator.steps[nextInternalIndex].startTime = Date.now();
+        }
+      }
+      renderOperators();
+      renderAnalysis();
+      persistSave("active");
+    };
+
+    const handleValidate = (operator, stepIndex) => {
+      const step = operator.steps[stepIndex];
+      if (!step || step.status !== "running") {
+        return;
+      }
+      const now = Date.now();
+      const elapsed = step.startTime !== null ? (now - step.startTime) / 1000 : 0;
+      const actualMin = elapsed / 60;
+      completeStep(operator, actualMin, false);
+    };
+
+    const startAllOperatorsOnSmedStart = () => {
+      // Au démarrage SMED (Dernier IPC complété), on garantit 1 seule étape "running" par opérateur.
+      // Règle V1 (simple): si une étape est déjà running (ex: external lancée avant IPC), on la conserve.
+      // Sinon, on démarre la première étape "todo" dans l'ordre (quel que soit le type).
+      operators.forEach((operator) => {
+        const runningSteps = operator.steps.filter((step) => step.status === "running");
+        if (runningSteps.length > 1) {
+          // Conserver la première (ordre naturel du tableau) et remettre les autres à todo.
+          runningSteps.slice(1).forEach((step) => {
+            step.status = "todo";
+            step.startTime = null;
+            step.elapsedSeconds = 0;
+          });
+        }
+        if (runningSteps.length >= 1) {
+          return;
+        }
+        const firstTodo = operator.steps.find((step) => step.status === "todo");
+        if (firstTodo) {
+          firstTodo.status = "running";
+          firstTodo.startTime = Date.now();
+          if (typeof firstTodo.elapsedSeconds !== "number") firstTodo.elapsedSeconds = 0;
+        }
+      });
+      renderOperators();
+    };
+
+    const tickOperator = (operator) => {
+      if (isSmedPaused) return;
+      const running = operator.steps.find((step) => step.status === "running");
+      if (!running || running.startTime === null) {
+        return;
+      }
+      const now = Date.now();
+      running.elapsedSeconds = (now - running.startTime) / 1000;
+      renderOperators();
+    };
+
+    const startOperatorTick = () => {
+      stopOperatorTick();
+      operators.forEach((operator) => {
+        const interval = setInterval(() => {
+          tickOperator(operator);
+        }, 1000);
+        operatorTickIntervals.push(interval);
+      });
+    };
+
+    const stopOperatorTick = () => {
+      operatorTickIntervals.forEach((interval) => {
+        clearInterval(interval);
+      });
+      operatorTickIntervals = [];
+    };
+
+    /**
+     * NOUVELLE FONCTION: Gère la tuile "En cours" AVANT IPC.
+     * Pour chaque opérateur, si aucune étape n'est running,
+     * on passe la première external non terminée en running.
+     */
+    const ensurePreIpcRunningForEachOperator = () => {
+      operators.forEach((operator) => {
+        // Vérifier s'il existe déjà une étape en running
+        const hasRunning = operator.steps.some((step) => step.status === "running");
+        
+        if (!hasRunning) {
+          // Trouver la première étape external non terminée
+          const firstExternalTodo = operator.steps.find(
+            (step) => step.type === "external" && step.status !== "done"
+          );
+          
+          if (firstExternalTodo) {
+            // Passer cette étape en running
+            firstExternalTodo.status = "running";
+            firstExternalTodo.startTime = Date.now();
+          }
+        }
+      });
+    };
+
+    const renderOperators = () => {
+      if (!operatorsGrid) {
+        return;
+      }
+
+      // NOUVEAU: Appeler la fonction de gestion des tuiles "En cours" avant IPC
+      if (!isSmedStarted) {
+        ensurePreIpcRunningForEachOperator();
+      }
+
+      const scrollMap = new Map();
+      operatorsGrid.querySelectorAll(".action-list").forEach((el, i) => {
+        const probe = el.querySelector('input[data-op][data-step-index]');
+        const key = probe ? `${probe.dataset.op}|${probe.dataset.stepIndex}` : `idx|${i}`;
+        scrollMap.set(key, el.scrollTop);
+      });
+
+      let html = "";
+      operators.forEach((operator) => {
+        const completedCount = getCompletedCount(operator);
+        const idle = isOperatorIdle(operator);
+        const statusClass = idle ? "idle" : "active";
+        const statusText = idle ? "En attente" : "En activité";
+        const statusIcon = idle
+          ? `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+             </svg>`
+          : `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+             </svg>`;
+        html += `
+          <div class="operator-card">
+            <div class="operator-header">
+              <h3 class="operator-title">${operator.name}</h3>
+              <div class="operator-status ${statusClass}">
+                <span class="icon">${statusIcon}</span>
+                <span>${statusText}</span>
+              </div>
+            </div>
+            <div class="operator-steps">
+        `;
+        const lastDoneIndex = operator.steps.reduce((acc, s, idx) => (s.status === "done" ? idx : acc), -1);
+
+        operator.steps.forEach((step, stepIndex) => {
+          const shouldShow =
+            isSmedStarted ||
+            step.type === "external";
+          if (!shouldShow) {
+            return;
+          }
+          const isRunning = step.status === "running";
+          const isDone = step.status === "done";
+          const isTodo = step.status === "todo";
+          const isCompact = !isRunning;
+          const cardClass = `step-card ${isCompact ? "compact" : "full"} ${step.status}`;
+          const typeLabel = getStepTypeLabel(step.type);
+          const timeDisplay = isDone
+            ? formatTime(step.elapsedSeconds)
+            : isRunning
+              ? formatTime(step.elapsedSeconds)
+              : formatTime(step.targetSeconds);
+          const targetDisplay = formatTime(step.targetSeconds);
+          const icon = renderStepIcon(step);
+          const hasNotes = Array.isArray(step.notes) && step.notes.length > 0;
+          html += `
+            <div class="${cardClass}" data-status="${step.status}" data-type="${step.type}">
+              <div class="step-header">
+                <div class="step-icon">${icon}</div>
+                <div class="step-info">
+                  <div class="step-name">${step.name}${hasNotes ? `<span class="note-indicator">Note</span>` : ""}</div>
+                  <div class="step-meta">${typeLabel}</div>
+                </div>
+                <div class="step-timer">${timeDisplay}</div>
+                ${isRunning || isDone ? `<div class="step-target">Cible: ${targetDisplay}</div>` : ``}
+                ${!isRunning ? `<button class="note-quick" data-action="add-note" data-op="${operator.id}" data-step-index="${stepIndex}" title="Ajouter une note">Note</button>` : ""}
+              </div>
+          `;
+
+          if (isDone && stepIndex === lastDoneIndex) {
+            html += `
+              <div class="step-actions">
+                <div class="chip-bar">
+                  <button class="chip-button undo" data-action="undo-last" data-op="${operator.id}">Annuler</button>
+                </div>
+              </div>
+            `;
+          }
+
+          if (isRunning) {
+            const canValidate = isSmedStarted || step.type === "external";
+            const actions = Array.isArray(step.actions) ? step.actions : [];
+            const done = Array.isArray(step.actionsDone) ? step.actionsDone : [];
+            const disabled = !canValidate ? "disabled" : "";
+html += `
+              <div class="step-actions">
+                <div class="chip-bar">
+                  <button class="chip-button note" data-action="add-note" data-op="${operator.id}" data-step-index="${stepIndex}">Note</button>
+                </div>
+                ${actions.length ? `
+                  <div class="action-list">
+                    ${actions.map((action, idx) => `
+                      <label class="action-item">
+                        <input type="checkbox" data-action="toggle-action" data-op="${operator.id}" data-step-index="${stepIndex}" data-action-index="${idx}" ${done[idx] ? "checked" : ""}>
+                        <span>${action}</span>
+                      </label>
+                    `).join("")}
+                  </div>
+                ` : ""}
+                <button class="step-button" data-action="validate" data-op="${operator.id}" data-step-index="${stepIndex}" ${disabled}>
+                  Valider
+                </button>
+              </div>
+            `;
+          }
+          html += `
+            </div>
+          `;
+        });
+        html += `
+            </div>
+          </div>
+        `;
+      });
+      operatorsGrid.innerHTML = html;
+      operatorsGrid.querySelectorAll(".action-list").forEach((el, i) => {
+        const probe = el.querySelector('input[data-op][data-step-index]');
+        const key = probe ? `${probe.dataset.op}|${probe.dataset.stepIndex}` : `idx|${i}`;
+        if (scrollMap.has(key)) el.scrollTop = scrollMap.get(key);
+      });
+    };
+
+    resetOperators();
+
+    const getStepRealSeconds = (step) => {
+      if (step.status === "done") {
+        return step.elapsedSeconds || 0;
+      }
+      if (step.status === "running" && step.startTime) {
+        const endTimestamp = isSmedFinished && firstIpcTimestamp ? firstIpcTimestamp : Date.now();
+        return Math.max(0, (endTimestamp - step.startTime) / 1000);
+      }
+      return 0;
+    };
+
+    const getAnalysisDataset = () => {
+      const lastIpc = getLastIpcDateTime();
+      const firstIpc = getFirstIpcDateTime();
+      const now = new Date();
+      const endTimestamp = firstIpc ? firstIpc.getTime() : now.getTime();
+      const startTimestamp = lastIpc ? lastIpc.getTime() : null;
+      const durationRealMin = startTimestamp ? (endTimestamp - startTimestamp) / 60000 : 0;
+      const targetSeconds = operators.reduce((total, operator) => {
+        return total + operator.steps.reduce((sum, step) => {
+          if (step.type === "internal") {
+            return sum + step.targetSeconds;
+          }
+          return sum;
+        }, 0);
+      }, 0);
+      const targetMinutes = targetSeconds / 60;
+      const steps = operators.flatMap((operator) => {
+        return operator.steps.map((step, index) => {
+          const realSeconds = getStepRealSeconds(step);
+          return {
+            operator,
+            step,
+            order: step.order ?? index + 1,
+            realSeconds
+          };
+        });
+      });
+      return {
+        lastIpc,
+        firstIpc,
+        durationRealMin,
+        targetMinutes,
+        steps
+      };
+    };
+
+    
+    const escapeHtml = (value) => {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    };
+
+    const formatTimeOnly = (date) => {
+      if (!date) {
+        return "—";
+      }
+      return date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    };
+
+    const getOperatorIndex = (operator) => {
+      if (!operator) {
+        return 1;
+      }
+      if (typeof operator.index === "number") {
+        return operator.index;
+      }
+      const match = String(operator.id || "").match(/(\d+)/);
+      if (match) {
+        return Number(match[1]);
+      }
+      const nameMatch = String(operator.name || "").match(/(\d+)/);
+      return nameMatch ? Number(nameMatch[1]) : 1;
+    };
+
+    const getDurationTargetMin = () => {
+      const dataset = getAnalysisDataset();
+      return dataset.steps.reduce((sum, entry) => {
+        if (entry.step.type === "internal") {
+          return sum + entry.step.targetSeconds / 60;
+        }
+        return sum;
+      }, 0);
+    };
+
+    const buildTimelineItems = (dataset, allNotes) => {
+      const items = [];
+
+      const lastIpc = dataset.lastIpc ? dataset.lastIpc.getTime() : null;
+      const firstIpc = dataset.firstIpc ? dataset.firstIpc.getTime() : null;
+
+      if (lastIpc) {
+        items.push({
+          at: lastIpc,
+          html: `<div class="timeline-item">
+            <div class="timeline-head">
+              <div class="timeline-title">start_smed</div>
+              <div class="timeline-meta">${formatDateTime(dataset.lastIpc)}</div>
+            </div>
+          </div>`
+        });
+      }
+
+      dataset.steps.forEach((entry) => {
+        if (!entry.step.startTime && !entry.step.endTime) {
+          return;
+        }
+        const start = entry.step.startTime ? new Date(entry.step.startTime) : null;
+        const end = entry.step.endTime ? new Date(entry.step.endTime) : null;
+        const operatorIndex = getOperatorIndex(entry.operator);
+
+        const notes = Array.isArray(entry.step.notes) ? entry.step.notes : [];
+        const notesHtml = notes
+          .slice()
+          .sort((a, b) => (a.at || 0) - (b.at || 0))
+          .map((note) => {
+            const at = typeof note.at === "number" ? new Date(note.at) : new Date();
+            return `<div class="note-line">${formatTimeOnly(at)} , ${escapeHtml(note.text || "")}</div>`;
+          })
+          .join("");
+
+        items.push({
+          at: start ? start.getTime() : (end ? end.getTime() : Date.now()),
+          html: `<div class="timeline-item">
+            <div class="timeline-head">
+              <div class="timeline-title">Opérateur ${operatorIndex} , ${escapeHtml(entry.step.name)}</div>
+              <div class="timeline-meta">${start ? formatDateTime(start) : "—"} → ${end ? formatDateTime(end) : "—"}</div>
+            </div>
+            ${notesHtml ? `<div class="timeline-notes">${notesHtml}</div>` : ""}
+          </div>`
+        });
+      });
+
+      const undoItems = (Array.isArray(sessionEvents) ? sessionEvents : [])
+        .filter((ev) => ev && ev.type === "undo" && typeof ev.at === "number")
+        .map((ev) => {
+          const atDate = new Date(ev.at);
+          return {
+            at: ev.at,
+            html: `<div class="timeline-item">
+              <div class="timeline-head">
+                <div class="timeline-title">undo</div>
+                <div class="timeline-meta">${formatDateTime(atDate)}</div>
+              </div>
+              <div class="timeline-meta">Opérateur ${ev.operatorIndex ?? "—"} , étape ${escapeHtml(ev.stepId ?? "—")}</div>
+            </div>`
+          };
+        });
+
+      items.push(...undoItems);
+
+      if (firstIpc) {
+        items.push({
+          at: firstIpc,
+          html: `<div class="timeline-item">
+            <div class="timeline-head">
+              <div class="timeline-title">finish_smed</div>
+              <div class="timeline-meta">${formatDateTime(dataset.firstIpc)}</div>
+            </div>
+          </div>`
+        });
+      }
+
+      return items.sort((a, b) => a.at - b.at);
+    };
+
+
+    const renderAnalysis = () => {
+      const lineValue = ligneInput?.value.trim() || "—";
+      const poValue = document.querySelector("#po-input")?.value.trim() || "—";
+      const productValue = productInput?.value.trim() || "—";
+      const dataset = getAnalysisDataset();
+
+      const lastIpcIso = dataset.lastIpc ? dataset.lastIpc.toISOString() : null;
+      const firstIpcIso = dataset.firstIpc ? dataset.firstIpc.toISOString() : null;
+
+      if (analysisContext) {
+        analysisContext.textContent = `Ligne: ${lineValue} , PO: ${poValue} , Produit: ${productValue}`;
+      }
+      if (analysisLastIpc) {
+        analysisLastIpc.textContent = dataset.lastIpc ? formatDateTime(dataset.lastIpc) : "—";
+      }
+      if (analysisFirstIpc) {
+        analysisFirstIpc.textContent = dataset.firstIpc ? formatDateTime(dataset.firstIpc) : "—";
+      }
+      if (analysisStatus) {
+        analysisStatus.textContent = isSmedFinished ? "Terminé" : isSmedStarted ? "En cours" : "—";
+      }
+
+      const durationTargetMin = getDurationTargetMin();
+      const durationRealMin = isSmedFinished && dataset.lastIpc && dataset.firstIpc
+        ? (dataset.firstIpc.getTime() - dataset.lastIpc.getTime()) / 60000
+        : null;
+
+      if (analysisRealDuration) {
+        if (durationRealMin === null) {
+          const liveMin = dataset.lastIpc ? dataset.durationRealMin : 0;
+          analysisRealDuration.textContent = dataset.lastIpc ? `${liveMin.toFixed(1)} min` : "—";
+        } else {
+          analysisRealDuration.textContent = `${durationRealMin.toFixed(1)} min`;
+        }
+      }
+      if (analysisTargetDuration) {
+        analysisTargetDuration.textContent = `${durationTargetMin.toFixed(1)} min`;
+      }
+      if (analysisGapDuration) {
+        const gap = durationRealMin === null ? (dataset.lastIpc ? dataset.durationRealMin - durationTargetMin : 0) : (durationRealMin - durationTargetMin);
+        analysisGapDuration.textContent = `${gap.toFixed(1)} min`;
+      }
+
+      const byType = { external: { min: 0 }, internal: { min: 0 } };
+      const byOperator = {};
+      let totalSmedReal = 0;
+      let totalSmedTarget = 0;
+
+      dataset.steps.forEach((entry) => {
+        const type = entry.step.type;
+        const operatorIndex = getOperatorIndex(entry.operator);
+        const realMin = entry.step.status === "done" ? entry.realSeconds / 60 : 0;
+        byType[type].min += realMin;
+
+        if (type === "internal") {
+          if (!byOperator[operatorIndex]) {
+            byOperator[operatorIndex] = { real: 0, target: 0 };
+          }
+          const targetMin = entry.step.targetSeconds / 60;
+          if (entry.step.status === "done") {
+            byOperator[operatorIndex].real += realMin;
+            totalSmedReal += realMin;
+          }
+          byOperator[operatorIndex].target += targetMin;
+          totalSmedTarget += targetMin;
+        }
+      });
+
+      const totalRealAll = byType.external.min + byType.internal.min;
+      if (analysisByType) {
+        analysisByType.innerHTML = ["external", "internal"].map((type) => {
+          const value = byType[type].min;
+          const pct = totalRealAll > 0 ? (value / totalRealAll) * 100 : 0;
+          const label = type === "external" ? "Externe" : "Interne";
+          return `<div class="mini-row"><div>${label}</div><div>${value.toFixed(1)} min , ${pct.toFixed(0)}%</div></div>`;
+        }).join("");
+      }
+
+      if (analysisByOperator) {
+        const entries = Object.entries(byOperator).sort((a, b) => Number(a[0]) - Number(b[0]));
+        analysisByOperator.innerHTML = entries.map(([idx, stats]) => {
+          const pct = totalSmedReal > 0 ? (stats.real / totalSmedReal) * 100 : 0;
+          return `<div class="mini-row"><div>Opérateur ${idx}</div><div>${stats.real.toFixed(1)} / ${stats.target.toFixed(1)} min , ${pct.toFixed(0)}%</div></div>`;
+        }).join("") || `<div class="mini-row"><div>—</div><div>—</div></div>`;
+      }
+
+      const overages = dataset.steps
+        .map((entry) => {
+          const operatorIndex = getOperatorIndex(entry.operator);
+          const targetMin = entry.step.targetSeconds / 60;
+          const realMin = entry.step.status === "done" ? entry.realSeconds / 60 : null;
+          const delta = realMin === null ? null : realMin - targetMin;
+          return {
+            operatorIndex,
+            order: entry.order,
+            name: entry.step.name,
+            type: entry.step.type,
+            targetMin,
+            realMin,
+            delta,
+            justification: entry.step.justification || ""
+          };
+        })
+        .filter((row) => row.delta !== null)
+        .sort((a, b) => (b.delta ?? 0) - (a.delta ?? 0))
+        .slice(0, 5);
+
+      if (analysisTopOver) {
+        analysisTopOver.innerHTML = overages.map((row) => {
+          const who = `Opérateur ${row.operatorIndex}`;
+          const deltaText = `${row.delta.toFixed(1)} min`;
+          const just = row.justification ? ` , ${escapeHtml(row.justification)}` : "";
+          return `<div class="mini-row"><div>${who} , ${escapeHtml(row.name)}</div><div>${deltaText}${just}</div></div>`;
+        }).join("") || `<div class="mini-row"><div>—</div><div>—</div></div>`;
+      }
+
+      if (analysisStepsBody) {
+        const rows = dataset.steps
+          .map((entry) => {
+            const operatorIndex = getOperatorIndex(entry.operator);
+            const targetMin = entry.step.targetSeconds / 60;
+            const realMin = entry.step.status === "done" ? entry.realSeconds / 60 : null;
+            const delta = realMin === null ? null : realMin - targetMin;
+            const notesCount = Array.isArray(entry.step.notes) ? entry.step.notes.length : 0;
+            return {
+              operatorIndex,
+              order: entry.order,
+              name: entry.step.name,
+              type: entry.step.type,
+              targetMin,
+              realMin,
+              delta,
+              justification: entry.step.justification || "",
+              notesCount
+            };
+          })
+          .sort((a, b) => (b.delta ?? -1e9) - (a.delta ?? -1e9));
+
+        analysisStepsBody.innerHTML = rows.map((row) => {
+          const typeLabel = row.type === "external" ? "external" : "internal";
+          const real = row.realMin === null ? "—" : row.realMin.toFixed(1);
+          const delta = row.delta === null ? "—" : row.delta.toFixed(1);
+          return `<tr>
+            <td>Opérateur ${row.operatorIndex}</td>
+            <td>${row.order}</td>
+            <td>${escapeHtml(row.name)}</td>
+            <td>${typeLabel}</td>
+            <td>${row.targetMin.toFixed(1)}</td>
+            <td>${real}</td>
+            <td>${delta}</td>
+            <td>${escapeHtml(row.justification || "")}</td>
+            <td>${row.notesCount}</td>
+          </tr>`;
+        }).join("");
+      }
+
+      const allNotes = dataset.steps.flatMap((entry) => {
+        const operatorIndex = getOperatorIndex(entry.operator);
+        const stepId = entry.step.id;
+        const stepName = entry.step.name;
+        const notes = Array.isArray(entry.step.notes) ? entry.step.notes : [];
+        return notes.map((note) => ({
+          at: typeof note.at === "number" ? note.at : Date.now(),
+          text: String(note.text || ""),
+          operatorIndex,
+          stepId,
+          stepName
+        }));
+      }).sort((a, b) => b.at - a.at);
+
+      if (analysisNotesGlobal) {
+        analysisNotesGlobal.innerHTML = allNotes.map((note) => {
+          return `<div class="note-card">
+            <div class="meta">${formatTimeOnly(new Date(note.at))} , Opérateur ${note.operatorIndex} , ${escapeHtml(note.stepName)}</div>
+            <div>${escapeHtml(note.text)}</div>
+          </div>`;
+        }).join("") || `<div class="note-card"><div class="meta">—</div><div>—</div></div>`;
+      }
+
+      if (analysisTimeline) {
+        const items = buildTimelineItems(dataset, allNotes);
+        analysisTimeline.innerHTML = items.map((item) => item.html).join("") || `<div class="timeline-item"><div class="timeline-head"><div class="timeline-title">—</div></div></div>`;
+      }
+    };
+
+    const areAllExternalTasksDone = () => {
+      if (!Array.isArray(operators) || operators.length === 0) {
+        const hasExternalSteps = Array.isArray(settings?.standardSteps)
+          && settings.standardSteps.some((step) => step?.type === "external");
+        return !hasExternalSteps;
+      }
+      const externalSteps = operators.flatMap((operator) => (Array.isArray(operator.steps) ? operator.steps : []))
+        .filter((step) => step?.type === "external");
+      if (externalSteps.length === 0) {
+        return true;
+      }
+      return externalSteps.every((step) => step && step.status === "done");
+    };
+
+    const updateSmedStarted = () => {
+      const hasDate = Boolean(ipcDate && ipcDate.value);
+      const hasTime = Boolean(ipcTime && ipcTime.value);
+      if (!isSmedStarted && hasDate && hasTime && !areAllExternalTasksDone()) {
+        alert("Impossible de démarrer: valider toutes les tâches externes avant de lancer le chrono.");
+        return;
+      }
+      const newIsSmedStarted = hasDate && hasTime;
+      isSmedStarted = newIsSmedStarted;
+      if (productInput) {
+        productInput.readOnly = newIsSmedStarted;
+        productInput.classList.toggle("readonly", newIsSmedStarted);
+      }
+      if (!newIsSmedStarted) {
+        isSmedFinished = false;
+        firstIpcTimestamp = null;
+      }
+      if (paramTabButton) {
+        paramTabButton.disabled = isSmedStarted;
+        paramTabButton.classList.toggle("disabled", isSmedStarted);
+      }
+      if (settingsLock) {
+        settingsLock.classList.toggle("visible", isSmedStarted);
+      }
+      if (settingsForm) {
+        settingsForm.classList.toggle("settings-disabled", isSmedStarted);
+      }
+      if (settingsApply) {
+        settingsApply.disabled = isSmedStarted || !hasSettingsChanges();
+      }
+      if (isSmedStarted && document.querySelector(".page.active")?.dataset.tab === "parametres") {
+        setActiveTab("smed");
+      }
+      if (smedStarted && !newIsSmedStarted) {
+        smedStarted.classList.remove("visible");
+      }
+      if (smedFinished && !newIsSmedStarted) {
+        smedFinished.classList.remove("visible");
+      }
+      if (!newIsSmedStarted && startedToastTimeout) {
+        clearTimeout(startedToastTimeout);
+        startedToastTimeout = null;
+      }
+      if (!wasSmedStarted && newIsSmedStarted && smedStarted) {
+        if (startedToastTimeout) {
+          clearTimeout(startedToastTimeout);
+          startedToastTimeout = null;
+        }
+        smedStarted.classList.add("visible");
+        startedToastTimeout = setTimeout(() => {
+          smedStarted.classList.remove("visible");
+          startedToastTimeout = null;
+        }, 5000);
+        startAllOperatorsOnSmedStart();
+        const lastIpc = getLastIpcDateTime();
+        sessionEvents.push({ type: "start_smed", at: lastIpc ? lastIpc.getTime() : Date.now(), operatorIndex: null, stepId: null, payload: {} });
+        persistSave("force");
+        persistStartAutosave();
+      }
+      if (finishSmedButton) {
+        finishSmedButton.classList.toggle("hidden", !isSmedStarted || isSmedFinished);
+      }
+      updatePauseButton();
+      if (isSmedStarted && !isSmedFinished) {
+        startChrono();
+        startOperatorTick();
+      } else if (isSmedStarted && isSmedFinished) {
+        stopChrono(false);
+        stopOperatorTick();
+      } else {
+        stopChrono(true);
+        stopOperatorTick();
+      }
+      wasSmedStarted = newIsSmedStarted;
+      renderOperators();
+      renderAnalysis();
+      renderSettingsForm();
+
+    };
+
+    const getDefaultStandardSteps = () => createDefaultStandardSteps(draftOperatorsCount);
+
+    const ensureDraftState = () => {
+      normalizeOperatorIndex(draftStandardSteps, draftOperatorsCount);
+      let globalOrder = 1;
+      for (let operatorIndex = 1; operatorIndex <= draftOperatorsCount; operatorIndex += 1) {
+        draftStandardSteps
+          .filter((step) => step.operatorIndex === operatorIndex)
+          .forEach((step) => {
+            step.order = globalOrder;
+            globalOrder += 1;
+          });
+      }
+    };
+
+    const hasSettingsChanges = () => {
+      return (
+        draftOperatorsCount !== settings.operatorsCount ||
+        draftAlertMinutes !== settings.alertMinutes ||
+        JSON.stringify(draftStandardSteps) !== JSON.stringify(settings.standardSteps) ||
+        JSON.stringify(draftJustificationReasons) !== JSON.stringify(settings.justificationReasons)
+      );
+    };
+
+    const renderConsistency = () => {
+      if (!consistencyTypeTable || !consistencyOperatorTable || !consistencyAlerts) {
+        return;
+      }
+      const totalGlobal = draftStandardSteps.reduce((sum, step) => sum + step.targetMin, 0);
+      const totalSmed = draftStandardSteps.reduce((sum, step) => {
+        if (step.type === "internal") {
+          return sum + step.targetMin;
+        }
+        return sum;
+      }, 0);
+      const types = ["external", "internal"];
+      consistencyTypeTable.innerHTML = types.map((type) => {
+        const minutes = draftStandardSteps
+          .filter((step) => step.type === type)
+          .reduce((sum, step) => sum + step.targetMin, 0);
+        const percent = totalGlobal > 0 ? (minutes / totalGlobal) * 100 : 0;
+        return `
+          <tr>
+            <td>${getStepTypeLabel(type)}</td>
+            <td>${minutes.toFixed(1)}</td>
+            <td>${percent.toFixed(1)}%</td>
+          </tr>
+        `;
+      }).join("");
+
+      const operatorRows = [];
+      const operatorTotals = {};
+      for (let i = 1; i <= draftOperatorsCount; i++) {
+        operatorTotals[i] = draftStandardSteps
+          .filter((step) => step.operatorIndex === i && (step.type === "internal"))
+          .reduce((sum, step) => sum + step.targetMin, 0);
+        const percent = totalSmed > 0 ? (operatorTotals[i] / totalSmed) * 100 : 0;
+        operatorRows.push(`
+          <tr>
+            <td>Opérateur ${i}</td>
+            <td>${operatorTotals[i].toFixed(1)}</td>
+            <td>${percent.toFixed(1)}%</td>
+          </tr>
+        `);
+      }
+      consistencyOperatorTable.innerHTML = operatorRows.join("");
+
+      const alerts = [];
+      Object.entries(operatorTotals).forEach(([index, total]) => {
+        const percent = totalSmed > 0 ? (total / totalSmed) * 100 : 0;
+        if (percent > 60) {
+          alerts.push(`Attention: l’opérateur ${index} concentre ${percent.toFixed(1)} % du temps SMED`);
+        }
+      });
+      const externalPercent = totalGlobal > 0
+        ? (draftStandardSteps.filter((step) => step.type === "external").reduce((sum, step) => sum + step.targetMin, 0) / totalGlobal) * 100
+        : 0;
+      if (externalPercent > 70) {
+        alerts.push(`Attention: ${externalPercent.toFixed(1)} % des temps sont classés Externe, vérifier la cohérence SMED`);
+      }
+      consistencyAlerts.innerHTML = alerts.length
+        ? `<ul class="warning-text">${alerts.map((item) => `<li>${item}</li>`).join("")}</ul>`
+        : "Aucune alerte détectée.";
+    };
+
+    const renderStandardSteps = () => {
+      if (!standardStepsList) {
+        return;
+      }
+      const operatorOptions = Array.from({ length: draftOperatorsCount }, (_, index) => {
+        const value = index + 1;
+        return `<option value="${value}">Opérateur ${value}</option>`;
+      }).join("");
+
+      const totalSmedTargetMinAll = draftStandardSteps.reduce((sum, step) => {
+        if (step.type === "internal") {
+          return sum + step.targetMin;
+        }
+        return sum;
+      }, 0);
+
+      standardStepsList.innerHTML = Array.from({ length: draftOperatorsCount }, (_, index) => {
+        const operatorIndex = index + 1;
+        const stepsForOperator = draftStandardSteps.filter((step) => step.operatorIndex === operatorIndex);
+        const operatorSmedTargetMin = stepsForOperator.reduce((sum, step) => {
+          if (step.type === "internal") {
+            return sum + step.targetMin;
+          }
+          return sum;
+        }, 0);
+        const operatorPct = totalSmedTargetMinAll > 0 ? (operatorSmedTargetMin / totalSmedTargetMinAll) * 100 : 0;
+        const badgeClass = operatorPct > 60 ? "badge-amber" : "badge-neutral";
+        return `
+          <div class="standard-column" data-operator="${operatorIndex}">
+            <div class="standard-step-row" style="justify-content: space-between; flex-wrap: wrap;">
+              <div class="standard-col-head">
+                <h4>Opérateur ${operatorIndex}</h4>
+                <div class="standard-col-meta">
+                  <span class="col-min">${operatorSmedTargetMin} min</span>
+                  <span class="col-pct ${badgeClass}">${operatorPct.toFixed(0)}%</span>
+                </div>
+              </div>
+            </div>
+            ${stepsForOperator.map((step, localIndex) => `
+              <div class="standard-step-card" data-step-id="${step.id}">
+                <div class="standard-step-row">
+                  <span class="drag-handle" aria-hidden="true">≡</span>
+                  <span class="analysis-pill">#${localIndex + 1}</span>
+                  <div class="standard-step-actions">
+                    <button class="analysis-button" type="button" data-action="move-up">Monter</button>
+                    <button class="analysis-button" type="button" data-action="move-down">Descendre</button>
+                    <button class="analysis-button" type="button" data-action="delete">Supprimer</button>
+                  </div>
+                  <select data-field="operatorIndex">${operatorOptions}</select>
+                </div>
+                <div class="standard-step-row">
+                  <label>Nom</label>
+                  <input type="text" data-field="name" value="${step.name}">
+                </div>
+                <div class="standard-step-row">
+                  <label>Type</label>
+                  <select data-field="type">
+                    <option value="external" ${step.type === "external" ? "selected" : ""}>Externe</option>
+                    <option value="internal" ${step.type === "internal" ? "selected" : ""}>Interne</option>
+                  </select>
+                </div>
+                <div class="standard-step-row">
+                  <label>Temps cible (min)</label>
+                  <div class="standard-step-actions">
+                    <button class="analysis-button" type="button" data-action="target-minus">-</button>
+                    <span class="analysis-value">${step.targetMin}</span>
+                    <button class="analysis-button" type="button" data-action="target-plus">+</button>
+                  </div>
+                </div>
+                <div class="standard-step-row">
+                  <label>Actions</label>
+                  <div class="action-list">
+                    ${(step.actions || []).map((action, actionIndex) => `
+                      <div class="action-item">
+                        <input type="text" data-field="action" data-action-index="${actionIndex}" value="${action}">
+                        <button class="analysis-button" type="button" data-action="remove-action" data-action-index="${actionIndex}">Supprimer</button>
+                      </div>
+                    `).join("")}
+                    <button class="analysis-button" type="button" data-action="add-action">Ajouter une action</button>
+                  </div>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        `;
+      }).join("");
+
+      standardStepsList.querySelectorAll("select[data-field=\"operatorIndex\"]").forEach((select) => {
+        const card = select.closest(".standard-step-card");
+        const stepId = card?.dataset.stepId;
+        const step = draftStandardSteps.find((item) => item.id === stepId);
+        if (step) {
+          select.value = String(step.operatorIndex);
+        }
+      });
+    };
+
+    const renderSettingsForm = () => {
+      ensureDraftState();
+      if (operatorsCountDisplay) {
+        operatorsCountDisplay.textContent = String(draftOperatorsCount);
+      }
+      if (alertThresholdDisplay) {
+        alertThresholdDisplay.textContent = String(draftAlertMinutes);
+      }
+      if (targetSmedDisplay) {
+        targetSmedDisplay.textContent = formatMinutes(getTargetSecondsFromStandard(draftStandardSteps) / 60);
+      }
+      renderStandardSteps();
+      renderConsistency();
+      renderJustifications();
+      if (settingsApply) {
+        settingsApply.disabled = isSmedStarted || !hasSettingsChanges();
+      }
+    };
+
+    const renderJustifications = () => {
+      if (!justificationList) {
+        return;
+      }
+      justificationList.innerHTML = draftJustificationReasons.map((reason, index) => `
+        <div class="action-item" data-reason-index="${index}">
+          <input type="text" value="${reason}" data-field="reason">
+          <button class="analysis-button" type="button" data-action="move-reason-up">Monter</button>
+          <button class="analysis-button" type="button" data-action="move-reason-down">Descendre</button>
+          <button class="analysis-button" type="button" data-action="remove-reason">Supprimer</button>
+        </div>
+      `).join("");
+    };
+
+    const applySettings = () => {
+      if (isSmedStarted) {
+        return;
+      }
+      settings.operatorsCount = draftOperatorsCount;
+      settings.alertMinutes = draftAlertMinutes;
+      settings.standardSteps = JSON.parse(JSON.stringify(draftStandardSteps));
+      settings.justificationReasons = [...draftJustificationReasons];
+      normalizeOperatorIndex(settings.standardSteps, settings.operatorsCount);
+      targetSeconds = getTargetSecondsFromStandard(settings.standardSteps);
+      alertSeconds = settings.alertMinutes * 60;
+      updateChronoLabels();
+      resetOperators();
+      stopChrono(true);
+      updateChronoDisplay();
+      // Persist parameters "en dur"
+      persistSaveSettings();
+      setActiveTab("smed");
+    };
+
+    const cancelSettings = () => {
+      draftOperatorsCount = settings.operatorsCount;
+      draftAlertMinutes = settings.alertMinutes;
+      draftStandardSteps = JSON.parse(JSON.stringify(settings.standardSteps));
+      draftJustificationReasons = [...settings.justificationReasons];
+      renderSettingsForm();
+
+      setActiveTab("smed");
+    };
+
+    if (ipcDate && ipcTime) {
+      ipcDate.addEventListener("input", updateSmedStarted);
+      ipcTime.addEventListener("input", updateSmedStarted);
+    }
+
+    if (settingsApply) {
+      settingsApply.addEventListener("click", applySettings);
+    }
+    if (settingsCancel) {
+      settingsCancel.addEventListener("click", cancelSettings);
+    }
+
+    if (settingsForm) {
+      settingsForm.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) {
+          return;
+        }
+        const stepper = target.dataset.stepper;
+        const action = target.dataset.action;
+        const card = target.closest(".standard-step-card");
+        const stepId = card?.dataset.stepId;
+        if (stepper === "operators") {
+          const delta = action === "plus" ? 1 : action === "minus" ? -1 : 0;
+          if (delta !== 0) {
+            draftOperatorsCount = clampOperatorCount(draftOperatorsCount + delta);
+            normalizeOperatorIndex(draftStandardSteps, draftOperatorsCount);
+            renderSettingsForm();
+
+          }
+          return;
+        }
+        if (stepper === "alert") {
+          const delta = action === "plus" ? 1 : action === "minus" ? -1 : 0;
+          if (delta !== 0) {
+            draftAlertMinutes = Math.max(1, draftAlertMinutes + delta);
+            renderSettingsForm();
+
+          }
+          return;
+        }
+        const reasonWrapper = target.closest("[data-reason-index]");
+        if (reasonWrapper && action) {
+          const reasonIndex = Number(reasonWrapper.dataset.reasonIndex);
+          if (action === "move-reason-up" && reasonIndex > 0) {
+            const [removed] = draftJustificationReasons.splice(reasonIndex, 1);
+            draftJustificationReasons.splice(reasonIndex - 1, 0, removed);
+            renderSettingsForm();
+
+          }
+          if (action === "move-reason-down" && reasonIndex < draftJustificationReasons.length - 1) {
+            const [removed] = draftJustificationReasons.splice(reasonIndex, 1);
+            draftJustificationReasons.splice(reasonIndex + 1, 0, removed);
+            renderSettingsForm();
+
+          }
+          if (action === "remove-reason") {
+            const shouldDelete = window.confirm("Supprimer cette raison ?");
+            if (shouldDelete) {
+              draftJustificationReasons.splice(reasonIndex, 1);
+              renderSettingsForm();
+
+            }
+          }
+          return;
+        }
+        if (!stepId) {
+          return;
+        }
+        const stepIndex = draftStandardSteps.findIndex((item) => item.id === stepId);
+        if (stepIndex === -1) {
+          return;
+        }
+        const step = draftStandardSteps[stepIndex];
+        const sameOperatorSteps = draftStandardSteps.filter((item) => item.operatorIndex === step.operatorIndex);
+        const localIndex = sameOperatorSteps.findIndex((item) => item.id === step.id);
+        if (action === "move-up" && localIndex > 0) {
+          const targetStep = sameOperatorSteps[localIndex - 1];
+          const globalIndex = draftStandardSteps.findIndex((item) => item.id === targetStep.id);
+          const [removed] = draftStandardSteps.splice(stepIndex, 1);
+          draftStandardSteps.splice(globalIndex, 0, removed);
+          renderSettingsForm();
+
+        }
+        if (action === "move-down" && localIndex < sameOperatorSteps.length - 1) {
+          const targetStep = sameOperatorSteps[localIndex + 1];
+          const globalIndex = draftStandardSteps.findIndex((item) => item.id === targetStep.id);
+          const [removed] = draftStandardSteps.splice(stepIndex, 1);
+          draftStandardSteps.splice(globalIndex + 1, 0, removed);
+          renderSettingsForm();
+
+        }
+        if (action === "delete") {
+          const shouldDelete = window.confirm("Supprimer cette étape ?");
+          if (shouldDelete) {
+            draftStandardSteps.splice(stepIndex, 1);
+            renderSettingsForm();
+
+          }
+        }
+        if (action === "target-minus") {
+          step.targetMin = clampTargetMin(step.type, step.targetMin - 1);
+          renderSettingsForm();
+
+        }
+        if (action === "target-plus") {
+          step.targetMin = clampTargetMin(step.type, step.targetMin + 1);
+          renderSettingsForm();
+
+        }
+        if (action === "add-action") {
+          if (!Array.isArray(step.actions)) {
+            step.actions = [];
+          }
+          step.actions.push(`Action ${step.actions.length + 1}`);
+          renderSettingsForm();
+
+        }
+        if (action === "remove-action") {
+          const actionIndex = Number(target.dataset.actionIndex);
+          if (!Number.isNaN(actionIndex) && Array.isArray(step.actions)) {
+            step.actions.splice(actionIndex, 1);
+            renderSettingsForm();
+
+          }
+        }
+      });
+
+      settingsForm.addEventListener("input", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement) && !(target instanceof HTMLSelectElement)) {
+          return;
+        }
+        const card = target.closest(".standard-step-card");
+        const stepId = card?.dataset.stepId;
+        if (!stepId) {
+          const reasonWrapper = target.closest("[data-reason-index]");
+          if (reasonWrapper && target.dataset.field === "reason") {
+            const reasonIndex = Number(reasonWrapper.dataset.reasonIndex);
+            if (!Number.isNaN(reasonIndex)) {
+              draftJustificationReasons[reasonIndex] = target.value.trim() || draftJustificationReasons[reasonIndex];
+              if (settingsApply) {
+                settingsApply.disabled = isSmedStarted || !hasSettingsChanges();
+              }
+            }
+          }
+          return;
+        }
+        const step = draftStandardSteps.find((item) => item.id === stepId);
+        if (!step) {
+          return;
+        }
+        const field = target.dataset.field;
+        if (field === "name") {
+          step.name = target.value.trim() || step.name;
+          if (settingsApply) {
+            settingsApply.disabled = isSmedStarted || !hasSettingsChanges();
+          }
+          return;
+        }
+        if (field === "type") {
+          step.type = target.value;
+          step.targetMin = clampTargetMin(step.type, step.targetMin);
+          renderSettingsForm();
+
+          return;
+        }
+        if (field === "operatorIndex") {
+          const newOperator = Number(target.value);
+          step.operatorIndex = newOperator;
+          const lastIndex = [...draftStandardSteps]
+            .map((item, idx) => ({ item, idx }))
+            .filter(({ item }) => item.operatorIndex === newOperator && item.id !== step.id)
+            .map(({ idx }) => idx)
+            .pop();
+          const currentIndex = draftStandardSteps.findIndex((item) => item.id === step.id);
+          const [removed] = draftStandardSteps.splice(currentIndex, 1);
+          if (lastIndex === undefined) {
+            draftStandardSteps.push(removed);
+          } else {
+            draftStandardSteps.splice(lastIndex + 1, 0, removed);
+          }
+          renderSettingsForm();
+
+          return;
+        }
+        if (field === "action") {
+          const actionIndex = Number(target.dataset.actionIndex);
+          if (!Number.isNaN(actionIndex)) {
+            if (!Array.isArray(step.actions)) {
+              step.actions = [];
+            }
+            step.actions[actionIndex] = target.value.trim();
+            if (settingsApply) {
+              settingsApply.disabled = isSmedStarted || !hasSettingsChanges();
+            }
+          }
+        }
+      });
+    }
+
+    if (addStandardStepButton) {
+      addStandardStepButton.addEventListener("click", () => {
+        const newStep = {
+          id: `std-${standardStepCounter++}`,
+          order: draftStandardSteps.length + 1,
+          name: `Étape ${draftStandardSteps.length + 1}`,
+          type: "external",
+          targetMin: 0,
+          operatorIndex: 1,
+          actions: []
+        };
+        const lastIndex = [...draftStandardSteps]
+          .map((item, idx) => ({ item, idx }))
+          .filter(({ item }) => item.operatorIndex === 1)
+          .map(({ idx }) => idx)
+          .pop();
+        if (lastIndex === undefined) {
+          draftStandardSteps.push(newStep);
+        } else {
+          draftStandardSteps.splice(lastIndex + 1, 0, newStep);
+        }
+        renderSettingsForm();
+
+      });
+    }
+
+    if (resetStandardStepsButton) {
+      resetStandardStepsButton.addEventListener("click", () => {
+        const shouldReset = window.confirm("Réinitialiser le standard ?");
+        if (!shouldReset) {
+          return;
+        }
+        persistStopAutosave();
+        persistClear();
+        const resetEvent = { type: "reset", at: Date.now(), operatorIndex: null, stepId: null, payload: {} };
+        sessionEvents = [resetEvent];
+        draftStandardSteps = getDefaultStandardSteps();
+        standardStepCounter = draftStandardSteps.length + 1;
+        renderSettingsForm();
+
+      });
+    }
+
+    if (addJustificationButton) {
+      addJustificationButton.addEventListener("click", () => {
+        draftJustificationReasons.push(`Raison ${draftJustificationReasons.length + 1}`);
+        renderSettingsForm();
+
+      });
+    }
+
+    if (operatorsGrid) {
+      operatorsGrid.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) {
+          return;
+        }
+        const action = target.dataset.action;
+        const opId = target.dataset.op;
+        const stepIndex = Number(target.dataset.stepIndex);
+        if (!action || !opId) {
+          return;
+        }
+        const operator = operators.find((item) => item.id === opId);
+        if (!operator) {
+          return;
+        }
+        if (action === "toggle-action") {
+          const actionIndex = Number(target.dataset.actionIndex);
+          const step = operator.steps[stepIndex];
+          if (step && Array.isArray(step.actionsDone) && !Number.isNaN(actionIndex)) {
+            step.actionsDone[actionIndex] = target.checked;
+            renderOperators();
+            persistSave("active");
+          }
+          return;
+        }
+        if (action === "undo-last") {
+          const hasDone = operator.steps.some((item) => item.status === "done");
+          if (!hasDone) {
+            return;
+          }
+          const shouldUndo = window.confirm("Annuler la dernière validation de cet opérateur ?");
+          if (!shouldUndo) {
+            return;
+          }
+          const lastDoneIndex = [...operator.steps].map((step, index) => ({ step, index }))
+            .filter(({ step }) => step.status === "done")
+            .map(({ index }) => index)
+            .pop();
+          if (lastDoneIndex === undefined) {
+            return;
+          }
+          const lastDone = operator.steps[lastDoneIndex];
+          lastDone.status = "todo";
+          lastDone.elapsedSeconds = 0;
+          lastDone.endTime = null;
+          lastDone.startTime = null;
+          lastDone.justification = "";
+          if (isSmedStarted && operator.steps.every((step) => step.status !== "running")) {
+            lastDone.status = "running";
+            lastDone.startTime = Date.now();
+          }
+          sessionEvents.push({
+            type: "undo",
+            operatorIndex: Number(operator.id.split("-")[1]),
+            stepId: lastDone.id,
+            at: Date.now()
+          });
+          renderOperators();
+          renderAnalysis();
+          persistSave("active");
+          return;
+        }
+        if (action === "add-note") {
+          const step = operator.steps[stepIndex];
+          if (!step) {
+            return;
+          }
+          pendingNote = { operatorId: operator.id, stepIndex };
+          if (noteText) {
+            noteText.value = "";
+          }
+          if (noteModal) {
+            noteModal.classList.add("visible");
+          }
+          return;
+        }
+        if (action === "validate") {
+          if (Number.isNaN(stepIndex)) {
+            return;
+          }
+          handleValidate(operator, stepIndex);
+        }
+      });
+    }
+
+    if (justificationCancel) {
+      justificationCancel.addEventListener("click", () => {
+        closeJustificationModal();
+      });
+    }
+
+    if (justificationReason) {
+      justificationReason.addEventListener("change", () => {
+        if (justificationError) {
+          justificationError.hidden = true;
+        }
+      });
+    }
+
+    if (justificationConfirm) {
+      justificationConfirm.addEventListener("click", () => {
+        if (!pendingJustification) {
+          closeJustificationModal();
+          return;
+        }
+        if (!justificationReason) {
+          return;
+        }
+        if (settings.justificationReasons.length === 0) {
+          if (justificationEmpty) {
+            justificationEmpty.hidden = false;
+          }
+          return;
+        }
+        const selectedReason = justificationReason.value;
+        if (!selectedReason) {
+          if (justificationError) {
+            justificationError.hidden = false;
+          }
+          return;
+        }
+        const operator = operators.find((item) => item.id === pendingJustification.operatorId);
+        if (operator) {
+          const step = operator.steps.find((item) => item.status === "running");
+          if (step) {
+            step.justification = selectedReason;
+          }
+          completeStep(operator, pendingJustification.actualMin, true);
+        }
+        closeJustificationModal();
+      });
+    }
+
+    if (noteCancel) {
+      noteCancel.addEventListener("click", () => {
+        pendingNote = null;
+        if (noteModal) {
+          noteModal.classList.remove("visible");
+        }
+      });
+    }
+
+    if (noteSave) {
+      noteSave.addEventListener("click", () => {
+        if (!pendingNote || !noteText) {
+          return;
+        }
+        const text = noteText.value.trim();
+        if (!text) {
+          return;
+        }
+        const operator = operators.find((item) => item.id === pendingNote.operatorId);
+        const step = operator?.steps[pendingNote.stepIndex];
+        if (step) {
+          if (!Array.isArray(step.notes)) {
+            step.notes = [];
+          }
+          step.notes.push({ text, at: Date.now() });
+          sessionEvents.push({ type: "add_note", at: Date.now(), operatorIndex: getOperatorIndex(operator), stepId: step.id, payload: {} });
+        }
+        pendingNote = null;
+        if (noteModal) {
+          noteModal.classList.remove("visible");
+        }
+        renderOperators();
+        renderAnalysis();
+        persistSave("active");
+      });
+    }
+
+    if (pauseSmedButton) {
+      pauseSmedButton.addEventListener("click", () => {
+        if (!isSmedStarted || isSmedFinished) {
+          return;
+        }
+        if (!isSmedPaused) {
+          isSmedPaused = true;
+          pauseStartTimestamp = Date.now();
+          stopOperatorTick();
+          if (!state || typeof state !== "object") {
+            state = { marks: [] };
+          }
+          if (!Array.isArray(state.marks)) {
+            state.marks = [];
+          }
+          state.marks.push({ kind: "pause", t: pauseStartTimestamp, label: "Pause SMED", note: "" });
+          sessionEvents.push({ type: "pause", at: pauseStartTimestamp, operatorIndex: null, stepId: null, payload: {} });
+          updatePauseButton();
+          updateChronoDisplay();
+          persistSave("active");
+          return;
+        }
+        const reason = window.prompt("Justification obligatoire de la pause (ex: nuit, week-end, attente planning)");
+        if (!reason || !reason.trim()) {
+          return;
+        }
+        const resumeTimestamp = Date.now();
+        const currentPauseStart = pauseStartTimestamp;
+        isSmedPaused = false;
+        if (currentPauseStart) {
+          pausedDurationMs += resumeTimestamp - currentPauseStart;
+        }
+        operators.forEach((operator) => {
+          const running = operator.steps.find((s) => s.status === "running" && s.startTime !== null);
+          if (running && currentPauseStart) {
+            running.startTime += (resumeTimestamp - currentPauseStart);
+          }
+        });
+        pauseStartTimestamp = null;
+        if (!state || typeof state !== "object") {
+          state = { marks: [] };
+        }
+        if (!Array.isArray(state.marks)) {
+          state.marks = [];
+        }
+        state.marks.push({ kind: "resume", t: resumeTimestamp, label: "Reprise SMED", note: reason.trim() });
+        sessionEvents.push({ type: "resume", at: resumeTimestamp, operatorIndex: null, stepId: null, payload: { note: reason.trim() } });
+        updatePauseButton();
+        updateChronoDisplay();
+        startOperatorTick();
+        renderOperators();
+        renderAnalysis();
+        persistSave("active");
+      });
+    }
+
+    if (resetSmedButton) {
+      resetSmedButton.addEventListener("click", () => {
+        const shouldReset = window.confirm("Confirmer la remise à zéro du SMED ?");
+        if (!shouldReset) {
+          return;
+        }
+        persistStopAutosave();
+        persistClear();
+        const resetEvent = { type: "reset", at: Date.now(), operatorIndex: null, stepId: null, payload: {} };
+        sessionEvents = [resetEvent];
+        if (ipcDate) {
+          ipcDate.value = "";
+        }
+        if (ipcTime) {
+          ipcTime.value = "";
+        }
+        const ligneInput = document.querySelector("#ligne-input");
+        const poInput = document.querySelector("#po-input");
+        if (ligneInput) {
+          ligneInput.value = "";
+        }
+        if (poInput) {
+          poInput.value = "";
+        }
+        const productInput = document.querySelector("#product-input");
+        if (productInput) {
+          productInput.value = "";
+          productInput.readOnly = false;
+          productInput.classList.remove("readonly");
+        }
+        if (finishDate) {
+          finishDate.value = "";
+        }
+        if (finishTime) {
+          finishTime.value = "";
+        }
+        isSmedStarted = false;
+        wasSmedStarted = false;
+        isSmedFinished = false;
+        isSmedPaused = false;
+        pauseStartTimestamp = null;
+        pausedDurationMs = 0;
+        if (!state || typeof state !== "object") {
+          state = { marks: [] };
+        }
+        state.marks = [];
+        firstIpcTimestamp = null;
+        if (startedToastTimeout) {
+          clearTimeout(startedToastTimeout);
+          startedToastTimeout = null;
+        }
+        if (smedStarted) {
+          smedStarted.classList.remove("visible");
+        }
+        if (smedFinished) {
+          smedFinished.classList.remove("visible");
+        }
+        resetOperators();
+        updateSmedStarted();
+        persistStopAutosave();
+        persistClearActive();
+      });
+    }
+
+    const openFinishModal = () => {
+      if (!finishModal || !finishDate || !finishTime) {
+        return false;
+      }
+      const now = new Date();
+      const values = toDateTimeInputValue(now);
+      finishDate.value = values.date;
+      finishTime.value = values.time;
+      finishModal.classList.add("visible");
+      return true;
+    };
+
+    const closeFinishModal = () => {
+      if (!finishModal) {
+        return;
+      }
+      finishModal.classList.remove("visible");
+    };
+
+    if (finishSmedButton) {
+      finishSmedButton.addEventListener("click", () => {
+        if (!isSmedStarted || isSmedFinished) {
+          return;
+        }
+        const opened = openFinishModal();
+        if (!opened) {
+          finalizeSmed(new Date());
+        }
+      });
+    }
+
+    if (finishCancel) {
+      finishCancel.addEventListener("click", closeFinishModal);
+    }
+
+    const finalizeSmed = (finishValue) => {
+      if (!finishValue || Number.isNaN(finishValue.getTime())) {
+        alert("Date/heure de fin invalide.");
+        return;
+      }
+      firstIpcTimestamp = finishValue.getTime();
+      isSmedFinished = true;
+      isSmedPaused = false;
+      pauseStartTimestamp = null;
+      sessionEvents.push({ type: "finish_smed", at: firstIpcTimestamp, operatorIndex: null, stepId: null, payload: {} });
+      persistSave("force");
+      persistStopAutosave();
+      stopChrono(false);
+      stopOperatorTick();
+      closeFinishModal();
+      if (smedFinished) {
+        smedFinished.classList.add("visible");
+        setTimeout(() => {
+          smedFinished.classList.remove("visible");
+        }, 5000);
+      }
+      updateSmedStarted();
+      renderAnalysis();
+      exportJson();
+      exportReport({ autoPrint: true, suppressBlockedAlert: false });
+      persistSaveCompleted();
+    };
+
+    if (finishConfirm) {
+      finishConfirm.addEventListener("click", () => {
+        if (!finishDate?.value || !finishTime?.value) {
+          alert("Merci de renseigner la date et l'heure de fin.");
+          return;
+        }
+        const finishValue = new Date(`${finishDate.value}T${finishTime.value}`);
+        if (Number.isNaN(finishValue.getTime())) {
+          alert("Date/heure de fin invalide.");
+          return;
+        }
+        finalizeSmed(finishValue);
+      });
+    }
+
+    const exportFile = (content, filename, type) => {
+      const blob = new Blob([content], { type });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    };
+
+    const getSafeFileSegment = (value, fallback) => {
+      const trimmed = (value || "").trim();
+      if (!trimmed) {
+        return fallback;
+      }
+      return trimmed.replace(/[^\w-]+/g, "_");
+    };
+
+    const getExportTimestamp = () => {
+      const now = new Date();
+      const date = now.toISOString().slice(0, 10);
+      const time = now.toTimeString().slice(0, 5).replace(":", "");
+      return { date, time };
+    };
+
+    const getSessionId = () => {
+      const lastIpc = getLastIpcDateTime();
+      const datePart = lastIpc ? lastIpc.toISOString().slice(0, 10) : "date";
+      const timePart = lastIpc ? lastIpc.toTimeString().slice(0, 5).replace(":", "") : "time";
+      const line = getSafeFileSegment(ligneInput?.value, "LIGNE");
+      const po = getSafeFileSegment(document.querySelector("#po-input")?.value, "PO");
+      return `${line}_${po}_${datePart}_${timePart}`;
+    };
+
+    const buildStepsExport = () => {
+      const dataset = getAnalysisDataset();
+      return dataset.steps.map((entry) => {
+        return {
+          order: entry.order,
+          name: entry.step.name,
+          type: entry.step.type,
+          operator: entry.operator.name,
+          targetMin: entry.step.targetSeconds / 60,
+          realMin: entry.realSeconds / 60,
+          startTs: entry.step.startTime ? new Date(entry.step.startTime).toISOString() : "",
+          endTs: entry.step.endTime ? new Date(entry.step.endTime).toISOString() : "",
+          status: entry.step.status,
+          justification: entry.step.justification || "",
+          actions: entry.step.actions || [],
+          actionsDone: entry.step.actionsDone || [],
+          notes: entry.step.notes || []
+        };
+      });
+    };
+
+    const exportCsv = () => {
+      const lastIpc = getLastIpcDateTime();
+      const firstIpc = getFirstIpcDateTime();
+      const line = ligneInput?.value.trim() || "";
+      const po = document.querySelector("#po-input")?.value.trim() || "";
+      const rows = [
+        [
+          "Ligne",
+          "PO",
+          "Date/heure Dernier IPC",
+          "Date/heure Premier IPC",
+          "Opérateur",
+          "Ordre étape",
+          "Nom étape",
+          "Type",
+          "Temps cible (min)",
+          "TargetParallelMin",
+          "Temps réel (min)",
+          "Timestamp début étape",
+          "Timestamp fin étape",
+          "Justification",
+          "Actions",
+          "Actions réalisées",
+          "Notes"
+        ]
+      ];
+      const targetParallelMin = targetSeconds / 60;
+      buildStepsExport().forEach((step) => {
+        rows.push([
+          line,
+          po,
+          lastIpc ? lastIpc.toISOString() : "",
+          firstIpc ? firstIpc.toISOString() : "",
+          step.operator,
+          step.order,
+          step.name,
+          getStepTypeLabel(step.type),
+          step.targetMin.toFixed(1),
+          targetParallelMin.toFixed(1),
+          step.realMin.toFixed(1),
+          step.startTs,
+          step.endTs,
+          step.justification,
+          (step.actions || []).join("|"),
+          (step.actions || []).filter((_, idx) => step.actionsDone?.[idx]).join("|"),
+          (step.notes || []).map((note) => note.text).join(" | ")
+        ]);
+      });
+      const csvContent = rows.map((row) => row.map((cell) => {
+        const value = String(cell ?? "");
+        if (value.includes(",") || value.includes("\"") || value.includes("\n")) {
+          return `"${value.replace(/\"/g, "\"\"")}"`;
+        }
+        return value;
+      }).join(",")).join("\n");
+      const timestamp = getExportTimestamp();
+      const filename = `SMED_${getSafeFileSegment(line, "LIGNE")}_${getSafeFileSegment(po, "PO")}_${timestamp.date}_${timestamp.time}.csv`;
+      exportFile(csvContent, filename, "text/csv;charset=utf-8");
+    };
+
+    const exportJson = () => {
+      const dataset = getAnalysisDataset();
+      const lastIpc = getLastIpcDateTime();
+      const firstIpc = getFirstIpcDateTime();
+
+      const timeZone = (() => {
+        try {
+          return Intl.DateTimeFormat().resolvedOptions().timeZone || "+01:00";
+        } catch (error) {
+          return "+01:00";
+        }
+      })();
+
+      const line = ligneInput?.value.trim() || "";
+      const po = document.querySelector("#po-input")?.value.trim() || "";
+      const product = productInput?.value.trim() || "";
+
+      const durationTargetMin = getDurationTargetMin();
+      const targetParallelMin = targetSeconds / 60;
+      const durationRealMin = isSmedFinished && lastIpc && firstIpc ? (firstIpc.getTime() - lastIpc.getTime()) / 60000 : null;
+      const deltaMin = durationRealMin === null ? null : durationRealMin - durationTargetMin;
+
+      const realByType = { external: 0, internal: 0 };
+      dataset.steps.forEach((entry) => {
+        if (entry.step.status !== "done") {
+          return;
+        }
+        const type = entry.step.type;
+        const realMin = entry.realSeconds / 60;
+        realByType[type] += realMin;
+      });
+
+      const steps = dataset.steps.map((entry) => {
+        const operatorIndex = getOperatorIndex(entry.operator);
+        const targetMin = entry.step.targetSeconds / 60;
+        const realMin = entry.step.status === "done" ? entry.realSeconds / 60 : null;
+        const notes = Array.isArray(entry.step.notes) ? entry.step.notes : [];
+        return {
+          stepId: String(entry.step.id),
+          order: Number(entry.order),
+          name: String(entry.step.name),
+          type: entry.step.type,
+          operatorIndex,
+          targetMin,
+          realMin,
+          startTs: entry.step.startTime ? new Date(entry.step.startTime).toISOString() : null,
+          endTs: entry.step.endTime ? new Date(entry.step.endTime).toISOString() : null,
+          status: entry.step.status,
+          justification: entry.step.justification ? String(entry.step.justification) : null,
+          notes: notes.map((note) => {
+            const at = typeof note.at === "number" ? new Date(note.at) : new Date();
+            return {
+              text: String(note.text || ""),
+              at: at.toISOString(),
+              operatorIndex,
+              stepId: String(entry.step.id)
+            };
+          }),
+          actions: Array.isArray(entry.step.actions) ? entry.step.actions.map((a) => String(a)) : [],
+          actionsDone: Array.isArray(entry.step.actionsDone) ? entry.step.actionsDone.map((v) => Boolean(v)) : []
+        };
+      });
+
+      const events = (Array.isArray(sessionEvents) ? sessionEvents : []).map((ev) => {
+        const at = typeof ev.at === "number" ? new Date(ev.at).toISOString() : new Date().toISOString();
+        return {
+          type: String(ev.type || ""),
+          at,
+          operatorIndex: ev.operatorIndex === undefined ? null : Number(ev.operatorIndex),
+          stepId: ev.stepId === undefined ? null : String(ev.stepId),
+          payload: ev.payload && typeof ev.payload === "object" ? ev.payload : {}
+        };
+      });
+
+      const payload = {
+        meta: {
+          toolName: "SMED Maquette",
+          toolVersion: "v1",
+          sessionId: getSessionId(),
+          exportedAt: new Date().toISOString(),
+          timezone: timeZone
+        },
+        context: {
+          line: String(line),
+          po: String(po),
+          product: String(product),
+          operatorsCount: Number(settings.operatorsCount)
+        },
+        ipc: {
+          lastIpc: lastIpc ? lastIpc.toISOString() : null,
+          firstIpc: firstIpc ? firstIpc.toISOString() : null
+        },
+        kpi: {
+          durationRealMin,
+          durationTargetMin,
+          targetParallelMin,
+          deltaMin,
+          externalRealMin: realByType.external,
+          internalRealMin: realByType.internal
+        },
+        steps,
+        events
+      };
+
+      const lastIpcForName = lastIpc || new Date();
+      const datePart = lastIpcForName.toISOString().slice(0, 10);
+      const timePart = lastIpcForName.toTimeString().slice(0, 5).replace(":", "");
+      const safeLine = getSafeFileSegment(line, "LIGNE");
+      const safePo = getSafeFileSegment(po, "PO");
+      const safeProduct = getSafeFileSegment(product || "NA", "NA");
+      const filename = `SMED_${safeLine}_${safeProduct}_${safePo}_${datePart}_${timePart}.json`;
+
+      exportFile(JSON.stringify(payload, null, 2), filename, "application/json");
+    };
+
+    const exportReport = (options = {}) => {
+      const dataset = getAnalysisDataset();
+      const lastIpc = getLastIpcDateTime();
+      const firstIpc = getFirstIpcDateTime();
+
+      const line = ligneInput?.value.trim() || "";
+      const po = document.querySelector("#po-input")?.value.trim() || "";
+      const product = productInput?.value.trim() || "";
+
+      const durationTargetMin = targetSeconds / 60;
+      const durationRealMin = isSmedFinished && lastIpc && firstIpc ? (firstIpc.getTime() - lastIpc.getTime()) / 60000 : null;
+      const gapMin = durationRealMin === null ? null : durationRealMin - durationTargetMin;
+
+      const pauseEvents = (Array.isArray(sessionEvents) ? sessionEvents : [])
+        .filter((ev) => ev && (ev.type === "pause" || ev.type === "resume") && typeof ev.at === "number")
+        .sort((a, b) => a.at - b.at);
+      const pausePairs = [];
+      for (let i = 0; i < pauseEvents.length; i += 1) {
+        const pauseEvent = pauseEvents[i];
+        if (!pauseEvent || pauseEvent.type !== "pause") {
+          continue;
+        }
+        const resumeEvent = pauseEvents.slice(i + 1).find((ev) => ev.type === "resume");
+        if (!resumeEvent) {
+          continue;
+        }
+        const startMs = pauseEvent.at;
+        const endMs = resumeEvent.at;
+        const durationMs = endMs - startMs;
+        if (durationMs <= 0) {
+          continue;
+        }
+        const note = resumeEvent.payload && resumeEvent.payload.note ? String(resumeEvent.payload.note) : "";
+        pausePairs.push({ startMs, endMs, durationMs, note });
+      }
+      const totalPauseMin = pausePairs.reduce((sum, item) => sum + (item.durationMs / 60000), 0);
+
+      const steps = buildStepsExport().map((row) => {
+        const operatorIndex = row.operatorIndex ?? (String(row.operator || "").match(/(\d+)/)?.[1] ? Number(String(row.operator).match(/(\d+)/)[1]) : 1);
+        const delta = row.realMin === null || row.realMin === undefined ? null : row.realMin - row.targetMin;
+        return { ...row, operatorIndex, delta };
+      });
+
+      const smedSteps = steps.filter((row) => row.type === "internal");
+      const byOperator = {};
+      smedSteps.forEach((row) => {
+        const idx = row.operatorIndex;
+        if (!byOperator[idx]) {
+          byOperator[idx] = { real: 0, target: 0 };
+        }
+        if (typeof row.realMin === "number") {
+          byOperator[idx].real += row.realMin;
+        }
+        byOperator[idx].target += row.targetMin;
+      });
+
+      const topDrift = smedSteps
+        .filter((row) => typeof row.delta === "number")
+        .sort((a, b) => (b.delta ?? 0) - (a.delta ?? 0))[0];
+
+      const allNotes = operators.flatMap((operator) => {
+        const operatorIndex = getOperatorIndex(operator);
+        return operator.steps.flatMap((step) => {
+          const notes = Array.isArray(step.notes) ? step.notes : [];
+          return notes.map((note) => ({
+            at: typeof note.at === "number" ? note.at : Date.now(),
+            text: String(note.text || ""),
+            operatorIndex,
+            stepName: step.name
+          }));
+        });
+      }).sort((a, b) => b.at - a.at).slice(0, 10);
+
+      const banner = `${escapeHtml(line)} , ${escapeHtml(po)} , ${escapeHtml(product || "—")}`;
+      const period = `${lastIpc ? formatDateTime(lastIpc) : "—"} → ${firstIpc ? formatDateTime(firstIpc) : "—"}`;
+      const realText = durationRealMin === null ? "—" : `${durationRealMin.toFixed(1)} min`;
+      const targetText = `${durationTargetMin.toFixed(1)} min`;
+      const gapText = gapMin === null ? "—" : `${gapMin.toFixed(1)} min`;
+
+      const operatorTiles = Object.entries(byOperator)
+        .sort((a, b) => Number(a[0]) - Number(b[0]))
+        .map(([idx, stats]) => `<div class="pill">Op ${idx} : ${stats.real.toFixed(1)} / ${stats.target.toFixed(1)} min</div>`)
+        .join("") || `<div class="pill">—</div>`;
+
+      const notesHtml = allNotes.map((n) => `<div class="note"><div class="meta">${formatTimeOnly(new Date(n.at))} , Op ${n.operatorIndex} , ${escapeHtml(n.stepName)}</div><div>${escapeHtml(n.text)}</div></div>`).join("") || `<div class="note"><div class="meta">—</div><div>—</div></div>`;
+
+      const pausesTotalText = totalPauseMin > 0 ? `${totalPauseMin.toFixed(1)} min` : "—";
+      const pausesHtml = pausePairs.length
+        ? pausePairs.map((item) => {
+          const startText = formatDateTime(new Date(item.startMs));
+          const endText = formatDateTime(new Date(item.endMs));
+          const durationText = `${(item.durationMs / 60000).toFixed(1)} min`;
+          const noteText = item.note ? ` , ${escapeHtml(item.note)}` : "";
+          return `<div>${startText} → ${endText} , ${durationText}${noteText}</div>`;
+        }).join("")
+        : `<div>—</div>`;
+
+      const stepsRows = steps
+        .slice()
+        .sort((a, b) => (b.delta ?? -1e9) - (a.delta ?? -1e9))
+        .map((row) => {
+          const delta = row.delta === null || row.delta === undefined ? "—" : row.delta.toFixed(1);
+          const real = row.realMin === null || row.realMin === undefined ? "—" : row.realMin.toFixed(1);
+          const just = row.justification ? escapeHtml(row.justification) : "";
+          return `<tr>
+            <td>Op ${row.operatorIndex}</td>
+            <td>${row.order}</td>
+            <td>${escapeHtml(row.name)}</td>
+            <td>${row.type}</td>
+            <td>${row.targetMin.toFixed(1)}</td>
+            <td>${real}</td>
+            <td>${delta}</td>
+            <td>${just}</td>
+          </tr>`;
+        })
+        .join("");
+
+      const topDriftHtml = topDrift
+        ? `<div>${escapeHtml(topDrift.name)} , Op ${topDrift.operatorIndex} , +${topDrift.delta.toFixed(1)} min</div>`
+        : `<div>—</div>`;
+
+      const { autoPrint = false, suppressBlockedAlert = false } = options;
+
+      const htmlDoc = `<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rapport SMED</title>
+<style>
+  @page { size: A4; margin: 12mm; }
+  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color: #111827; }
+  .banner { display:flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+  .title { font-size: 18px; font-weight: 800; }
+  .sub { color:#4b5563; font-size: 12px; margin-top: 4px; }
+  .grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .tile { border: 1px solid #e5e7eb; border-radius: 12px; padding: 10px 12px; }
+  .label { color:#6b7280; font-size: 11px; }
+  .value { font-size: 16px; font-weight: 800; margin-top: 6px; }
+  .pills { display:flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .pill { border: 1px solid #e5e7eb; border-radius: 999px; padding: 6px 10px; font-size: 12px; color:#111827; }
+  .section { margin-top: 12px; }
+  .h { font-weight: 800; margin-bottom: 8px; }
+  .line { border-bottom: 1px dashed #9ca3af; height: 18px; margin-top: 10px; }
+  .notes { display:flex; flex-direction: column; gap: 8px; }
+  .note { border: 1px solid #e5e7eb; border-radius: 12px; padding: 8px 10px; }
+  .note .meta { color:#6b7280; font-size: 11px; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  th, td { border-bottom: 1px solid #e5e7eb; padding: 6px 6px; text-align: left; vertical-align: top; }
+  th { color:#374151; font-weight: 800; }
+
+    .standard-column {
+      position: relative;
+    }
+
+    .standard-column > .standard-step-row:first-child {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(21, 32, 51, 0.08);
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+    }
+
+    .standard-col-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .standard-col-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .col-pct {
+      border-radius: 999px;
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      font-weight: 700;
+    }
+
+    .badge-amber {
+      background: rgba(245, 158, 11, 0.18);
+      border-color: rgba(245, 158, 11, 0.35);
+      color: #92400e;
+    }
+
+    .badge-neutral {
+      background: rgba(21, 32, 51, 0.06);
+    }
+
+    .standard-step-card .drag-handle {
+      opacity: 0.6;
+      font-size: 16px;
+      line-height: 1;
+      padding: 6px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(21, 32, 51, 0.12);
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+  
+/* HOTFIX V1 – Paramètres : opérateurs côte à côte (force horizontal) */
+#parameters .operators,
+#parameters .operators-container,
+#parameters .operators-list {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 16px;
+  overflow-x: auto;
+  align-items: stretch;
+}
+
+#parameters .operator-column,
+#parameters .operator,
+#parameters .operator-card {
+  flex: 0 0 320px;
+  max-width: 320px;
+}
+
+</style>
+</head>
+<body>
+
+  <div class="resume-banner" id="resume-banner">
+    <div class="resume-text">
+      Session SMED en cours détectée.
+      <span class="resume-sub">Reprendre la session sauvegardée ou repartir à zéro.</span>
+    </div>
+    <div class="resume-actions">
+      <button class="resume-btn secondary" type="button" id="resume-discard">Repartir</button>
+      <button class="resume-btn primary" type="button" id="resume-continue">Reprendre</button>
+    </div>
+  </div>
+
+  <div class="banner">
+    <div>
+      <div class="title">Rapport SMED (A4)</div>
+      <div class="sub">${banner}</div>
+      <div class="sub">${period}</div>
+    </div>
+    <div class="sub">Généré: ${new Date().toLocaleString("fr-FR")}</div>
+  </div>
+
+  <div class="grid">
+    <div class="tile">
+      <div class="label">SMED cible vs réel (Interne)</div>
+      <div class="value">${targetText} → ${realText}</div>
+      <div class="sub">Écart: ${gapText}</div>
+    </div>
+    <div class="tile">
+      <div class="label">Contribution opérateurs (Interne)</div>
+      <div class="pills">${operatorTiles}</div>
+    </div>
+    <div class="tile">
+      <div class="label">Top écart (étape)</div>
+      <div class="value">${gapMin === null ? "—" : gapText}</div>
+      <div class="sub">${topDriftHtml}</div>
+    </div>
+    <div class="tile">
+      <div class="label">Temps en pause</div>
+      <div class="value">${pausesTotalText}</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="h">Actions décidées</div>
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+  </div>
+
+  <div class="section">
+    <div class="h">Notes terrain (top 10)</div>
+    <div class="notes">${notesHtml}</div>
+  </div>
+
+  <div class="section">
+    <div class="h">Pauses</div>
+    <div class="notes">${pausesHtml}</div>
+  </div>
+
+  <div class="section">
+    <div class="h">Tableau étapes (détail)</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Op</th><th>Ordre</th><th>Étape</th><th>Type</th><th>Cible</th><th>Réel</th><th>Écart</th><th>Justification</th>
+        </tr>
+      </thead>
+      <tbody>${stepsRows}</tbody>
+    </table>
+  </div>
+</body>
+</html>`;
+
+      const win = window.open("", "_blank");
+      if (!win) {
+        if (!suppressBlockedAlert) {
+          alert("Impossible d'ouvrir le rapport (popup bloquée).");
+        }
+        return false;
+      }
+      win.document.open();
+      win.document.write(htmlDoc);
+      win.document.close();
+
+      const triggerPrint = () => {
+        try {
+          win.focus();
+          win.print();
+        } catch (error) {
+          // no-op
+        }
+      };
+
+      if (autoPrint) {
+        setTimeout(triggerPrint, 250);
+      } else {
+        triggerPrint();
+      }
+      return true;
+    }
+
+    if (exportCsvButton) {
+      exportCsvButton.addEventListener("click", () => {
+        renderAnalysis();
+        exportCsv();
+      });
+    }
+
+    if (exportJsonButton) {
+      exportJsonButton.addEventListener("click", () => {
+        renderAnalysis();
+        exportJson();
+      });
+    }
+
+    if (exportReportButton) {
+      exportReportButton.addEventListener("click", () => {
+        renderAnalysis();
+        exportReport();
+      });
+    }
+
+    if (analysisPrintButton) {
+      analysisPrintButton.addEventListener("click", () => {
+        renderAnalysis();
+        window.print();
+      });
+    }
+
+    // Date/heure en direct (locale fr-FR, mise à jour chaque seconde).
+    const updateDateTime = () => {
+      if (!headerDateTime) {
+        return;
+      }
+      const now = new Date();
+      const time = now.toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      });
+      const date = now.toLocaleDateString("fr-FR");
+      headerDateTime.textContent = `${time} – ${date}`;
+    };
+
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+
+    // Load durable parameters first (kept even after SMED completion/reset)
+    const hadDurableSettings = persistLoadSettings();
+    if (hadDurableSettings) {
+      updateChronoLabels();
+      resetOperators();
+      updateChronoDisplay();
+    }
+    renderSettingsForm();
+
+    // Restore active session once (anti-F5)
+    const restoredOnLoad = persistLoad();
+    if (restoredOnLoad) {
+      updateHeaderLigne();
+      updateHeaderDateTime();
+      updateSmedState();
+      renderOperators();
+      renderAnalysis();
+      renderSettingsForm();
+      // Ensure autosave/timers are consistent with restored state
+      if (isSmedStarted && !isSmedFinished) {
+        persistStartAutosave();
+      }
+    }
+
+    updateChronoLabels();
+    updateSmedStarted();
+    initializeReasons();
+    renderOperators();
+    renderAnalysis();
+    // Check active saved session (anti-F5)
+    showResumeBannerIfNeeded();
+  </script>
+</body>
+</html>
