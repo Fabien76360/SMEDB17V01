@@ -670,6 +670,12 @@
       white-space: nowrap;
     }
 
+    .step-target {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
     .note-quick {
       margin-left: 10px;
       border-radius: 999px;
@@ -2733,6 +2739,7 @@
     };
 
     const tickOperator = (operator) => {
+      if (isSmedPaused) return;
       const running = operator.steps.find((step) => step.status === "running");
       if (!running || running.startTime === null) {
         return;
@@ -2794,6 +2801,13 @@
         ensurePreIpcRunningForEachOperator();
       }
 
+      const scrollMap = new Map();
+      operatorsGrid.querySelectorAll(".action-list").forEach((el, i) => {
+        const probe = el.querySelector('input[data-op][data-step-index]');
+        const key = probe ? `${probe.dataset.op}|${probe.dataset.stepIndex}` : `idx|${i}`;
+        scrollMap.set(key, el.scrollTop);
+      });
+
       let html = "";
       operators.forEach((operator) => {
         const completedCount = getCompletedCount(operator);
@@ -2838,6 +2852,7 @@
             : isRunning
               ? formatTime(step.elapsedSeconds)
               : formatTime(step.targetSeconds);
+          const targetDisplay = formatTime(step.targetSeconds);
           const icon = renderStepIcon(step);
           const hasNotes = Array.isArray(step.notes) && step.notes.length > 0;
           html += `
@@ -2849,6 +2864,7 @@
                   <div class="step-meta">${typeLabel}</div>
                 </div>
                 <div class="step-timer">${timeDisplay}</div>
+                ${isRunning || isDone ? `<div class="step-target">Cible: ${targetDisplay}</div>` : ``}
                 ${!isRunning ? `<button class="note-quick" data-action="add-note" data-op="${operator.id}" data-step-index="${stepIndex}" title="Ajouter une note">Note</button>` : ""}
               </div>
           `;
@@ -2899,6 +2915,11 @@ html += `
         `;
       });
       operatorsGrid.innerHTML = html;
+      operatorsGrid.querySelectorAll(".action-list").forEach((el, i) => {
+        const probe = el.querySelector('input[data-op][data-step-index]');
+        const key = probe ? `${probe.dataset.op}|${probe.dataset.stepIndex}` : `idx|${i}`;
+        if (scrollMap.has(key)) el.scrollTop = scrollMap.get(key);
+      });
     };
 
     resetOperators();
@@ -4029,6 +4050,7 @@ html += `
         if (!isSmedPaused) {
           isSmedPaused = true;
           pauseStartTimestamp = Date.now();
+          stopOperatorTick();
           if (!state || typeof state !== "object") {
             state = { marks: [] };
           }
@@ -4047,10 +4069,17 @@ html += `
           return;
         }
         const resumeTimestamp = Date.now();
+        const currentPauseStart = pauseStartTimestamp;
         isSmedPaused = false;
-        if (pauseStartTimestamp) {
-          pausedDurationMs += resumeTimestamp - pauseStartTimestamp;
+        if (currentPauseStart) {
+          pausedDurationMs += resumeTimestamp - currentPauseStart;
         }
+        operators.forEach((operator) => {
+          const running = operator.steps.find((s) => s.status === "running" && s.startTime !== null);
+          if (running && currentPauseStart) {
+            running.startTime += (resumeTimestamp - currentPauseStart);
+          }
+        });
         pauseStartTimestamp = null;
         if (!state || typeof state !== "object") {
           state = { marks: [] };
@@ -4062,6 +4091,9 @@ html += `
         sessionEvents.push({ type: "resume", at: resumeTimestamp, operatorIndex: null, stepId: null, payload: { note: reason.trim() } });
         updatePauseButton();
         updateChronoDisplay();
+        startOperatorTick();
+        renderOperators();
+        renderAnalysis();
         persistSave("active");
       });
     }
