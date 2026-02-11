@@ -3696,6 +3696,9 @@ html += `
       alertSeconds = settings.alertMinutes * 60;
       updateChronoLabels();
       resetOperators();
+      if (typeof renderAnalysis === "function") {
+        renderAnalysis();
+      }
       stopChrono(true);
       updateChronoDisplay();
       // Persist parameters "en dur"
