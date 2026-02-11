@@ -3098,13 +3098,7 @@ html += `
     };
 
     const getDurationTargetMin = () => {
-      const dataset = getAnalysisDataset();
-      return dataset.steps.reduce((sum, entry) => {
-        if (entry.step.type === "internal") {
-          return sum + entry.step.targetSeconds / 60;
-        }
-        return sum;
-      }, 0);
+      return targetSeconds / 60;
     };
 
     const buildTimelineItems = (dataset, allNotes) => {
