@@ -2042,7 +2042,11 @@
           <h3>Cadence SMED</h3>
           <div class="settings-field">
             <label>Durée cible SMED</label>
-            <div class="analysis-value" id="target-smed-display">—</div>
+            <div class="actions-wrap">
+              <button class="settings-button" type="button" data-action="smed-target-minus">-</button>
+              <span class="analysis-value" id="target-smed-display">—</span>
+              <button class="settings-button" type="button" data-action="smed-target-plus">+</button>
+            </div>
           </div>
           <div class="settings-field">
             <label>Seuil d'alerte (minutes)</label>
@@ -2189,6 +2193,7 @@
     let settings = {
       operatorsCount: 3,
       alertMinutes: 12,
+      smedTargetMinutes: null,
       standardSteps: createDefaultStandardSteps(3),
       justificationReasons: [
         "Optimisation du procédé",
@@ -2200,6 +2205,7 @@
 
     let draftOperatorsCount = settings.operatorsCount;
     let draftAlertMinutes = settings.alertMinutes;
+    let draftSmedTargetMinutes = settings.smedTargetMinutes;
     let draftStandardSteps = JSON.parse(JSON.stringify(settings.standardSteps));
     let draftJustificationReasons = [...settings.justificationReasons];
 
@@ -2260,12 +2266,16 @@
     const persistApply = (snap) => {
       if (!snap || typeof snap !== "object") return;
       if (snap.settings) settings = snap.settings;
+      if (!Array.isArray(settings.standardSteps) || !settings.standardSteps.length) {
+        settings.standardSteps = createDefaultStandardSteps(settings.operatorsCount || 3);
+      }
+      settings.smedTargetMinutes = normalizeSmedTargetMinutes(settings.smedTargetMinutes, settings.standardSteps);
       if (Array.isArray(snap.operators)) operators = snap.operators;
       isSmedStarted = Boolean(snap.isSmedStarted);
       wasSmedStarted = Boolean(snap.wasSmedStarted);
       isSmedFinished = Boolean(snap.isSmedFinished);
       firstIpcTimestamp = typeof snap.firstIpcTimestamp === "number" ? snap.firstIpcTimestamp : null;
-      targetSeconds = typeof snap.targetSeconds === "number" ? snap.targetSeconds : targetSeconds;
+      targetSeconds = Math.round(settings.smedTargetMinutes * 60);
       alertSeconds = typeof snap.alertSeconds === "number" ? snap.alertSeconds : alertSeconds;
       sessionEvents = Array.isArray(snap.sessionEvents) ? snap.sessionEvents : sessionEvents;
       if (snap.state && typeof snap.state === "object") {
@@ -2322,16 +2332,18 @@
         if (!Array.isArray(settings.standardSteps) || !settings.standardSteps.length) {
           settings.standardSteps = createDefaultStandardSteps(settings.operatorsCount);
         }
+        settings.smedTargetMinutes = normalizeSmedTargetMinutes(settings.smedTargetMinutes, settings.standardSteps);
         if (!Array.isArray(settings.justificationReasons)) settings.justificationReasons = [];
       }
       // Keep drafts aligned with persisted settings so the UI reflects saved values
       draftOperatorsCount = settings.operatorsCount;
       draftAlertMinutes = settings.alertMinutes;
+      draftSmedTargetMinutes = settings.smedTargetMinutes;
       draftStandardSteps = JSON.parse(JSON.stringify(settings.standardSteps));
       draftJustificationReasons = [...settings.justificationReasons];
 
       normalizeOperatorIndex(settings.standardSteps, settings.operatorsCount);
-      targetSeconds = getTargetSecondsFromStandard(settings.standardSteps);
+      targetSeconds = Math.round(settings.smedTargetMinutes * 60);
       alertSeconds = settings.alertMinutes * 60;
     }
 
@@ -2574,6 +2586,16 @@
 
     const clampOperatorCount = (value) => Math.min(6, Math.max(1, value));
 
+    const normalizeSmedTargetMinutes = (value, standardSteps) => {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed) && parsed > 0) {
+        return Math.max(1, Math.min(180, Number(parsed.toFixed(1))));
+      }
+      const computedTargetSeconds = getTargetSecondsFromStandard(standardSteps);
+      const computedTargetMinutes = computedTargetSeconds / 60;
+      return Math.max(1, Math.min(180, Number(computedTargetMinutes.toFixed(1))));
+    };
+
     const clampTargetMin = (type, value) => {
       const max = 60;
       if (type === "external") {
@@ -2590,7 +2612,8 @@
       });
     };
 
-    targetSeconds = getTargetSecondsFromStandard(settings.standardSteps);
+    settings.smedTargetMinutes = normalizeSmedTargetMinutes(settings.smedTargetMinutes, settings.standardSteps);
+    targetSeconds = Math.round(settings.smedTargetMinutes * 60);
 
     const formatMinutes = (minutes) => `${minutes.toFixed(1)} min`;
 
@@ -3098,13 +3121,7 @@ html += `
     };
 
     const getDurationTargetMin = () => {
-      const dataset = getAnalysisDataset();
-      return dataset.steps.reduce((sum, entry) => {
-        if (entry.step.type === "internal") {
-          return sum + entry.step.targetSeconds / 60;
-        }
-        return sum;
-      }, 0);
+      return targetSeconds / 60;
     };
 
     const buildTimelineItems = (dataset, allNotes) => {
@@ -3471,6 +3488,7 @@ html += `
     const getDefaultStandardSteps = () => createDefaultStandardSteps(draftOperatorsCount);
 
     const ensureDraftState = () => {
+      draftSmedTargetMinutes = normalizeSmedTargetMinutes(draftSmedTargetMinutes, draftStandardSteps);
       normalizeOperatorIndex(draftStandardSteps, draftOperatorsCount);
       let globalOrder = 1;
       for (let operatorIndex = 1; operatorIndex <= draftOperatorsCount; operatorIndex += 1) {
@@ -3487,6 +3505,7 @@ html += `
       return (
         draftOperatorsCount !== settings.operatorsCount ||
         draftAlertMinutes !== settings.alertMinutes ||
+        draftSmedTargetMinutes !== settings.smedTargetMinutes ||
         JSON.stringify(draftStandardSteps) !== JSON.stringify(settings.standardSteps) ||
         JSON.stringify(draftJustificationReasons) !== JSON.stringify(settings.justificationReasons)
       );
@@ -3659,7 +3678,7 @@ html += `
         alertThresholdDisplay.textContent = String(draftAlertMinutes);
       }
       if (targetSmedDisplay) {
-        targetSmedDisplay.textContent = formatMinutes(getTargetSecondsFromStandard(draftStandardSteps) / 60);
+        targetSmedDisplay.textContent = formatMinutes(draftSmedTargetMinutes);
       }
       renderStandardSteps();
       renderConsistency();
@@ -3691,8 +3710,10 @@ html += `
       settings.alertMinutes = draftAlertMinutes;
       settings.standardSteps = JSON.parse(JSON.stringify(draftStandardSteps));
       settings.justificationReasons = [...draftJustificationReasons];
+      settings.smedTargetMinutes = normalizeSmedTargetMinutes(draftSmedTargetMinutes, settings.standardSteps);
+      draftSmedTargetMinutes = settings.smedTargetMinutes;
       normalizeOperatorIndex(settings.standardSteps, settings.operatorsCount);
-      targetSeconds = getTargetSecondsFromStandard(settings.standardSteps);
+      targetSeconds = Math.round(settings.smedTargetMinutes * 60);
       alertSeconds = settings.alertMinutes * 60;
       updateChronoLabels();
       resetOperators();
@@ -3706,6 +3727,7 @@ html += `
     const cancelSettings = () => {
       draftOperatorsCount = settings.operatorsCount;
       draftAlertMinutes = settings.alertMinutes;
+      draftSmedTargetMinutes = settings.smedTargetMinutes;
       draftStandardSteps = JSON.parse(JSON.stringify(settings.standardSteps));
       draftJustificationReasons = [...settings.justificationReasons];
       renderSettingsForm();
@@ -3752,6 +3774,16 @@ html += `
             renderSettingsForm();
 
           }
+          return;
+        }
+        if (action === "smed-target-minus") {
+          draftSmedTargetMinutes = Math.max(1, Math.min(180, draftSmedTargetMinutes - 1));
+          renderSettingsForm();
+          return;
+        }
+        if (action === "smed-target-plus") {
+          draftSmedTargetMinutes = Math.max(1, Math.min(180, draftSmedTargetMinutes + 1));
+          renderSettingsForm();
           return;
         }
         const reasonWrapper = target.closest("[data-reason-index]");
@@ -4471,7 +4503,7 @@ html += `
       const product = productInput?.value.trim() || "";
 
       const durationTargetMin = getDurationTargetMin();
-      const targetParallelMin = targetSeconds / 60;
+      const targetParallelMin = durationTargetMin;
       const durationRealMin = isSmedFinished && lastIpc && firstIpc ? (firstIpc.getTime() - lastIpc.getTime()) / 60000 : null;
       const deltaMin = durationRealMin === null ? null : durationRealMin - durationTargetMin;
 
