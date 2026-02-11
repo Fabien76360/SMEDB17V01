@@ -41,4 +41,4 @@ Règle d’or (importante):
 Le README dit la vérité produit.
 Les fichiers HTML suivent.
 GitHub garde l’historique technique.
-
+Le11/02/26 update concernant l'ajout du commentaire si dépassement V1.2
