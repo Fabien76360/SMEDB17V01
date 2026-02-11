@@ -3695,6 +3695,9 @@ html += `
       resetOperators();
       stopChrono(true);
       updateChronoDisplay();
+      if (typeof renderAnalysis === "function") {
+        renderAnalysis();
+      }
       // Persist parameters "en dur"
       persistSaveSettings();
       setActiveTab("smed");
