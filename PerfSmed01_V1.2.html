@@ -2113,6 +2113,10 @@
             <option value="">-- Sélectionnez --</option>
           </select>
         </div>
+        <div class="modal-field">
+          <label for="justification-comment">Commentaire (optionnel)</label>
+          <textarea id="justification-comment" rows="3" placeholder="Ajouter un commentaire..."></textarea>
+        </div>
         <div class="analysis-muted" id="justification-empty" hidden>Aucune raison configurée dans Paramètres.</div>
         <div class="inline-error" id="justification-error" hidden>Veuillez sélectionner une raison.</div>
       </div>
@@ -2418,6 +2422,7 @@
     const pauseBanner = document.querySelector("#pause-banner");
     const justificationModal = document.querySelector("#justification-modal");
     const justificationReason = document.querySelector("#justification-reason");
+    const justificationComment = document.querySelector("#justification-comment");
     const justificationEmpty = document.querySelector("#justification-empty");
     const justificationError = document.querySelector("#justification-error");
     const justificationCancel = document.querySelector("#justification-cancel");
@@ -2553,6 +2558,15 @@
       const min = Math.floor(seconds / 60);
       const sec = Math.floor(seconds % 60);
       return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+    };
+
+    const getJustificationDisplay = (justification, justificationComment) => {
+      const reason = String(justification || "").trim();
+      if (!reason) {
+        return "";
+      }
+      const comment = String(justificationComment || "").trim();
+      return comment ? `${reason} — ${comment}` : reason;
     };
 
     const getTargetSecondsFromStandard = (steps) => {
@@ -2738,6 +2752,9 @@
         ${settings.justificationReasons.map((reason) => `<option value="${reason}">${reason}</option>`).join("")}
       `;
       justificationReason.selectedIndex = 0;
+      if (justificationComment) {
+        justificationComment.value = "";
+      }
       if (justificationError) {
         justificationError.hidden = true;
       }
@@ -3289,7 +3306,8 @@ html += `
             targetMin,
             realMin,
             delta,
-            justification: entry.step.justification || ""
+            justification: entry.step.justification || "",
+            justificationComment: entry.step.justificationComment || ""
           };
         })
         .filter((row) => row.delta !== null)
@@ -3300,7 +3318,8 @@ html += `
         analysisTopOver.innerHTML = overages.map((row) => {
           const who = `Opérateur ${row.operatorIndex}`;
           const deltaText = `${row.delta.toFixed(1)} min`;
-          const just = row.justification ? ` , ${escapeHtml(row.justification)}` : "";
+          const justificationText = getJustificationDisplay(row.justification, row.justificationComment);
+          const just = justificationText ? ` , ${escapeHtml(justificationText)}` : "";
           return `<div class="mini-row"><div>${who} , ${escapeHtml(row.name)}</div><div>${deltaText}${just}</div></div>`;
         }).join("") || `<div class="mini-row"><div>—</div><div>—</div></div>`;
       }
@@ -3322,6 +3341,7 @@ html += `
               realMin,
               delta,
               justification: entry.step.justification || "",
+              justificationComment: entry.step.justificationComment || "",
               notesCount
             };
           })
@@ -3331,6 +3351,7 @@ html += `
           const typeLabel = row.type === "external" ? "external" : "internal";
           const real = row.realMin === null ? "—" : row.realMin.toFixed(1);
           const delta = row.delta === null ? "—" : row.delta.toFixed(1);
+          const justificationText = getJustificationDisplay(row.justification, row.justificationComment);
           return `<tr>
             <td>Opérateur ${row.operatorIndex}</td>
             <td>${row.order}</td>
@@ -3339,7 +3360,7 @@ html += `
             <td>${row.targetMin.toFixed(1)}</td>
             <td>${real}</td>
             <td>${delta}</td>
-            <td>${escapeHtml(row.justification || "")}</td>
+            <td>${escapeHtml(justificationText)}</td>
             <td>${row.notesCount}</td>
           </tr>`;
         }).join("");
@@ -4013,6 +4034,7 @@ html += `
           lastDone.endTime = null;
           lastDone.startTime = null;
           lastDone.justification = "";
+          lastDone.justificationComment = "";
           if (isSmedStarted && operator.steps.every((step) => step.status !== "running")) {
             lastDone.status = "running";
             lastDone.startTime = Date.now();
@@ -4095,6 +4117,8 @@ html += `
           const step = operator.steps.find((item) => item.status === "running");
           if (step) {
             step.justification = selectedReason;
+            const comment = justificationComment ? justificationComment.value.trim() : "";
+            step.justificationComment = comment;
           }
           completeStep(operator, pendingJustification.actualMin, true);
         }
@@ -4386,6 +4410,7 @@ html += `
           endTs: entry.step.endTime ? new Date(entry.step.endTime).toISOString() : "",
           status: entry.step.status,
           justification: entry.step.justification || "",
+          justificationComment: entry.step.justificationComment || "",
           actions: entry.step.actions || [],
           actionsDone: entry.step.actionsDone || [],
           notes: entry.step.notes || []
@@ -4414,6 +4439,7 @@ html += `
           "Timestamp début étape",
           "Timestamp fin étape",
           "Justification",
+          "Commentaire justification",
           "Actions",
           "Actions réalisées",
           "Notes"
@@ -4436,6 +4462,7 @@ html += `
           step.startTs,
           step.endTs,
           step.justification,
+          step.justificationComment,
           (step.actions || []).join("|"),
           (step.actions || []).filter((_, idx) => step.actionsDone?.[idx]).join("|"),
           (step.notes || []).map((note) => note.text).join(" | ")
@@ -4502,6 +4529,7 @@ html += `
           endTs: entry.step.endTime ? new Date(entry.step.endTime).toISOString() : null,
           status: entry.step.status,
           justification: entry.step.justification ? String(entry.step.justification) : null,
+          justificationComment: entry.step.justificationComment ? String(entry.step.justificationComment) : null,
           notes: notes.map((note) => {
             const at = typeof note.at === "number" ? new Date(note.at) : new Date();
             return {
@@ -4671,7 +4699,7 @@ html += `
         .map((row) => {
           const delta = row.delta === null || row.delta === undefined ? "—" : row.delta.toFixed(1);
           const real = row.realMin === null || row.realMin === undefined ? "—" : row.realMin.toFixed(1);
-          const just = row.justification ? escapeHtml(row.justification) : "";
+          const just = escapeHtml(getJustificationDisplay(row.justification, row.justificationComment));
           return `<tr>
             <td>Op ${row.operatorIndex}</td>
             <td>${row.order}</td>
