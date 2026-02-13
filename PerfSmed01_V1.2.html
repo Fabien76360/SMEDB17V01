@@ -2113,8 +2113,13 @@
             <option value="">-- Sélectionnez --</option>
           </select>
         </div>
+        <div class="modal-field">
+          <label for="justification-comment">Commentaire (obligatoire)</label>
+          <textarea id="justification-comment" rows="3" placeholder="Expliquer le dépassement (fait marquant, cause terrain, attente…)"></textarea>
+        </div>
         <div class="analysis-muted" id="justification-empty" hidden>Aucune raison configurée dans Paramètres.</div>
         <div class="inline-error" id="justification-error" hidden>Veuillez sélectionner une raison.</div>
+        <div class="inline-error" id="justification-comment-error" hidden>Veuillez saisir un commentaire.</div>
       </div>
       <div class="modal-actions">
         <button class="modal-button secondary" id="justification-cancel">Annuler</button>
@@ -2418,8 +2423,10 @@
     const pauseBanner = document.querySelector("#pause-banner");
     const justificationModal = document.querySelector("#justification-modal");
     const justificationReason = document.querySelector("#justification-reason");
+    const justificationComment = document.querySelector("#justification-comment");
     const justificationEmpty = document.querySelector("#justification-empty");
     const justificationError = document.querySelector("#justification-error");
+    const justificationCommentError = document.querySelector("#justification-comment-error");
     const justificationCancel = document.querySelector("#justification-cancel");
     const justificationConfirm = document.querySelector("#justification-confirm");
     const resetSmedButton = document.querySelector("#reset-smed-button");
@@ -2530,6 +2537,7 @@
             elapsedSeconds: 0,
             endTime: null,
             justification: "",
+            justificationComment: "",
             actions: step.actions ? [...step.actions] : [],
             actionsDone: step.actions ? step.actions.map(() => false) : [],
             notes: []
@@ -2741,6 +2749,12 @@
       if (justificationError) {
         justificationError.hidden = true;
       }
+      if (justificationCommentError) {
+        justificationCommentError.hidden = true;
+      }
+      if (justificationComment) {
+        justificationComment.value = "";
+      }
       if (justificationEmpty) {
         justificationEmpty.hidden = settings.justificationReasons.length > 0;
       }
@@ -2759,6 +2773,18 @@
 
     const closeJustificationModal = () => {
       pendingJustification = null;
+      if (justificationReason) {
+        justificationReason.selectedIndex = 0;
+      }
+      if (justificationComment) {
+        justificationComment.value = "";
+      }
+      if (justificationError) {
+        justificationError.hidden = true;
+      }
+      if (justificationCommentError) {
+        justificationCommentError.hidden = true;
+      }
       if (justificationModal) {
         justificationModal.classList.remove("visible");
       }
@@ -3289,7 +3315,8 @@ html += `
             targetMin,
             realMin,
             delta,
-            justification: entry.step.justification || ""
+            justification: entry.step.justification || "",
+            justificationComment: entry.step.justificationComment || ""
           };
         })
         .filter((row) => row.delta !== null)
@@ -3322,6 +3349,7 @@ html += `
               realMin,
               delta,
               justification: entry.step.justification || "",
+              justificationComment: entry.step.justificationComment || "",
               notesCount
             };
           })
@@ -3339,7 +3367,7 @@ html += `
             <td>${row.targetMin.toFixed(1)}</td>
             <td>${real}</td>
             <td>${delta}</td>
-            <td>${escapeHtml(row.justification || "")}</td>
+            <td>${row.justification ? `Raison: ${escapeHtml(row.justification)}${row.justificationComment ? `<br>Commentaire: ${escapeHtml(row.justificationComment)}` : ""}` : ""}</td>
             <td>${row.notesCount}</td>
           </tr>`;
         }).join("");
@@ -4013,6 +4041,7 @@ html += `
           lastDone.endTime = null;
           lastDone.startTime = null;
           lastDone.justification = "";
+          lastDone.justificationComment = "";
           if (isSmedStarted && operator.steps.every((step) => step.status !== "running")) {
             lastDone.status = "running";
             lastDone.startTime = Date.now();
@@ -4068,6 +4097,14 @@ html += `
       });
     }
 
+    if (justificationComment) {
+      justificationComment.addEventListener("input", () => {
+        if (justificationCommentError) {
+          justificationCommentError.hidden = true;
+        }
+      });
+    }
+
     if (justificationConfirm) {
       justificationConfirm.addEventListener("click", () => {
         if (!pendingJustification) {
@@ -4084,17 +4121,31 @@ html += `
           return;
         }
         const selectedReason = justificationReason.value;
+        const justificationCommentValue = (document.getElementById("justification-comment")?.value || "").trim();
         if (!selectedReason) {
           if (justificationError) {
             justificationError.hidden = false;
           }
           return;
         }
+        if (!justificationCommentValue) {
+          if (justificationCommentError) {
+            justificationCommentError.hidden = false;
+          }
+          return;
+        }
+        if (justificationError) {
+          justificationError.hidden = true;
+        }
+        if (justificationCommentError) {
+          justificationCommentError.hidden = true;
+        }
         const operator = operators.find((item) => item.id === pendingJustification.operatorId);
         if (operator) {
           const step = operator.steps.find((item) => item.status === "running");
           if (step) {
             step.justification = selectedReason;
+            step.justificationComment = justificationCommentValue;
           }
           completeStep(operator, pendingJustification.actualMin, true);
         }
@@ -4386,6 +4437,7 @@ html += `
           endTs: entry.step.endTime ? new Date(entry.step.endTime).toISOString() : "",
           status: entry.step.status,
           justification: entry.step.justification || "",
+          justificationComment: entry.step.justificationComment || "",
           actions: entry.step.actions || [],
           actionsDone: entry.step.actionsDone || [],
           notes: entry.step.notes || []
@@ -4502,6 +4554,7 @@ html += `
           endTs: entry.step.endTime ? new Date(entry.step.endTime).toISOString() : null,
           status: entry.step.status,
           justification: entry.step.justification ? String(entry.step.justification) : null,
+          justificationComment: entry.step.justificationComment ? String(entry.step.justificationComment) : null,
           notes: notes.map((note) => {
             const at = typeof note.at === "number" ? new Date(note.at) : new Date();
             return {
@@ -4671,7 +4724,9 @@ html += `
         .map((row) => {
           const delta = row.delta === null || row.delta === undefined ? "—" : row.delta.toFixed(1);
           const real = row.realMin === null || row.realMin === undefined ? "—" : row.realMin.toFixed(1);
-          const just = row.justification ? escapeHtml(row.justification) : "";
+          const just = row.justification
+            ? `Raison: ${escapeHtml(row.justification)}${row.justificationComment ? `<br>Commentaire: ${escapeHtml(row.justificationComment)}` : ""}`
+            : "";
           return `<tr>
             <td>Op ${row.operatorIndex}</td>
             <td>${row.order}</td>
