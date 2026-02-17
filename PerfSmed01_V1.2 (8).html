@@ -4037,9 +4037,10 @@ html += `
             }
           });
           lastDone.status = "running";
-          lastDone.startTime = Date.now();
+          const resumedElapsedSeconds = Number.isFinite(lastDone.elapsedSeconds) ? lastDone.elapsedSeconds : 0;
+          lastDone.elapsedSeconds = resumedElapsedSeconds;
+          lastDone.startTime = Date.now() - (resumedElapsedSeconds * 1000);
           lastDone.endTime = null;
-          lastDone.elapsedSeconds = 0;
           if ("justification" in lastDone) {
             lastDone.justification = "";
           }
