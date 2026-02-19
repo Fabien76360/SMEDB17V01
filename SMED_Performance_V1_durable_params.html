@@ -1808,9 +1808,12 @@
         </div>
         <div class="field actions-field">
           <label>&nbsp;</label>
-          <div class="actions-wrap">
+          <div class="actions-wrap main-actions">
             <button class="reset-button" id="reset-smed-button">
               Réinitialiser
+            </button>
+            <button class="reset-button" id="pause-smed-button" hidden>
+              ⏸ Pause SMED
             </button>
             <button class="reset-button finish-smed-button hidden" id="finish-smed-button">
               Terminer
@@ -2143,6 +2146,10 @@
 
     let startedToastTimeout = null;
     let sessionEvents = [];
+    let state = { marks: [] };
+    let isSmedPaused = false;
+    let pauseStartTimestamp = null;
+    let pausedDurationMs = 0;
     let pendingNote = null;
 
     // --- V1 Persistence (localStorage) ---
@@ -2161,6 +2168,10 @@
       targetSeconds,
       alertSeconds,
       sessionEvents,
+      state,
+      isSmedPaused,
+      pauseStartTimestamp,
+      pausedDurationMs,
       // context inputs are read from DOM on restore
       ipcDate: ipcDate?.value || "",
       ipcTime: ipcTime?.value || "",
@@ -2179,6 +2190,15 @@
       targetSeconds = typeof snap.targetSeconds === "number" ? snap.targetSeconds : targetSeconds;
       alertSeconds = typeof snap.alertSeconds === "number" ? snap.alertSeconds : alertSeconds;
       sessionEvents = Array.isArray(snap.sessionEvents) ? snap.sessionEvents : sessionEvents;
+      if (snap.state && typeof snap.state === "object") {
+        state = snap.state;
+        if (!Array.isArray(state.marks)) {
+          state.marks = [];
+        }
+      }
+      isSmedPaused = Boolean(snap.isSmedPaused);
+      pauseStartTimestamp = typeof snap.pauseStartTimestamp === "number" ? snap.pauseStartTimestamp : null;
+      pausedDurationMs = typeof snap.pausedDurationMs === "number" ? snap.pausedDurationMs : 0;
 
       // restore DOM fields if present
       const li = document.querySelector("#ligne-input");
@@ -2316,6 +2336,7 @@
     const chronoTime = document.querySelector("#chrono-time");
     const chronoTarget = document.querySelector("#chrono-target");
     const operatorsGrid = document.querySelector("#operators-grid");
+    const pauseSmedButton = document.querySelector("#pause-smed-button");
     const justificationModal = document.querySelector("#justification-modal");
     const justificationReason = document.querySelector("#justification-reason");
     const justificationEmpty = document.querySelector("#justification-empty");
@@ -2456,12 +2477,20 @@
     };
 
     const getTargetSecondsFromStandard = (steps) => {
-      return steps.reduce((sum, step) => {
-        if (step.type === "internal" || step.type === "handoff") {
-          return sum + step.targetMin * 60;
+      const totalsByOperator = {};
+      steps.forEach((step) => {
+        if (step.type !== "internal" && step.type !== "handoff") {
+          return;
         }
-        return sum;
-      }, 0);
+        const operatorIndex = typeof step.operatorIndex === "number" ? step.operatorIndex : 1;
+        const targetMin = Number(step.targetMin);
+        if (!Number.isFinite(targetMin)) {
+          return;
+        }
+        totalsByOperator[operatorIndex] = (totalsByOperator[operatorIndex] || 0) + (targetMin * 60);
+      });
+      const values = Object.values(totalsByOperator);
+      return values.length ? Math.max(...values) : 0;
     };
 
     const clampOperatorCount = (value) => Math.min(6, Math.max(1, value));
@@ -2529,7 +2558,8 @@
         return;
       }
       const now = Date.now();
-      const elapsed = chronoStartTimestamp !== null ? Math.floor((now - chronoStartTimestamp) / 1000) : 0;
+      const pausedMs = pausedDurationMs + (isSmedPaused && pauseStartTimestamp ? (now - pauseStartTimestamp) : 0);
+      const elapsed = chronoStartTimestamp !== null ? Math.floor(Math.max(0, now - chronoStartTimestamp - pausedMs) / 1000) : 0;
       chronoTime.textContent = formatTime(elapsed);
       if (!isSmedStarted) {
         chronoBar.classList.remove("warn", "over");
@@ -2559,6 +2589,16 @@
         chronoStartTimestamp = null;
       }
       updateChronoDisplay();
+    };
+
+    const updatePauseButton = () => {
+      if (!pauseSmedButton) {
+        return;
+      }
+      const shouldShow = isSmedStarted && !isSmedFinished;
+      pauseSmedButton.hidden = !shouldShow;
+      pauseSmedButton.disabled = !shouldShow;
+      pauseSmedButton.textContent = isSmedPaused ? "▶ Reprendre SMED" : "⏸ Pause SMED";
     };
 
     const renderStepIcon = (step) => {
@@ -3304,6 +3344,7 @@ html += `
       if (finishSmedButton) {
         finishSmedButton.classList.toggle("hidden", !isSmedStarted || isSmedFinished);
       }
+      updatePauseButton();
       if (isSmedStarted && !isSmedFinished) {
         startChrono();
         startOperatorTick();
@@ -3994,6 +4035,51 @@ html += `
       });
     }
 
+    if (pauseSmedButton) {
+      pauseSmedButton.addEventListener("click", () => {
+        if (!isSmedStarted || isSmedFinished) {
+          return;
+        }
+        if (!isSmedPaused) {
+          isSmedPaused = true;
+          pauseStartTimestamp = Date.now();
+          if (!state || typeof state !== "object") {
+            state = { marks: [] };
+          }
+          if (!Array.isArray(state.marks)) {
+            state.marks = [];
+          }
+          state.marks.push({ kind: "pause", t: pauseStartTimestamp, label: "Pause SMED", note: "" });
+          sessionEvents.push({ type: "pause", at: pauseStartTimestamp, operatorIndex: null, stepId: null, payload: {} });
+          updatePauseButton();
+          updateChronoDisplay();
+          persistSave("active");
+          return;
+        }
+        const reason = window.prompt("Justification obligatoire de la pause (ex: nuit, week-end, attente planning)");
+        if (!reason || !reason.trim()) {
+          return;
+        }
+        const resumeTimestamp = Date.now();
+        isSmedPaused = false;
+        if (pauseStartTimestamp) {
+          pausedDurationMs += resumeTimestamp - pauseStartTimestamp;
+        }
+        pauseStartTimestamp = null;
+        if (!state || typeof state !== "object") {
+          state = { marks: [] };
+        }
+        if (!Array.isArray(state.marks)) {
+          state.marks = [];
+        }
+        state.marks.push({ kind: "resume", t: resumeTimestamp, label: "Reprise SMED", note: reason.trim() });
+        sessionEvents.push({ type: "resume", at: resumeTimestamp, operatorIndex: null, stepId: null, payload: { note: reason.trim() } });
+        updatePauseButton();
+        updateChronoDisplay();
+        persistSave("active");
+      });
+    }
+
     if (resetSmedButton) {
       resetSmedButton.addEventListener("click", () => {
         const shouldReset = window.confirm("Confirmer la remise à zéro du SMED ?");
@@ -4033,6 +4119,13 @@ html += `
         isSmedStarted = false;
         wasSmedStarted = false;
         isSmedFinished = false;
+        isSmedPaused = false;
+        pauseStartTimestamp = null;
+        pausedDurationMs = 0;
+        if (!state || typeof state !== "object") {
+          state = { marks: [] };
+        }
+        state.marks = [];
         firstIpcTimestamp = null;
         if (startedToastTimeout) {
           clearTimeout(startedToastTimeout);
@@ -4093,6 +4186,8 @@ html += `
         }
         firstIpcTimestamp = finishValue.getTime();
         isSmedFinished = true;
+        isSmedPaused = false;
+        pauseStartTimestamp = null;
         sessionEvents.push({ type: "finish_smed", at: firstIpcTimestamp, operatorIndex: null, stepId: null, payload: {} });
         persistSave("force");
         persistStopAutosave();
@@ -4186,6 +4281,7 @@ html += `
           "Nom étape",
           "Type",
           "Temps cible (min)",
+          "TargetParallelMin",
           "Temps réel (min)",
           "Timestamp début étape",
           "Timestamp fin étape",
@@ -4195,6 +4291,7 @@ html += `
           "Notes"
         ]
       ];
+      const targetParallelMin = targetSeconds / 60;
       buildStepsExport().forEach((step) => {
         rows.push([
           line,
@@ -4206,6 +4303,7 @@ html += `
           step.name,
           getStepTypeLabel(step.type),
           step.targetMin.toFixed(1),
+          targetParallelMin.toFixed(1),
           step.realMin.toFixed(1),
           step.startTs,
           step.endTs,
@@ -4245,6 +4343,7 @@ html += `
       const product = productInput?.value.trim() || "";
 
       const durationTargetMin = getDurationTargetMin();
+      const targetParallelMin = targetSeconds / 60;
       const durationRealMin = isSmedFinished && lastIpc && firstIpc ? (firstIpc.getTime() - lastIpc.getTime()) / 60000 : null;
       const deltaMin = durationRealMin === null ? null : durationRealMin - durationTargetMin;
 
@@ -4321,6 +4420,7 @@ html += `
         kpi: {
           durationRealMin,
           durationTargetMin,
+          targetParallelMin,
           deltaMin,
           externalRealMin: realByType.external,
           handoffRealMin: realByType.handoff,
@@ -4353,6 +4453,30 @@ html += `
       const durationTargetMin = getDurationTargetMin();
       const durationRealMin = isSmedFinished && lastIpc && firstIpc ? (firstIpc.getTime() - lastIpc.getTime()) / 60000 : null;
       const gapMin = durationRealMin === null ? null : durationRealMin - durationTargetMin;
+
+      const pauseEvents = (Array.isArray(sessionEvents) ? sessionEvents : [])
+        .filter((ev) => ev && (ev.type === "pause" || ev.type === "resume") && typeof ev.at === "number")
+        .sort((a, b) => a.at - b.at);
+      const pausePairs = [];
+      for (let i = 0; i < pauseEvents.length; i += 1) {
+        const pauseEvent = pauseEvents[i];
+        if (!pauseEvent || pauseEvent.type !== "pause") {
+          continue;
+        }
+        const resumeEvent = pauseEvents.slice(i + 1).find((ev) => ev.type === "resume");
+        if (!resumeEvent) {
+          continue;
+        }
+        const startMs = pauseEvent.at;
+        const endMs = resumeEvent.at;
+        const durationMs = endMs - startMs;
+        if (durationMs <= 0) {
+          continue;
+        }
+        const note = resumeEvent.payload && resumeEvent.payload.note ? String(resumeEvent.payload.note) : "";
+        pausePairs.push({ startMs, endMs, durationMs, note });
+      }
+      const totalPauseMin = pausePairs.reduce((sum, item) => sum + (item.durationMs / 60000), 0);
 
       const steps = buildStepsExport().map((row) => {
         const operatorIndex = row.operatorIndex ?? (String(row.operator || "").match(/(\d+)/)?.[1] ? Number(String(row.operator).match(/(\d+)/)[1]) : 1);
@@ -4402,6 +4526,17 @@ html += `
         .join("") || `<div class="pill">—</div>`;
 
       const notesHtml = allNotes.map((n) => `<div class="note"><div class="meta">${formatTimeOnly(new Date(n.at))} , Op ${n.operatorIndex} , ${escapeHtml(n.stepName)}</div><div>${escapeHtml(n.text)}</div></div>`).join("") || `<div class="note"><div class="meta">—</div><div>—</div></div>`;
+
+      const pausesTotalText = totalPauseMin > 0 ? `${totalPauseMin.toFixed(1)} min` : "—";
+      const pausesHtml = pausePairs.length
+        ? pausePairs.map((item) => {
+          const startText = formatDateTime(new Date(item.startMs));
+          const endText = formatDateTime(new Date(item.endMs));
+          const durationText = `${(item.durationMs / 60000).toFixed(1)} min`;
+          const noteText = item.note ? ` , ${escapeHtml(item.note)}` : "";
+          return `<div>${startText} → ${endText} , ${durationText}${noteText}</div>`;
+        }).join("")
+        : `<div>—</div>`;
 
       const stepsRows = steps
         .slice()
@@ -4571,6 +4706,10 @@ html += `
       <div class="value">${gapMin === null ? "—" : gapText}</div>
       <div class="sub">${topDriftHtml}</div>
     </div>
+    <div class="tile">
+      <div class="label">Temps en pause</div>
+      <div class="value">${pausesTotalText}</div>
+    </div>
   </div>
 
   <div class="section">
@@ -4583,6 +4722,11 @@ html += `
   <div class="section">
     <div class="h">Notes terrain (top 10)</div>
     <div class="notes">${notesHtml}</div>
+  </div>
+
+  <div class="section">
+    <div class="h">Pauses</div>
+    <div class="notes">${pausesHtml}</div>
   </div>
 
   <div class="section">
