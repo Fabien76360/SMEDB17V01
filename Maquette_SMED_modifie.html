@@ -665,8 +665,97 @@
 
     .step-actions {
       display: flex;
-      justify-content: flex-end;
+      flex-direction: column;
+      gap: 12px;
       margin-top: 12px;
+    }
+
+    .step-actions .action-list {
+      max-height: 140px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .step-actions .step-button {
+      align-self: flex-end;
+    }
+
+    .chip-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .chip-button {
+      border-radius: 999px;
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      background: var(--surface-muted);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 40px;
+    }
+
+    .chip-button.note {
+      color: var(--primary);
+    }
+
+    .chip-button.undo {
+      color: var(--warn);
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .chip-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .note-indicator {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(42, 86, 255, 0.12);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 6px;
+    }
+
+    :root {
+      --type-external: #3aa0f3;
+      --type-handoff: #f59e0b;
+      --type-internal: #22c55e;
+      --type-external-bg: rgba(58, 160, 243, 0.1);
+      --type-handoff-bg: rgba(245, 158, 11, 0.12);
+      --type-internal-bg: rgba(34, 197, 94, 0.12);
+    }
+
+    .step-card[data-type="external"] {
+      border-left: 4px solid var(--type-external);
+    }
+
+    .step-card[data-type="handoff"] {
+      border-left: 4px solid var(--type-handoff);
+    }
+
+    .step-card[data-type="internal"] {
+      border-left: 4px solid var(--type-internal);
+    }
+
+    .step-card.running[data-type="external"] {
+      background: var(--type-external-bg);
+    }
+
+    .step-card.running[data-type="handoff"] {
+      background: var(--type-handoff-bg);
+    }
+
+    .step-card.running[data-type="internal"] {
+      background: var(--type-internal-bg);
     }
 
     .step-button {
@@ -787,7 +876,8 @@
     }
 
     .modal-field select,
-    .modal-field input {
+    .modal-field input,
+    .modal-field textarea {
       width: 100%;
       height: 44px;
       padding: 0 12px;
@@ -798,8 +888,15 @@
       font-size: 16px;
     }
 
+    .modal-field textarea {
+      height: auto;
+      resize: vertical;
+      min-height: 120px;
+    }
+
     .modal-field select:focus-visible,
-    .modal-field input:focus-visible {
+    .modal-field input:focus-visible,
+    .modal-field textarea:focus-visible {
       outline: 3px solid var(--focus);
       outline-offset: 2px;
       box-shadow: var(--shadow-sm);
@@ -1037,6 +1134,252 @@
       cursor: not-allowed;
       box-shadow: none;
     }
+
+    .analysis-header {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .analysis-card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .analysis-card h3 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .analysis-value {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .analysis-section {
+      margin-bottom: 24px;
+    }
+
+    .analysis-section h3 {
+      margin-bottom: 12px;
+      font-size: 18px;
+    }
+
+    .analysis-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+
+    .analysis-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+    }
+
+    .analysis-table th,
+    .analysis-table td {
+      padding: 12px 14px;
+      font-size: 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .analysis-table th {
+      background: rgba(42, 86, 255, 0.08);
+      font-weight: 700;
+    }
+
+    .analysis-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .analysis-export {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .analysis-button {
+      padding: 10px 18px;
+      border-radius: 12px;
+      border: 1px solid rgba(42, 86, 255, 0.2);
+      background: rgba(42, 86, 255, 0.08);
+      color: var(--primary);
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+    }
+
+    .analysis-button:hover {
+      background: rgba(42, 86, 255, 0.14);
+    }
+
+    .analysis-button:active {
+      transform: scale(0.98);
+    }
+
+    .analysis-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .timeline-item {
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      display: grid;
+      gap: 6px;
+    }
+
+    .timeline-item strong {
+      font-size: 14px;
+    }
+
+    .analysis-muted {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .analysis-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(255, 122, 69, 0.12);
+      color: var(--accent);
+    }
+
+    .analysis-pill.done {
+      background: rgba(34, 197, 94, 0.12);
+      color: var(--success);
+    }
+
+    .standard-step-card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 12px;
+      background: var(--surface);
+      display: grid;
+      gap: 10px;
+    }
+
+    .standard-step-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .standard-step-row label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .standard-step-row input,
+    .standard-step-row select {
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      padding: 0 10px;
+      font-size: 14px;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .standard-step-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .standard-steps-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+
+    .standard-column {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .standard-column h4 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .action-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .action-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .action-item input[type="text"] {
+      min-width: 0;
+    }
+
+    @media (max-width: 520px) {
+      .action-item {
+        grid-template-columns: 1fr;
+      }
+
+      .action-item .analysis-button {
+        width: 100%;
+      }
+    }
+
+    .inline-error {
+      color: var(--danger);
+      font-size: 13px;
+      margin-top: 6px;
+    }
+
+    .warning-text {
+      color: var(--warn);
+      font-weight: 600;
+    }
+
+    .finish-smed-button {
+      background: var(--accent);
+      color: #ffffff;
+      border: none;
+      box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .finish-smed-button:hover {
+      background: rgba(255, 122, 69, 0.9);
+    }
+
+    .finish-smed-button.hidden {
+      display: none;
+    }
   </style>
 </head>
 <body data-intensity="medium">
@@ -1055,6 +1398,14 @@
         </svg>
       </span>
       SMED
+    </button>
+    <button class="tabbar-button" data-tab="analyse">
+      <span class="tabbar-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 17h2v2H3v-2zm4-6h2v8H7v-8zm4-4h2v12h-2V7zm4 6h2v6h-2v-6zm4-10h2v16h-2V3z"/>
+        </svg>
+      </span>
+      Analyse
     </button>
     <button class="tabbar-button" data-tab="parametres" id="param-tab-button">
       <span class="tabbar-icon">
@@ -1090,6 +1441,9 @@
             <button class="reset-button" id="reset-smed-button">
               Réinitialiser
             </button>
+            <button class="reset-button finish-smed-button hidden" id="finish-smed-button">
+              Terminer
+            </button>
           </div>
         </div>
       </div>
@@ -1110,6 +1464,82 @@
       </div>
       <div class="operators-grid" id="operators-grid"></div>
     </div>
+    <div class="page" data-tab="analyse">
+      <h2>Analyse</h2>
+      <div class="analysis-header">
+        <div class="analysis-card">
+          <h3>Session</h3>
+          <div class="analysis-value" id="analysis-ligne">—</div>
+          <div class="analysis-muted" id="analysis-po">—</div>
+        </div>
+        <div class="analysis-card">
+          <h3>Dernier IPC</h3>
+          <div class="analysis-value" id="analysis-last-ipc">—</div>
+          <div class="analysis-muted">Début SMED</div>
+        </div>
+        <div class="analysis-card">
+          <h3>Premier IPC</h3>
+          <div class="analysis-value" id="analysis-first-ipc">—</div>
+          <div class="analysis-muted">Fin SMED</div>
+        </div>
+        <div class="analysis-card">
+          <h3>Statut</h3>
+          <div class="analysis-value" id="analysis-status">—</div>
+        </div>
+      </div>
+      <div class="analysis-grid">
+        <div class="analysis-card">
+          <h3>Durée SMED réelle</h3>
+          <div class="analysis-value" id="analysis-real-duration">—</div>
+        </div>
+        <div class="analysis-card">
+          <h3>Durée cible SMED</h3>
+          <div class="analysis-value" id="analysis-target-duration">—</div>
+        </div>
+        <div class="analysis-card">
+          <h3>Écart</h3>
+          <div class="analysis-value" id="analysis-gap-duration">—</div>
+        </div>
+      </div>
+      <div class="analysis-section">
+        <h3>Répartition par opérateur (SMED)</h3>
+        <table class="analysis-table" id="analysis-operators-table">
+          <thead>
+            <tr>
+              <th>Opérateur</th>
+              <th>Temps réel (min)</th>
+              <th>Temps cible (min)</th>
+              <th>Écart (min)</th>
+              <th>% contribution</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="analysis-section">
+        <h3>Répartition par type</h3>
+        <table class="analysis-table" id="analysis-types-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Temps réel (min)</th>
+              <th>Temps cible (min)</th>
+              <th>% total global</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="analysis-section">
+        <h3>Timeline</h3>
+        <div class="analysis-timeline" id="analysis-timeline"></div>
+      </div>
+      <div class="analysis-export">
+        <button class="analysis-button" id="export-csv">Exporter CSV</button>
+        <button class="analysis-button" id="export-json">Exporter JSON</button>
+        <button class="analysis-button" id="export-report">Exporter Rapport (Manager)</button>
+      </div>
+    </div>
     <div class="page" data-tab="parametres">
       <h2>Paramètres</h2>
       <div class="settings-notice" id="settings-lock" style="display: none;">
@@ -1120,61 +1550,103 @@
         </div>
         <div>Les paramètres sont verrouillés car le SMED a démarré. Réinitialisez le SMED pour modifier la configuration.</div>
       </div>
-      <form class="settings-form" id="settings-form">
-        <div class="settings-field">
-          <label for="settings-operators">Nombre d'opérateurs</label>
-          <input type="number" id="settings-operators" min="1" max="10" step="1">
+      <div class="settings-form" id="settings-form">
+        <div class="analysis-card">
+          <h3>Organisation</h3>
+          <div class="settings-field">
+            <label>Nombre d'opérateurs</label>
+            <div class="actions-wrap">
+              <button class="settings-button" type="button" data-stepper="operators" data-action="minus">-</button>
+              <span class="analysis-value" id="operators-count-display">3</span>
+              <button class="settings-button" type="button" data-stepper="operators" data-action="plus">+</button>
+            </div>
+          </div>
         </div>
-        <div class="settings-field">
-          <label for="settings-steps">Nombre d'étapes par opérateur</label>
-          <input type="number" id="settings-steps" min="1" max="20" step="1">
+        <div class="analysis-card">
+          <h3>Étapes</h3>
+          <div class="standard-steps-grid" id="standard-steps-list"></div>
+          <div class="analysis-export">
+            <button class="analysis-button" type="button" id="add-standard-step">Ajouter une étape</button>
+            <button class="analysis-button" type="button" id="reset-standard-steps">Réinitialiser le standard</button>
+          </div>
         </div>
-        <div class="settings-field">
-          <label for="settings-target">Temps cible (minutes)</label>
-          <input type="number" id="settings-target" min="1" step="0.1">
+        <div class="analysis-card">
+          <h3>Cadence SMED</h3>
+          <div class="settings-field">
+            <label>Durée cible SMED</label>
+            <div class="analysis-value" id="target-smed-display">—</div>
+          </div>
+          <div class="settings-field">
+            <label>Seuil d'alerte (minutes)</label>
+            <div class="actions-wrap">
+              <button class="settings-button" type="button" data-stepper="alert" data-action="minus">-</button>
+              <span class="analysis-value" id="alert-threshold-display">—</span>
+              <button class="settings-button" type="button" data-stepper="alert" data-action="plus">+</button>
+            </div>
+          </div>
         </div>
-        <div class="settings-field">
-          <label for="settings-alert">Seuil d'alerte (minutes)</label>
-          <input type="number" id="settings-alert" min="0.1" step="0.1">
+        <div class="analysis-card">
+          <h3>Cohérence du standard</h3>
+          <div class="analysis-section">
+            <h3>Répartition par type</h3>
+            <table class="analysis-table" id="consistency-type-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Minutes</th>
+                  <th>% global</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="analysis-section">
+            <h3>Répartition par opérateur (SMED)</h3>
+            <table class="analysis-table" id="consistency-operator-table">
+              <thead>
+                <tr>
+                  <th>Opérateur</th>
+                  <th>Minutes</th>
+                  <th>% SMED</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="analysis-section">
+            <h3>Alertes</h3>
+            <div id="consistency-alerts" class="analysis-muted"></div>
+          </div>
         </div>
-        <div class="settings-field">
-          <label for="settings-intensity">Intensité des alertes visuelles</label>
-          <select id="settings-intensity">
-            <option value="low">Faible (pas d'animations)</option>
-            <option value="medium">Moyenne (animations modérées)</option>
-            <option value="high">Forte (animations marquées)</option>
-          </select>
+        <div class="analysis-card">
+          <h3>Justifications</h3>
+          <div class="action-list" id="justification-list"></div>
+          <div class="analysis-export">
+            <button class="analysis-button" type="button" id="add-justification">Ajouter une raison</button>
+          </div>
         </div>
         <div class="settings-actions">
-          <button type="button" class="settings-button" id="settings-apply">
-            Appliquer
-          </button>
+          <button type="button" class="settings-button" id="settings-apply">Appliquer</button>
+          <button type="button" class="settings-button" id="settings-cancel">Annuler</button>
         </div>
-      </form>
+      </div>
     </div>
   </main>
   <div class="modal-overlay" id="justification-modal">
     <div class="modal">
       <div class="modal-header">
         <h3 class="modal-title">Justification requise</h3>
-        <p class="modal-subtitle">L'étape a été réalisée en moins de temps que prévu.</p>
+        <p class="modal-subtitle">L’étape dépasse le standard. Une justification est requise.</p>
       </div>
       <div class="modal-body">
         <div class="modal-field">
           <label for="justification-reason">Raison</label>
           <select id="justification-reason">
             <option value="">-- Sélectionnez --</option>
-            <option value="Optimisation du procédé">Optimisation du procédé</option>
-            <option value="Expérience de l'opérateur">Expérience de l'opérateur</option>
-            <option value="Outils/équipements adaptés">Outils/équipements adaptés</option>
-            <option value="Conditions favorables">Conditions favorables</option>
-            <option value="Autre">Autre</option>
           </select>
         </div>
-        <div class="modal-field" id="justification-other-wrapper" hidden>
-          <label for="justification-other">Précisez</label>
-          <input type="text" id="justification-other" placeholder="Détails de la raison">
-        </div>
+        <div class="analysis-muted" id="justification-empty" hidden>Aucune raison configurée dans Paramètres.</div>
+        <div class="inline-error" id="justification-error" hidden>Veuillez sélectionner une raison.</div>
       </div>
       <div class="modal-actions">
         <button class="modal-button secondary" id="justification-cancel">Annuler</button>
@@ -1182,37 +1654,92 @@
       </div>
     </div>
   </div>
+  <div class="modal-overlay" id="finish-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Fin de SMED</h3>
+        <p class="modal-subtitle">Saisir la date et l'heure du Premier IPC (PO N+1).</p>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label for="finish-date">Date Premier IPC (PO N+1)</label>
+          <input type="date" id="finish-date">
+        </div>
+        <div class="modal-field">
+          <label for="finish-time">Heure Premier IPC (PO N+1)</label>
+          <input type="time" id="finish-time" step="60">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-button secondary" id="finish-cancel">Annuler</button>
+        <button class="modal-button primary" id="finish-confirm">Valider</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="note-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Note terrain</h3>
+        <p class="modal-subtitle">Ajouter une note pour l’étape en cours.</p>
+      </div>
+      <div class="modal-body">
+        <div class="modal-field">
+          <label for="note-text">Note</label>
+          <textarea id="note-text" rows="4" placeholder="Saisir une note..."></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-button secondary" id="note-cancel">Annuler</button>
+        <button class="modal-button primary" id="note-save">Enregistrer</button>
+      </div>
+    </div>
+  </div>
   <div class="started-toast" id="smed-started">
     ✓ SMED démarré
   </div>
+  <div class="started-toast" id="smed-finished">
+    Le changement de production est terminé
+  </div>
   <script>
-    const stepTypes = ["external", "handoff", "internal"];
+    const createDefaultStandardSteps = (operatorsCount) => {
+      const types = ["external", "handoff", "internal", "external", "internal", "handoff"];
+      const targets = {
+        external: 5,
+        handoff: 8,
+        internal: 12
+      };
+      return types.map((type, index) => ({
+        id: `std-${index + 1}`,
+        order: index + 1,
+        name: `Étape ${index + 1}`,
+        type,
+        targetMin: targets[type],
+        operatorIndex: ((index % operatorsCount) + 1),
+        actions: []
+      }));
+    };
 
     let settings = {
       operatorsCount: 3,
-      stepsCount: 6,
-      targetMinutes: 15,
       alertMinutes: 12,
-      intensity: "medium"
+      standardSteps: createDefaultStandardSteps(3),
+      justificationReasons: [
+        "Optimisation du procédé",
+        "Expérience de l'opérateur",
+        "Outils/équipements adaptés",
+        "Conditions favorables"
+      ]
     };
 
-    let targetSeconds = settings.targetMinutes * 60;
+    let draftOperatorsCount = settings.operatorsCount;
+    let draftAlertMinutes = settings.alertMinutes;
+    let draftStandardSteps = JSON.parse(JSON.stringify(settings.standardSteps));
+    let draftJustificationReasons = [...settings.justificationReasons];
+
+    let standardStepCounter = settings.standardSteps.length + 1;
+
+    let targetSeconds = 0;
     let alertSeconds = settings.alertMinutes * 60;
-
-    const stepTimings = {
-      external: {
-        min: 40,
-        max: 120
-      },
-      handoff: {
-        min: 30,
-        max: 60
-      },
-      internal: {
-        min: 60,
-        max: 180
-      }
-    };
 
     let operators = [];
 
@@ -1221,12 +1748,16 @@
 
     let isSmedStarted = false;
     let wasSmedStarted = false;
+    let isSmedFinished = false;
+    let firstIpcTimestamp = null;
 
     let operatorTickIntervals = [];
 
     let pendingJustification = null;
 
     let startedToastTimeout = null;
+    let sessionEvents = [];
+    let pendingNote = null;
 
     const headerDateTime = document.querySelector("#header-datetime");
     const headerLigne = document.querySelector("#header-ligne");
@@ -1238,21 +1769,53 @@
     const operatorsGrid = document.querySelector("#operators-grid");
     const justificationModal = document.querySelector("#justification-modal");
     const justificationReason = document.querySelector("#justification-reason");
-    const justificationOtherWrapper = document.querySelector("#justification-other-wrapper");
-    const justificationOther = document.querySelector("#justification-other");
+    const justificationEmpty = document.querySelector("#justification-empty");
+    const justificationError = document.querySelector("#justification-error");
     const justificationCancel = document.querySelector("#justification-cancel");
     const justificationConfirm = document.querySelector("#justification-confirm");
     const resetSmedButton = document.querySelector("#reset-smed-button");
+    const finishSmedButton = document.querySelector("#finish-smed-button");
     const smedStarted = document.querySelector("#smed-started");
-    const settingsOperators = document.querySelector("#settings-operators");
-    const settingsSteps = document.querySelector("#settings-steps");
-    const settingsTarget = document.querySelector("#settings-target");
-    const settingsAlert = document.querySelector("#settings-alert");
-    const settingsIntensity = document.querySelector("#settings-intensity");
+    const smedFinished = document.querySelector("#smed-finished");
+    const finishModal = document.querySelector("#finish-modal");
+    const finishDate = document.querySelector("#finish-date");
+    const finishTime = document.querySelector("#finish-time");
+    const finishCancel = document.querySelector("#finish-cancel");
+    const finishConfirm = document.querySelector("#finish-confirm");
+    const noteModal = document.querySelector("#note-modal");
+    const noteText = document.querySelector("#note-text");
+    const noteCancel = document.querySelector("#note-cancel");
+    const noteSave = document.querySelector("#note-save");
     const settingsApply = document.querySelector("#settings-apply");
+    const settingsCancel = document.querySelector("#settings-cancel");
     const settingsForm = document.querySelector("#settings-form");
     const settingsLock = document.querySelector("#settings-lock");
     const paramTabButton = document.querySelector("#param-tab-button");
+    const operatorsCountDisplay = document.querySelector("#operators-count-display");
+    const standardStepsList = document.querySelector("#standard-steps-list");
+    const addStandardStepButton = document.querySelector("#add-standard-step");
+    const resetStandardStepsButton = document.querySelector("#reset-standard-steps");
+    const justificationList = document.querySelector("#justification-list");
+    const addJustificationButton = document.querySelector("#add-justification");
+    const targetSmedDisplay = document.querySelector("#target-smed-display");
+    const alertThresholdDisplay = document.querySelector("#alert-threshold-display");
+    const consistencyTypeTable = document.querySelector("#consistency-type-table tbody");
+    const consistencyOperatorTable = document.querySelector("#consistency-operator-table tbody");
+    const consistencyAlerts = document.querySelector("#consistency-alerts");
+    const analysisLigne = document.querySelector("#analysis-ligne");
+    const analysisPo = document.querySelector("#analysis-po");
+    const analysisLastIpc = document.querySelector("#analysis-last-ipc");
+    const analysisFirstIpc = document.querySelector("#analysis-first-ipc");
+    const analysisStatus = document.querySelector("#analysis-status");
+    const analysisRealDuration = document.querySelector("#analysis-real-duration");
+    const analysisTargetDuration = document.querySelector("#analysis-target-duration");
+    const analysisGapDuration = document.querySelector("#analysis-gap-duration");
+    const analysisOperatorsTable = document.querySelector("#analysis-operators-table tbody");
+    const analysisTypesTable = document.querySelector("#analysis-types-table tbody");
+    const analysisTimeline = document.querySelector("#analysis-timeline");
+    const exportCsvButton = document.querySelector("#export-csv");
+    const exportJsonButton = document.querySelector("#export-json");
+    const exportReportButton = document.querySelector("#export-report");
 
     const tabButtons = document.querySelectorAll(".tabbar-button");
 
@@ -1264,6 +1827,9 @@
       tabButtons.forEach((button) => {
         button.classList.toggle("active", button.dataset.tab === tab);
       });
+      if (tab === "analyse") {
+        renderAnalysis();
+      }
     };
 
     tabButtons.forEach((button) => {
@@ -1297,21 +1863,23 @@
     const generateOperators = () => {
       const newOperators = [];
       for (let i = 1; i <= settings.operatorsCount; i++) {
-        const steps = [];
-        for (let j = 1; j <= settings.stepsCount; j++) {
-          const type = stepTypes[(j - 1) % stepTypes.length];
-          const timing = stepTimings[type];
-          const targetSec = Math.floor(Math.random() * (timing.max - timing.min + 1) + timing.min);
-          steps.push({
-            id: `step-${i}-${j}`,
-            name: `Étape ${j}`,
-            type,
-            targetSeconds: targetSec,
+        const steps = settings.standardSteps
+          .filter((step) => step.operatorIndex === i)
+          .map((step) => ({
+            id: step.id,
+            order: step.order,
+            name: step.name,
+            type: step.type,
+            targetSeconds: step.targetMin * 60,
             status: "todo",
             startTime: null,
-            elapsedSeconds: 0
-          });
-        }
+            elapsedSeconds: 0,
+            endTime: null,
+            justification: "",
+            actions: step.actions ? [...step.actions] : [],
+            actionsDone: step.actions ? step.actions.map(() => false) : [],
+            notes: []
+          }));
         newOperators.push({
           id: `operator-${i}`,
           name: `Opérateur ${i}`,
@@ -1333,11 +1901,72 @@
       return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
     };
 
+    const getTargetSecondsFromStandard = (steps) => {
+      return steps.reduce((sum, step) => {
+        if (step.type === "internal" || step.type === "handoff") {
+          return sum + step.targetMin * 60;
+        }
+        return sum;
+      }, 0);
+    };
+
+    const clampOperatorCount = (value) => Math.min(6, Math.max(1, value));
+
+    const clampTargetMin = (type, value) => {
+      const max = 60;
+      if (type === "external") {
+        return Math.min(max, Math.max(0, value));
+      }
+      return Math.min(max, Math.max(1, value));
+    };
+
+    const normalizeOperatorIndex = (steps, operatorsCount) => {
+      steps.forEach((step) => {
+        if (step.operatorIndex > operatorsCount) {
+          step.operatorIndex = 1;
+        }
+      });
+    };
+
+    targetSeconds = getTargetSecondsFromStandard(settings.standardSteps);
+
+    const formatMinutes = (minutes) => `${minutes.toFixed(1)} min`;
+
+    const toDateTimeInputValue = (date) => ({
+      date: date.toISOString().slice(0, 10),
+      time: date.toTimeString().slice(0, 5)
+    });
+
+    const formatDateTime = (date) => {
+      if (!date) {
+        return "—";
+      }
+      return date.toLocaleString("fr-FR", {
+        dateStyle: "short",
+        timeStyle: "short"
+      });
+    };
+
+    const getLastIpcDateTime = () => {
+      if (!ipcDate?.value || !ipcTime?.value) {
+        return null;
+      }
+      const value = new Date(`${ipcDate.value}T${ipcTime.value}`);
+      return Number.isNaN(value.getTime()) ? null : value;
+    };
+
+    const getFirstIpcDateTime = () => {
+      if (!firstIpcTimestamp) {
+        return null;
+      }
+      const value = new Date(firstIpcTimestamp);
+      return Number.isNaN(value.getTime()) ? null : value;
+    };
+
     const updateChronoLabels = () => {
       if (!chronoTarget) {
         return;
       }
-      const targetSeconds = settings.targetMinutes * 60;
       chronoTarget.textContent = formatTime(targetSeconds);
     };
 
@@ -1427,14 +2056,19 @@
     };
 
     const initializeReasons = () => {
-      if (justificationReason) {
-        justificationReason.selectedIndex = 0;
+      if (!justificationReason) {
+        return;
       }
-      if (justificationOther) {
-        justificationOther.value = "";
+      justificationReason.innerHTML = `
+        <option value="">-- Sélectionnez --</option>
+        ${settings.justificationReasons.map((reason) => `<option value="${reason}">${reason}</option>`).join("")}
+      `;
+      justificationReason.selectedIndex = 0;
+      if (justificationError) {
+        justificationError.hidden = true;
       }
-      if (justificationOtherWrapper) {
-        justificationOtherWrapper.hidden = true;
+      if (justificationEmpty) {
+        justificationEmpty.hidden = settings.justificationReasons.length > 0;
       }
     };
 
@@ -1462,13 +2096,14 @@
         return;
       }
       const step = operator.steps[runningIndex];
-      const thresholdMin = step.targetSeconds / 60 / 2;
-      if (!forced && actualMin < thresholdMin) {
+      const targetMin = step.targetSeconds / 60;
+      if (!forced && targetMin > 0 && actualMin > targetMin) {
         openJustificationModal(operator, actualMin);
         return;
       }
       step.status = "done";
       step.elapsedSeconds = actualMin * 60;
+      step.endTime = Date.now();
       if (isSmedStarted) {
         const nextInternalIndex = operator.steps.findIndex(
           (s, idx) => idx > runningIndex && s.type === "internal" && s.status === "todo"
@@ -1487,6 +2122,7 @@
         }
       }
       renderOperators();
+      renderAnalysis();
     };
 
     const handleValidate = (operator, stepIndex) => {
@@ -1623,12 +2259,13 @@
               ? formatTime(step.elapsedSeconds)
               : formatTime(step.targetSeconds);
           const icon = renderStepIcon(step);
+          const hasNotes = Array.isArray(step.notes) && step.notes.length > 0;
           html += `
-            <div class="${cardClass}">
+            <div class="${cardClass}" data-status="${step.status}" data-type="${step.type}">
               <div class="step-header">
                 <div class="step-icon">${icon}</div>
                 <div class="step-info">
-                  <div class="step-name">${step.name}</div>
+                  <div class="step-name">${step.name}${hasNotes ? `<span class="note-indicator">Note</span>` : ""}</div>
                   <div class="step-meta">${typeLabel}</div>
                 </div>
                 <div class="step-timer">${timeDisplay}</div>
@@ -1636,9 +2273,26 @@
           `;
           if (isRunning) {
             const canValidate = isSmedStarted || step.type === "external";
+            const actions = Array.isArray(step.actions) ? step.actions : [];
+            const done = Array.isArray(step.actionsDone) ? step.actionsDone : [];
             const disabled = !canValidate ? "disabled" : "";
+            const hasDone = operator.steps.some((item) => item.status === "done");
             html += `
               <div class="step-actions">
+                <div class="chip-bar">
+                  <button class="chip-button undo" data-action="undo-last" data-op="${operator.id}" ${hasDone ? "" : "disabled"}>Annuler</button>
+                  <button class="chip-button note" data-action="add-note" data-op="${operator.id}" data-step-index="${stepIndex}">Note</button>
+                </div>
+                ${actions.length ? `
+                  <div class="action-list">
+                    ${actions.map((action, idx) => `
+                      <label class="action-item">
+                        <input type="checkbox" data-action="toggle-action" data-op="${operator.id}" data-step-index="${stepIndex}" data-action-index="${idx}" ${done[idx] ? "checked" : ""}>
+                        <span>${action}</span>
+                      </label>
+                    `).join("")}
+                  </div>
+                ` : ""}
                 <button class="step-button" data-action="validate" data-op="${operator.id}" data-step-index="${stepIndex}" ${disabled}>
                   Valider
                 </button>
@@ -1659,20 +2313,178 @@
 
     resetOperators();
 
+    const getStepRealSeconds = (step) => {
+      if (step.status === "done") {
+        return step.elapsedSeconds || 0;
+      }
+      if (step.status === "running" && step.startTime) {
+        const endTimestamp = isSmedFinished && firstIpcTimestamp ? firstIpcTimestamp : Date.now();
+        return Math.max(0, (endTimestamp - step.startTime) / 1000);
+      }
+      return 0;
+    };
+
+    const getAnalysisDataset = () => {
+      const lastIpc = getLastIpcDateTime();
+      const firstIpc = getFirstIpcDateTime();
+      const now = new Date();
+      const endTimestamp = firstIpc ? firstIpc.getTime() : now.getTime();
+      const startTimestamp = lastIpc ? lastIpc.getTime() : null;
+      const durationRealMin = startTimestamp ? (endTimestamp - startTimestamp) / 60000 : 0;
+      const targetSeconds = operators.reduce((total, operator) => {
+        return total + operator.steps.reduce((sum, step) => {
+          if (step.type === "internal" || step.type === "handoff") {
+            return sum + step.targetSeconds;
+          }
+          return sum;
+        }, 0);
+      }, 0);
+      const targetMinutes = targetSeconds / 60;
+      const steps = operators.flatMap((operator) => {
+        return operator.steps.map((step, index) => {
+          const realSeconds = getStepRealSeconds(step);
+          return {
+            operator,
+            step,
+            order: step.order ?? index + 1,
+            realSeconds
+          };
+        });
+      });
+      return {
+        lastIpc,
+        firstIpc,
+        durationRealMin,
+        targetMinutes,
+        steps
+      };
+    };
+
+    const renderAnalysis = () => {
+      const ligneValue = ligneInput?.value.trim() || "—";
+      const poValue = document.querySelector("#po-input")?.value.trim() || "—";
+      const dataset = getAnalysisDataset();
+      if (analysisLigne) {
+        analysisLigne.textContent = ligneValue;
+      }
+      if (analysisPo) {
+        analysisPo.textContent = poValue;
+      }
+      if (analysisLastIpc) {
+        analysisLastIpc.textContent = formatDateTime(dataset.lastIpc);
+      }
+      if (analysisFirstIpc) {
+        analysisFirstIpc.textContent = formatDateTime(dataset.firstIpc);
+      }
+      if (analysisStatus) {
+        analysisStatus.textContent = isSmedFinished ? "Terminé" : isSmedStarted ? "En cours" : "—";
+      }
+      if (analysisRealDuration) {
+        analysisRealDuration.textContent = formatMinutes(dataset.durationRealMin);
+      }
+      if (analysisTargetDuration) {
+        analysisTargetDuration.textContent = formatMinutes(dataset.targetMinutes);
+      }
+      if (analysisGapDuration) {
+        const gap = dataset.durationRealMin - dataset.targetMinutes;
+        analysisGapDuration.textContent = `${gap.toFixed(1)} min`;
+      }
+      if (analysisOperatorsTable) {
+        const totalSmedRealSeconds = dataset.steps.reduce((sum, entry) => {
+          if (entry.step.type === "internal" || entry.step.type === "handoff") {
+            return sum + entry.realSeconds;
+          }
+          return sum;
+        }, 0);
+        analysisOperatorsTable.innerHTML = operators.map((operator) => {
+          const operatorEntries = dataset.steps.filter((entry) => entry.operator.id === operator.id);
+          const realSeconds = operatorEntries.reduce((sum, entry) => {
+            if (entry.step.type === "internal" || entry.step.type === "handoff") {
+              return sum + entry.realSeconds;
+            }
+            return sum;
+          }, 0);
+          const targetSeconds = operator.steps.reduce((sum, step) => {
+            if (step.type === "internal" || step.type === "handoff") {
+              return sum + step.targetSeconds;
+            }
+            return sum;
+          }, 0);
+          const gapMin = realSeconds / 60 - targetSeconds / 60;
+          const contribution = totalSmedRealSeconds > 0 ? (realSeconds / totalSmedRealSeconds) * 100 : 0;
+          return `
+            <tr>
+              <td>${operator.name}</td>
+              <td>${(realSeconds / 60).toFixed(1)}</td>
+              <td>${(targetSeconds / 60).toFixed(1)}</td>
+              <td>${gapMin.toFixed(1)}</td>
+              <td>${contribution.toFixed(1)}%</td>
+            </tr>
+          `;
+        }).join("");
+      }
+      if (analysisTypesTable) {
+        const totalRealSeconds = dataset.steps.reduce((sum, entry) => sum + entry.realSeconds, 0);
+        const types = ["external", "handoff", "internal"];
+        analysisTypesTable.innerHTML = types.map((type) => {
+          const realSeconds = dataset.steps.reduce((sum, entry) => {
+            if (entry.step.type === type) {
+              return sum + entry.realSeconds;
+            }
+            return sum;
+          }, 0);
+          const targetSeconds = dataset.steps.reduce((sum, entry) => {
+            if ((type === "internal" || type === "handoff") && entry.step.type === type) {
+              return sum + entry.step.targetSeconds;
+            }
+            return sum;
+          }, 0);
+          const percent = totalRealSeconds > 0 ? (realSeconds / totalRealSeconds) * 100 : 0;
+          const targetDisplay = type === "external" ? "—" : (targetSeconds / 60).toFixed(1);
+          return `
+            <tr>
+              <td>${getStepTypeLabel(type)}</td>
+              <td>${(realSeconds / 60).toFixed(1)}</td>
+              <td>${targetDisplay}</td>
+              <td>${percent.toFixed(1)}%</td>
+            </tr>
+          `;
+        }).join("");
+      }
+      if (analysisTimeline) {
+        const timelineItems = dataset.steps
+          .filter((entry) => entry.step.status === "done")
+          .sort((a, b) => (a.step.endTime || 0) - (b.step.endTime || 0));
+        if (timelineItems.length === 0) {
+          analysisTimeline.innerHTML = `<div class="analysis-muted">Aucune étape validée.</div>`;
+        } else {
+          analysisTimeline.innerHTML = timelineItems.map((entry) => {
+            const timeLabel = entry.step.endTime ? formatDateTime(new Date(entry.step.endTime)) : "—";
+            return `
+              <div class="timeline-item">
+                <div><strong>${timeLabel}</strong> · ${entry.operator.name}</div>
+                <div>${entry.step.name} · ${getStepTypeLabel(entry.step.type)}</div>
+                <div class="analysis-muted">Temps réel : ${(entry.realSeconds / 60).toFixed(1)} min</div>
+              </div>
+            `;
+          }).join("");
+        }
+      }
+    };
+
     const updateSmedStarted = () => {
       const hasDate = Boolean(ipcDate && ipcDate.value);
       const hasTime = Boolean(ipcTime && ipcTime.value);
       const newIsSmedStarted = hasDate && hasTime;
       isSmedStarted = newIsSmedStarted;
+      if (!newIsSmedStarted) {
+        isSmedFinished = false;
+        firstIpcTimestamp = null;
+      }
       if (paramTabButton) {
         paramTabButton.disabled = isSmedStarted;
         paramTabButton.classList.toggle("disabled", isSmedStarted);
       }
-      [settingsOperators, settingsSteps, settingsTarget, settingsAlert, settingsIntensity].forEach((field) => {
-        if (field) {
-          field.disabled = isSmedStarted;
-        }
-      });
       if (settingsLock) {
         settingsLock.classList.toggle("visible", isSmedStarted);
       }
@@ -1687,6 +2499,9 @@
       }
       if (smedStarted && !newIsSmedStarted) {
         smedStarted.classList.remove("visible");
+      }
+      if (smedFinished && !newIsSmedStarted) {
+        smedFinished.classList.remove("visible");
       }
       if (!newIsSmedStarted && startedToastTimeout) {
         clearTimeout(startedToastTimeout);
@@ -1704,95 +2519,248 @@
         }, 5000);
         startAllOperatorsOnSmedStart();
       }
-      if (isSmedStarted) {
+      if (finishSmedButton) {
+        finishSmedButton.classList.toggle("hidden", !isSmedStarted || isSmedFinished);
+      }
+      if (isSmedStarted && !isSmedFinished) {
         startChrono();
         startOperatorTick();
+      } else if (isSmedStarted && isSmedFinished) {
+        stopChrono(false);
+        stopOperatorTick();
       } else {
         stopChrono(true);
+        stopOperatorTick();
       }
       wasSmedStarted = newIsSmedStarted;
       renderOperators();
+      renderAnalysis();
+      renderSettingsForm();
     };
 
-    const readSettingsValues = () => {
-      const operatorsCount = Math.max(1, Number(settingsOperators?.value || settings.operatorsCount));
-      const stepsCount = Math.max(1, Number(settingsSteps?.value || settings.stepsCount));
-      const targetMinutes = Math.max(1, Number(settingsTarget?.value || settings.targetMinutes));
-      const alertMinutes = Math.max(0.1, Number(settingsAlert?.value || settings.alertMinutes));
-      const intensity = settingsIntensity?.value || settings.intensity;
-      return {
-        operatorsCount,
-        stepsCount,
-        targetMinutes,
-        alertMinutes,
-        intensity
-      };
+    const getDefaultStandardSteps = () => createDefaultStandardSteps(draftOperatorsCount);
+
+    const ensureDraftState = () => {
+      normalizeOperatorIndex(draftStandardSteps, draftOperatorsCount);
+      let globalOrder = 1;
+      for (let operatorIndex = 1; operatorIndex <= draftOperatorsCount; operatorIndex += 1) {
+        draftStandardSteps
+          .filter((step) => step.operatorIndex === operatorIndex)
+          .forEach((step) => {
+            step.order = globalOrder;
+            globalOrder += 1;
+          });
+      }
     };
 
     const hasSettingsChanges = () => {
-      const values = readSettingsValues();
       return (
-        values.operatorsCount !== settings.operatorsCount ||
-        values.stepsCount !== settings.stepsCount ||
-        values.targetMinutes !== settings.targetMinutes ||
-        values.alertMinutes !== settings.alertMinutes ||
-        values.intensity !== settings.intensity
+        draftOperatorsCount !== settings.operatorsCount ||
+        draftAlertMinutes !== settings.alertMinutes ||
+        JSON.stringify(draftStandardSteps) !== JSON.stringify(settings.standardSteps) ||
+        JSON.stringify(draftJustificationReasons) !== JSON.stringify(settings.justificationReasons)
       );
     };
 
-    const syncSettingsForm = () => {
-      document.body.dataset.intensity = settings.intensity;
-      if (settingsOperators) {
-        settingsOperators.value = String(settings.operatorsCount);
+    const renderConsistency = () => {
+      if (!consistencyTypeTable || !consistencyOperatorTable || !consistencyAlerts) {
+        return;
       }
-      if (settingsSteps) {
-        settingsSteps.value = String(settings.stepsCount);
+      const totalGlobal = draftStandardSteps.reduce((sum, step) => sum + step.targetMin, 0);
+      const totalSmed = draftStandardSteps.reduce((sum, step) => {
+        if (step.type === "internal" || step.type === "handoff") {
+          return sum + step.targetMin;
+        }
+        return sum;
+      }, 0);
+      const types = ["external", "handoff", "internal"];
+      consistencyTypeTable.innerHTML = types.map((type) => {
+        const minutes = draftStandardSteps
+          .filter((step) => step.type === type)
+          .reduce((sum, step) => sum + step.targetMin, 0);
+        const percent = totalGlobal > 0 ? (minutes / totalGlobal) * 100 : 0;
+        return `
+          <tr>
+            <td>${getStepTypeLabel(type)}</td>
+            <td>${minutes.toFixed(1)}</td>
+            <td>${percent.toFixed(1)}%</td>
+          </tr>
+        `;
+      }).join("");
+
+      const operatorRows = [];
+      const operatorTotals = {};
+      for (let i = 1; i <= draftOperatorsCount; i++) {
+        operatorTotals[i] = draftStandardSteps
+          .filter((step) => step.operatorIndex === i && (step.type === "internal" || step.type === "handoff"))
+          .reduce((sum, step) => sum + step.targetMin, 0);
+        const percent = totalSmed > 0 ? (operatorTotals[i] / totalSmed) * 100 : 0;
+        operatorRows.push(`
+          <tr>
+            <td>Opérateur ${i}</td>
+            <td>${operatorTotals[i].toFixed(1)}</td>
+            <td>${percent.toFixed(1)}%</td>
+          </tr>
+        `);
       }
-      if (settingsTarget) {
-        settingsTarget.value = settings.targetMinutes.toFixed(1);
+      consistencyOperatorTable.innerHTML = operatorRows.join("");
+
+      const alerts = [];
+      Object.entries(operatorTotals).forEach(([index, total]) => {
+        const percent = totalSmed > 0 ? (total / totalSmed) * 100 : 0;
+        if (percent > 60) {
+          alerts.push(`Attention: l’opérateur ${index} concentre ${percent.toFixed(1)} % du temps SMED`);
+        }
+      });
+      const externalPercent = totalGlobal > 0
+        ? (draftStandardSteps.filter((step) => step.type === "external").reduce((sum, step) => sum + step.targetMin, 0) / totalGlobal) * 100
+        : 0;
+      if (externalPercent > 70) {
+        alerts.push(`Attention: ${externalPercent.toFixed(1)} % des temps sont classés Externe, vérifier la cohérence SMED`);
       }
-      if (settingsAlert) {
-        settingsAlert.value = settings.alertMinutes.toFixed(1);
-        settingsAlert.max = Math.max(settings.targetMinutes - 0.1, 0.1).toString();
+      const hasLongHandoff = draftStandardSteps.some((step) => step.type === "handoff" && step.targetMin > 15);
+      if (hasLongHandoff) {
+        alerts.push("Attention: une étape chevauchante dépasse 15 min, vérifier le découpage");
       }
-      if (settingsIntensity) {
-        settingsIntensity.value = settings.intensity;
+      consistencyAlerts.innerHTML = alerts.length
+        ? `<ul class="warning-text">${alerts.map((item) => `<li>${item}</li>`).join("")}</ul>`
+        : "Aucune alerte détectée.";
+    };
+
+    const renderStandardSteps = () => {
+      if (!standardStepsList) {
+        return;
       }
-      updateChronoLabels();
+      const operatorOptions = Array.from({ length: draftOperatorsCount }, (_, index) => {
+        const value = index + 1;
+        return `<option value="${value}">Opérateur ${value}</option>`;
+      }).join("");
+
+      standardStepsList.innerHTML = Array.from({ length: draftOperatorsCount }, (_, index) => {
+        const operatorIndex = index + 1;
+        const stepsForOperator = draftStandardSteps.filter((step) => step.operatorIndex === operatorIndex);
+        return `
+          <div class="standard-column" data-operator="${operatorIndex}">
+            <div class="standard-step-row" style="justify-content: space-between; flex-wrap: wrap;">
+              <h4>Opérateur ${operatorIndex}</h4>
+            </div>
+            ${stepsForOperator.map((step, localIndex) => `
+              <div class="standard-step-card" data-step-id="${step.id}">
+                <div class="standard-step-row">
+                  <span class="analysis-pill">#${localIndex + 1}</span>
+                  <div class="standard-step-actions">
+                    <button class="analysis-button" type="button" data-action="move-up">Monter</button>
+                    <button class="analysis-button" type="button" data-action="move-down">Descendre</button>
+                    <button class="analysis-button" type="button" data-action="delete">Supprimer</button>
+                  </div>
+                  <select data-field="operatorIndex">${operatorOptions}</select>
+                </div>
+                <div class="standard-step-row">
+                  <label>Nom</label>
+                  <input type="text" data-field="name" value="${step.name}">
+                </div>
+                <div class="standard-step-row">
+                  <label>Type</label>
+                  <select data-field="type">
+                    <option value="external" ${step.type === "external" ? "selected" : ""}>Externe</option>
+                    <option value="handoff" ${step.type === "handoff" ? "selected" : ""}>Chevauchante</option>
+                    <option value="internal" ${step.type === "internal" ? "selected" : ""}>Interne</option>
+                  </select>
+                </div>
+                <div class="standard-step-row">
+                  <label>Temps cible (min)</label>
+                  <div class="standard-step-actions">
+                    <button class="analysis-button" type="button" data-action="target-minus">-</button>
+                    <span class="analysis-value">${step.targetMin}</span>
+                    <button class="analysis-button" type="button" data-action="target-plus">+</button>
+                  </div>
+                </div>
+                <div class="standard-step-row">
+                  <label>Actions</label>
+                  <div class="action-list">
+                    ${(step.actions || []).map((action, actionIndex) => `
+                      <div class="action-item">
+                        <input type="text" data-field="action" data-action-index="${actionIndex}" value="${action}">
+                        <button class="analysis-button" type="button" data-action="remove-action" data-action-index="${actionIndex}">Supprimer</button>
+                      </div>
+                    `).join("")}
+                    <button class="analysis-button" type="button" data-action="add-action">Ajouter une action</button>
+                  </div>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        `;
+      }).join("");
+
+      standardStepsList.querySelectorAll("select[data-field=\"operatorIndex\"]").forEach((select) => {
+        const card = select.closest(".standard-step-card");
+        const stepId = card?.dataset.stepId;
+        const step = draftStandardSteps.find((item) => item.id === stepId);
+        if (step) {
+          select.value = String(step.operatorIndex);
+        }
+      });
+    };
+
+    const renderSettingsForm = () => {
+      ensureDraftState();
+      if (operatorsCountDisplay) {
+        operatorsCountDisplay.textContent = String(draftOperatorsCount);
+      }
+      if (alertThresholdDisplay) {
+        alertThresholdDisplay.textContent = String(draftAlertMinutes);
+      }
+      if (targetSmedDisplay) {
+        targetSmedDisplay.textContent = formatMinutes(getTargetSecondsFromStandard(draftStandardSteps) / 60);
+      }
+      renderStandardSteps();
+      renderConsistency();
+      renderJustifications();
+      if (settingsApply) {
+        settingsApply.disabled = isSmedStarted || !hasSettingsChanges();
+      }
+    };
+
+    const renderJustifications = () => {
+      if (!justificationList) {
+        return;
+      }
+      justificationList.innerHTML = draftJustificationReasons.map((reason, index) => `
+        <div class="action-item" data-reason-index="${index}">
+          <input type="text" value="${reason}" data-field="reason">
+          <button class="analysis-button" type="button" data-action="move-reason-up">Monter</button>
+          <button class="analysis-button" type="button" data-action="move-reason-down">Descendre</button>
+          <button class="analysis-button" type="button" data-action="remove-reason">Supprimer</button>
+        </div>
+      `).join("");
     };
 
     const applySettings = () => {
       if (isSmedStarted) {
         return;
       }
-      const values = readSettingsValues();
-      const safeAlert = Math.min(values.alertMinutes, Math.max(values.targetMinutes - 0.1, 0.1));
-      settings.operatorsCount = values.operatorsCount;
-      settings.stepsCount = values.stepsCount;
-      settings.targetMinutes = values.targetMinutes;
-      settings.alertMinutes = safeAlert;
-      settings.intensity = values.intensity;
-      targetSeconds = settings.targetMinutes * 60;
+      settings.operatorsCount = draftOperatorsCount;
+      settings.alertMinutes = draftAlertMinutes;
+      settings.standardSteps = JSON.parse(JSON.stringify(draftStandardSteps));
+      settings.justificationReasons = [...draftJustificationReasons];
+      normalizeOperatorIndex(settings.standardSteps, settings.operatorsCount);
+      targetSeconds = getTargetSecondsFromStandard(settings.standardSteps);
       alertSeconds = settings.alertMinutes * 60;
-      document.body.dataset.intensity = settings.intensity;
-      syncSettingsForm();
+      updateChronoLabels();
       resetOperators();
       stopChrono(true);
       updateChronoDisplay();
-      if (settingsApply) {
-        settingsApply.disabled = true;
-      }
       setActiveTab("smed");
     };
 
-    const handleSettingsInput = () => {
-      if (settingsAlert && settingsTarget) {
-        const targetValue = Math.max(1, Number(settingsTarget.value || settings.targetMinutes));
-        settingsAlert.max = Math.max(targetValue - 0.1, 0.1).toString();
-      }
-      if (settingsApply) {
-        settingsApply.disabled = isSmedStarted || !hasSettingsChanges();
-      }
+    const cancelSettings = () => {
+      draftOperatorsCount = settings.operatorsCount;
+      draftAlertMinutes = settings.alertMinutes;
+      draftStandardSteps = JSON.parse(JSON.stringify(settings.standardSteps));
+      draftJustificationReasons = [...settings.justificationReasons];
+      renderSettingsForm();
+      setActiveTab("smed");
     };
 
     if (ipcDate && ipcTime) {
@@ -1800,24 +2768,230 @@
       ipcTime.addEventListener("input", updateSmedStarted);
     }
 
-    if (settingsOperators) {
-      settingsOperators.addEventListener("input", handleSettingsInput);
-    }
-    if (settingsSteps) {
-      settingsSteps.addEventListener("input", handleSettingsInput);
-    }
-    if (settingsTarget) {
-      settingsTarget.addEventListener("input", handleSettingsInput);
-    }
-    if (settingsAlert) {
-      settingsAlert.addEventListener("input", handleSettingsInput);
-    }
-    if (settingsIntensity) {
-      settingsIntensity.addEventListener("change", handleSettingsInput);
-    }
-
     if (settingsApply) {
       settingsApply.addEventListener("click", applySettings);
+    }
+    if (settingsCancel) {
+      settingsCancel.addEventListener("click", cancelSettings);
+    }
+
+    if (settingsForm) {
+      settingsForm.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) {
+          return;
+        }
+        const stepper = target.dataset.stepper;
+        const action = target.dataset.action;
+        const card = target.closest(".standard-step-card");
+        const stepId = card?.dataset.stepId;
+        if (stepper === "operators") {
+          const delta = action === "plus" ? 1 : action === "minus" ? -1 : 0;
+          if (delta !== 0) {
+            draftOperatorsCount = clampOperatorCount(draftOperatorsCount + delta);
+            normalizeOperatorIndex(draftStandardSteps, draftOperatorsCount);
+            renderSettingsForm();
+          }
+          return;
+        }
+        if (stepper === "alert") {
+          const delta = action === "plus" ? 1 : action === "minus" ? -1 : 0;
+          if (delta !== 0) {
+            draftAlertMinutes = Math.max(1, draftAlertMinutes + delta);
+            renderSettingsForm();
+          }
+          return;
+        }
+        const reasonWrapper = target.closest("[data-reason-index]");
+        if (reasonWrapper && action) {
+          const reasonIndex = Number(reasonWrapper.dataset.reasonIndex);
+          if (action === "move-reason-up" && reasonIndex > 0) {
+            const [removed] = draftJustificationReasons.splice(reasonIndex, 1);
+            draftJustificationReasons.splice(reasonIndex - 1, 0, removed);
+            renderSettingsForm();
+          }
+          if (action === "move-reason-down" && reasonIndex < draftJustificationReasons.length - 1) {
+            const [removed] = draftJustificationReasons.splice(reasonIndex, 1);
+            draftJustificationReasons.splice(reasonIndex + 1, 0, removed);
+            renderSettingsForm();
+          }
+          if (action === "remove-reason") {
+            const shouldDelete = window.confirm("Supprimer cette raison ?");
+            if (shouldDelete) {
+              draftJustificationReasons.splice(reasonIndex, 1);
+              renderSettingsForm();
+            }
+          }
+          return;
+        }
+        if (!stepId) {
+          return;
+        }
+        const stepIndex = draftStandardSteps.findIndex((item) => item.id === stepId);
+        if (stepIndex === -1) {
+          return;
+        }
+        const step = draftStandardSteps[stepIndex];
+        const sameOperatorSteps = draftStandardSteps.filter((item) => item.operatorIndex === step.operatorIndex);
+        const localIndex = sameOperatorSteps.findIndex((item) => item.id === step.id);
+        if (action === "move-up" && localIndex > 0) {
+          const targetStep = sameOperatorSteps[localIndex - 1];
+          const globalIndex = draftStandardSteps.findIndex((item) => item.id === targetStep.id);
+          const [removed] = draftStandardSteps.splice(stepIndex, 1);
+          draftStandardSteps.splice(globalIndex, 0, removed);
+          renderSettingsForm();
+        }
+        if (action === "move-down" && localIndex < sameOperatorSteps.length - 1) {
+          const targetStep = sameOperatorSteps[localIndex + 1];
+          const globalIndex = draftStandardSteps.findIndex((item) => item.id === targetStep.id);
+          const [removed] = draftStandardSteps.splice(stepIndex, 1);
+          draftStandardSteps.splice(globalIndex + 1, 0, removed);
+          renderSettingsForm();
+        }
+        if (action === "delete") {
+          const shouldDelete = window.confirm("Supprimer cette étape ?");
+          if (shouldDelete) {
+            draftStandardSteps.splice(stepIndex, 1);
+            renderSettingsForm();
+          }
+        }
+        if (action === "target-minus") {
+          step.targetMin = clampTargetMin(step.type, step.targetMin - 1);
+          renderSettingsForm();
+        }
+        if (action === "target-plus") {
+          step.targetMin = clampTargetMin(step.type, step.targetMin + 1);
+          renderSettingsForm();
+        }
+        if (action === "add-action") {
+          if (!Array.isArray(step.actions)) {
+            step.actions = [];
+          }
+          step.actions.push(`Action ${step.actions.length + 1}`);
+          renderSettingsForm();
+        }
+        if (action === "remove-action") {
+          const actionIndex = Number(target.dataset.actionIndex);
+          if (!Number.isNaN(actionIndex) && Array.isArray(step.actions)) {
+            step.actions.splice(actionIndex, 1);
+            renderSettingsForm();
+          }
+        }
+      });
+
+      settingsForm.addEventListener("input", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement) && !(target instanceof HTMLSelectElement)) {
+          return;
+        }
+        const card = target.closest(".standard-step-card");
+        const stepId = card?.dataset.stepId;
+        if (!stepId) {
+          const reasonWrapper = target.closest("[data-reason-index]");
+          if (reasonWrapper && target.dataset.field === "reason") {
+            const reasonIndex = Number(reasonWrapper.dataset.reasonIndex);
+            if (!Number.isNaN(reasonIndex)) {
+              draftJustificationReasons[reasonIndex] = target.value.trim() || draftJustificationReasons[reasonIndex];
+              if (settingsApply) {
+                settingsApply.disabled = isSmedStarted || !hasSettingsChanges();
+              }
+            }
+          }
+          return;
+        }
+        const step = draftStandardSteps.find((item) => item.id === stepId);
+        if (!step) {
+          return;
+        }
+        const field = target.dataset.field;
+        if (field === "name") {
+          step.name = target.value.trim() || step.name;
+          if (settingsApply) {
+            settingsApply.disabled = isSmedStarted || !hasSettingsChanges();
+          }
+          return;
+        }
+        if (field === "type") {
+          step.type = target.value;
+          step.targetMin = clampTargetMin(step.type, step.targetMin);
+          renderSettingsForm();
+          return;
+        }
+        if (field === "operatorIndex") {
+          const newOperator = Number(target.value);
+          step.operatorIndex = newOperator;
+          const lastIndex = [...draftStandardSteps]
+            .map((item, idx) => ({ item, idx }))
+            .filter(({ item }) => item.operatorIndex === newOperator && item.id !== step.id)
+            .map(({ idx }) => idx)
+            .pop();
+          const currentIndex = draftStandardSteps.findIndex((item) => item.id === step.id);
+          const [removed] = draftStandardSteps.splice(currentIndex, 1);
+          if (lastIndex === undefined) {
+            draftStandardSteps.push(removed);
+          } else {
+            draftStandardSteps.splice(lastIndex + 1, 0, removed);
+          }
+          renderSettingsForm();
+          return;
+        }
+        if (field === "action") {
+          const actionIndex = Number(target.dataset.actionIndex);
+          if (!Number.isNaN(actionIndex)) {
+            if (!Array.isArray(step.actions)) {
+              step.actions = [];
+            }
+            step.actions[actionIndex] = target.value.trim();
+            if (settingsApply) {
+              settingsApply.disabled = isSmedStarted || !hasSettingsChanges();
+            }
+          }
+        }
+      });
+    }
+
+    if (addStandardStepButton) {
+      addStandardStepButton.addEventListener("click", () => {
+        const newStep = {
+          id: `std-${standardStepCounter++}`,
+          order: draftStandardSteps.length + 1,
+          name: `Étape ${draftStandardSteps.length + 1}`,
+          type: "external",
+          targetMin: 0,
+          operatorIndex: 1,
+          actions: []
+        };
+        const lastIndex = [...draftStandardSteps]
+          .map((item, idx) => ({ item, idx }))
+          .filter(({ item }) => item.operatorIndex === 1)
+          .map(({ idx }) => idx)
+          .pop();
+        if (lastIndex === undefined) {
+          draftStandardSteps.push(newStep);
+        } else {
+          draftStandardSteps.splice(lastIndex + 1, 0, newStep);
+        }
+        renderSettingsForm();
+      });
+    }
+
+    if (resetStandardStepsButton) {
+      resetStandardStepsButton.addEventListener("click", () => {
+        const shouldReset = window.confirm("Réinitialiser le standard ?");
+        if (!shouldReset) {
+          return;
+        }
+        draftStandardSteps = getDefaultStandardSteps();
+        standardStepCounter = draftStandardSteps.length + 1;
+        renderSettingsForm();
+      });
+    }
+
+    if (addJustificationButton) {
+      addJustificationButton.addEventListener("click", () => {
+        draftJustificationReasons.push(`Raison ${draftJustificationReasons.length + 1}`);
+        renderSettingsForm();
+      });
     }
 
     if (operatorsGrid) {
@@ -1836,6 +3010,65 @@
         if (!operator) {
           return;
         }
+        if (action === "toggle-action") {
+          const actionIndex = Number(target.dataset.actionIndex);
+          const step = operator.steps[stepIndex];
+          if (step && Array.isArray(step.actionsDone) && !Number.isNaN(actionIndex)) {
+            step.actionsDone[actionIndex] = target.checked;
+            renderOperators();
+          }
+          return;
+        }
+        if (action === "undo-last") {
+          const hasDone = operator.steps.some((item) => item.status === "done");
+          if (!hasDone) {
+            return;
+          }
+          const shouldUndo = window.confirm("Annuler la dernière validation de cet opérateur ?");
+          if (!shouldUndo) {
+            return;
+          }
+          const lastDoneIndex = [...operator.steps].map((step, index) => ({ step, index }))
+            .filter(({ step }) => step.status === "done")
+            .map(({ index }) => index)
+            .pop();
+          if (lastDoneIndex === undefined) {
+            return;
+          }
+          const lastDone = operator.steps[lastDoneIndex];
+          lastDone.status = "todo";
+          lastDone.elapsedSeconds = 0;
+          lastDone.endTime = null;
+          lastDone.startTime = null;
+          lastDone.justification = "";
+          if (isSmedStarted && operator.steps.every((step) => step.status !== "running")) {
+            lastDone.status = "running";
+            lastDone.startTime = Date.now();
+          }
+          sessionEvents.push({
+            type: "undo",
+            operatorIndex: Number(operator.id.split("-")[1]),
+            stepId: lastDone.id,
+            at: Date.now()
+          });
+          renderOperators();
+          renderAnalysis();
+          return;
+        }
+        if (action === "add-note") {
+          const step = operator.steps[stepIndex];
+          if (!step) {
+            return;
+          }
+          pendingNote = { operatorId: operator.id, stepIndex };
+          if (noteText) {
+            noteText.value = "";
+          }
+          if (noteModal) {
+            noteModal.classList.add("visible");
+          }
+          return;
+        }
         if (action === "validate") {
           if (Number.isNaN(stepIndex)) {
             return;
@@ -1845,22 +3078,17 @@
       });
     }
 
-    if (justificationReason) {
-      justificationReason.addEventListener("change", () => {
-        if (!justificationOtherWrapper || !justificationOther) {
-          return;
-        }
-        const isOther = justificationReason.value === "Autre";
-        justificationOtherWrapper.hidden = !isOther;
-        if (!isOther) {
-          justificationOther.value = "";
-        }
-      });
-    }
-
     if (justificationCancel) {
       justificationCancel.addEventListener("click", () => {
         closeJustificationModal();
+      });
+    }
+
+    if (justificationReason) {
+      justificationReason.addEventListener("change", () => {
+        if (justificationError) {
+          justificationError.hidden = true;
+        }
       });
     }
 
@@ -1873,18 +3101,62 @@
         if (!justificationReason) {
           return;
         }
-        const selectedReason = justificationReason.value;
-        if (!selectedReason) {
+        if (settings.justificationReasons.length === 0) {
+          if (justificationEmpty) {
+            justificationEmpty.hidden = false;
+          }
           return;
         }
-        if (selectedReason === "Autre" && (!justificationOther || !justificationOther.value.trim())) {
+        const selectedReason = justificationReason.value;
+        if (!selectedReason) {
+          if (justificationError) {
+            justificationError.hidden = false;
+          }
           return;
         }
         const operator = operators.find((item) => item.id === pendingJustification.operatorId);
         if (operator) {
+          const step = operator.steps.find((item) => item.status === "running");
+          if (step) {
+            step.justification = selectedReason;
+          }
           completeStep(operator, pendingJustification.actualMin, true);
         }
         closeJustificationModal();
+      });
+    }
+
+    if (noteCancel) {
+      noteCancel.addEventListener("click", () => {
+        pendingNote = null;
+        if (noteModal) {
+          noteModal.classList.remove("visible");
+        }
+      });
+    }
+
+    if (noteSave) {
+      noteSave.addEventListener("click", () => {
+        if (!pendingNote || !noteText) {
+          return;
+        }
+        const text = noteText.value.trim();
+        if (!text) {
+          return;
+        }
+        const operator = operators.find((item) => item.id === pendingNote.operatorId);
+        const step = operator?.steps[pendingNote.stepIndex];
+        if (step) {
+          if (!Array.isArray(step.notes)) {
+            step.notes = [];
+          }
+          step.notes.push({ text, at: Date.now() });
+        }
+        pendingNote = null;
+        if (noteModal) {
+          noteModal.classList.remove("visible");
+        }
+        renderOperators();
       });
     }
 
@@ -1908,8 +3180,16 @@
         if (poInput) {
           poInput.value = "";
         }
+        if (finishDate) {
+          finishDate.value = "";
+        }
+        if (finishTime) {
+          finishTime.value = "";
+        }
         isSmedStarted = false;
         wasSmedStarted = false;
+        isSmedFinished = false;
+        firstIpcTimestamp = null;
         if (startedToastTimeout) {
           clearTimeout(startedToastTimeout);
           startedToastTimeout = null;
@@ -1917,8 +3197,456 @@
         if (smedStarted) {
           smedStarted.classList.remove("visible");
         }
+        if (smedFinished) {
+          smedFinished.classList.remove("visible");
+        }
         resetOperators();
         updateSmedStarted();
+      });
+    }
+
+    const openFinishModal = () => {
+      if (!finishModal || !finishDate || !finishTime) {
+        return;
+      }
+      const now = new Date();
+      const values = toDateTimeInputValue(now);
+      finishDate.value = values.date;
+      finishTime.value = values.time;
+      finishModal.classList.add("visible");
+    };
+
+    const closeFinishModal = () => {
+      if (!finishModal) {
+        return;
+      }
+      finishModal.classList.remove("visible");
+    };
+
+    if (finishSmedButton) {
+      finishSmedButton.addEventListener("click", () => {
+        if (!isSmedStarted || isSmedFinished) {
+          return;
+        }
+        openFinishModal();
+      });
+    }
+
+    if (finishCancel) {
+      finishCancel.addEventListener("click", closeFinishModal);
+    }
+
+    if (finishConfirm) {
+      finishConfirm.addEventListener("click", () => {
+        if (!finishDate?.value || !finishTime?.value) {
+          return;
+        }
+        const finishValue = new Date(`${finishDate.value}T${finishTime.value}`);
+        if (Number.isNaN(finishValue.getTime())) {
+          return;
+        }
+        firstIpcTimestamp = finishValue.getTime();
+        isSmedFinished = true;
+        stopChrono(false);
+        stopOperatorTick();
+        closeFinishModal();
+        if (smedFinished) {
+          smedFinished.classList.add("visible");
+          setTimeout(() => {
+            smedFinished.classList.remove("visible");
+          }, 5000);
+        }
+        updateSmedStarted();
+        renderAnalysis();
+        exportJson();
+        exportReport();
+        exportCsv();
+      });
+    }
+
+    const exportFile = (content, filename, type) => {
+      const blob = new Blob([content], { type });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    };
+
+    const getSafeFileSegment = (value, fallback) => {
+      const trimmed = (value || "").trim();
+      if (!trimmed) {
+        return fallback;
+      }
+      return trimmed.replace(/[^\w-]+/g, "_");
+    };
+
+    const getExportTimestamp = () => {
+      const now = new Date();
+      const date = now.toISOString().slice(0, 10);
+      const time = now.toTimeString().slice(0, 5).replace(":", "");
+      return { date, time };
+    };
+
+    const getSessionId = () => {
+      const lastIpc = getLastIpcDateTime();
+      const datePart = lastIpc ? lastIpc.toISOString().slice(0, 10) : "date";
+      const timePart = lastIpc ? lastIpc.toTimeString().slice(0, 5).replace(":", "") : "time";
+      const line = getSafeFileSegment(ligneInput?.value, "LIGNE");
+      const po = getSafeFileSegment(document.querySelector("#po-input")?.value, "PO");
+      return `${line}_${po}_${datePart}_${timePart}`;
+    };
+
+    const buildStepsExport = () => {
+      const dataset = getAnalysisDataset();
+      return dataset.steps.map((entry) => {
+        return {
+          order: entry.order,
+          name: entry.step.name,
+          type: entry.step.type,
+          operator: entry.operator.name,
+          targetMin: entry.step.targetSeconds / 60,
+          realMin: entry.realSeconds / 60,
+          startTs: entry.step.startTime ? new Date(entry.step.startTime).toISOString() : "",
+          endTs: entry.step.endTime ? new Date(entry.step.endTime).toISOString() : "",
+          status: entry.step.status,
+          justification: entry.step.justification || "",
+          actions: entry.step.actions || [],
+          actionsDone: entry.step.actionsDone || [],
+          notes: entry.step.notes || []
+        };
+      });
+    };
+
+    const exportCsv = () => {
+      const lastIpc = getLastIpcDateTime();
+      const firstIpc = getFirstIpcDateTime();
+      const line = ligneInput?.value.trim() || "";
+      const po = document.querySelector("#po-input")?.value.trim() || "";
+      const rows = [
+        [
+          "Ligne",
+          "PO",
+          "Date/heure Dernier IPC",
+          "Date/heure Premier IPC",
+          "Opérateur",
+          "Ordre étape",
+          "Nom étape",
+          "Type",
+          "Temps cible (min)",
+          "Temps réel (min)",
+          "Timestamp début étape",
+          "Timestamp fin étape",
+          "Justification",
+          "Actions",
+          "Actions réalisées",
+          "Notes"
+        ]
+      ];
+      buildStepsExport().forEach((step) => {
+        rows.push([
+          line,
+          po,
+          lastIpc ? lastIpc.toISOString() : "",
+          firstIpc ? firstIpc.toISOString() : "",
+          step.operator,
+          step.order,
+          step.name,
+          getStepTypeLabel(step.type),
+          step.targetMin.toFixed(1),
+          step.realMin.toFixed(1),
+          step.startTs,
+          step.endTs,
+          step.justification,
+          (step.actions || []).join("|"),
+          (step.actions || []).filter((_, idx) => step.actionsDone?.[idx]).join("|"),
+          (step.notes || []).map((note) => note.text).join(" | ")
+        ]);
+      });
+      const csvContent = rows.map((row) => row.map((cell) => {
+        const value = String(cell ?? "");
+        if (value.includes(",") || value.includes("\"") || value.includes("\n")) {
+          return `"${value.replace(/\"/g, "\"\"")}"`;
+        }
+        return value;
+      }).join(",")).join("\n");
+      const timestamp = getExportTimestamp();
+      const filename = `SMED_${getSafeFileSegment(line, "LIGNE")}_${getSafeFileSegment(po, "PO")}_${timestamp.date}_${timestamp.time}.csv`;
+      exportFile(csvContent, filename, "text/csv;charset=utf-8");
+    };
+
+    const exportJson = () => {
+      const dataset = getAnalysisDataset();
+      const lastIpc = getLastIpcDateTime();
+      const firstIpc = getFirstIpcDateTime();
+      const stepsStandard = settings.standardSteps.map((step) => ({
+        name: step.name,
+        type: step.type,
+        targetMin: step.targetMin,
+        operator: `Opérateur ${step.operatorIndex}`,
+        order: step.order,
+        actions: step.actions || []
+      }));
+      const byType = {
+        external: 0,
+        handoff: 0,
+        internal: 0
+      };
+      const byOperatorSmed = {};
+      dataset.steps.forEach((entry) => {
+        const type = entry.step.type;
+        byType[type] += entry.realSeconds / 60;
+        if (type === "internal" || type === "handoff") {
+          if (!byOperatorSmed[entry.operator.name]) {
+            byOperatorSmed[entry.operator.name] = 0;
+          }
+          byOperatorSmed[entry.operator.name] += entry.realSeconds / 60;
+        }
+      });
+      const payload = {
+        meta: {
+          tool: "SMED Performance",
+          version: "v1",
+          sessionId: getSessionId(),
+          line: ligneInput?.value.trim() || "",
+          po: document.querySelector("#po-input")?.value.trim() || "",
+          lastIpcDateTime: lastIpc ? lastIpc.toISOString() : "",
+          firstIpcDateTime: firstIpc ? firstIpc.toISOString() : "",
+          status: isSmedFinished ? "done" : "in_progress",
+          durationRealMin: dataset.durationRealMin,
+          durationTargetMin: dataset.targetMinutes,
+          exportedAt: new Date().toISOString()
+        },
+        parameters: {
+          operatorsCount: settings.operatorsCount,
+          alertThresholdMin: settings.alertMinutes,
+          stepsStandard
+        },
+        steps: buildStepsExport().map((step) => ({
+          order: step.order,
+          name: step.name,
+          type: step.type,
+          operator: step.operator,
+          targetMin: step.targetMin,
+          realMin: step.realMin,
+          startTs: step.startTs,
+          endTs: step.endTs,
+          status: step.status,
+          justification: step.justification,
+          actions: step.actions,
+          actionsDone: step.actionsDone,
+          notes: step.notes
+        })),
+        summary: {
+          byType,
+          byOperatorSmed
+        },
+        events: sessionEvents
+      };
+      const timestamp = getExportTimestamp();
+      const line = getSafeFileSegment(ligneInput?.value, "LIGNE");
+      const po = getSafeFileSegment(document.querySelector("#po-input")?.value, "PO");
+      const filename = `SMED_${line}_${po}_${timestamp.date}_${timestamp.time}.json`;
+      exportFile(JSON.stringify(payload, null, 2), filename, "application/json;charset=utf-8");
+    };
+
+    const exportReport = () => {
+      const dataset = getAnalysisDataset();
+      const lastIpc = getLastIpcDateTime();
+      const firstIpc = getFirstIpcDateTime();
+      const line = ligneInput?.value.trim() || "";
+      const po = document.querySelector("#po-input")?.value.trim() || "";
+      const steps = buildStepsExport();
+      const smedSteps = steps.filter((step) => step.type !== "external");
+      const totalSmedReal = smedSteps.reduce((sum, step) => sum + step.realMin, 0);
+      const totalGlobalReal = steps.reduce((sum, step) => sum + step.realMin, 0);
+      const byType = ["external", "handoff", "internal"].map((type) => {
+        const real = steps.filter((step) => step.type === type).reduce((sum, step) => sum + step.realMin, 0);
+        const percent = totalGlobalReal > 0 ? (real / totalGlobalReal) * 100 : 0;
+        return { type, real, percent };
+      });
+      const byOperator = operators.map((operator) => {
+        const real = smedSteps.filter((step) => step.operator === operator.name).reduce((sum, step) => sum + step.realMin, 0);
+        const percent = totalSmedReal > 0 ? (real / totalSmedReal) * 100 : 0;
+        return { name: operator.name, real, percent };
+      });
+      const topSteps = steps
+        .map((step) => ({ ...step, gap: step.realMin - step.targetMin }))
+        .sort((a, b) => b.gap - a.gap)
+        .slice(0, 5);
+      const gapMin = dataset.durationRealMin - dataset.targetMinutes;
+      const gapPercent = dataset.targetMinutes > 0 ? (gapMin / dataset.targetMinutes) * 100 : 0;
+      const reportHtml = `
+        <!doctype html>
+        <html lang="fr">
+        <head>
+          <meta charset="utf-8">
+          <title>Rapport SMED</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 24px; color: #152033; }
+            h1 { margin-bottom: 8px; }
+            h2 { margin-top: 24px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+            th, td { border: 1px solid #d7dbe2; padding: 8px; text-align: left; font-size: 13px; }
+            th { background: #f0f1f4; }
+            .kpi-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+            .kpi-card { border: 1px solid #d7dbe2; border-radius: 12px; padding: 12px; }
+            .muted { color: #5a6472; font-size: 13px; }
+            .section { margin-top: 18px; }
+            .actions-line { border-bottom: 1px dashed #b5bdc9; height: 24px; margin-top: 12px; }
+            @media print { body { margin: 12mm; } }
+          </style>
+        </head>
+        <body>
+          <h1>Rapport SMED</h1>
+          <div class="muted">Ligne: ${line || "—"} · PO: ${po || "—"}</div>
+          <div class="section">
+            <strong>Dernier IPC:</strong> ${formatDateTime(lastIpc)}<br>
+            <strong>Premier IPC:</strong> ${formatDateTime(firstIpc)}<br>
+            <strong>Durée réelle SMED:</strong> ${dataset.durationRealMin.toFixed(1)} min<br>
+            <strong>Durée cible SMED:</strong> ${dataset.targetMinutes.toFixed(1)} min<br>
+            <strong>Écart:</strong> ${gapMin.toFixed(1)} min (${gapPercent.toFixed(1)}%)<br>
+            <strong>Statut:</strong> ${isSmedFinished ? "Terminé" : "En cours"}
+          </div>
+          <h2>Synthèse KPI</h2>
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <strong>Répartition par type</strong>
+              <table>
+                <thead><tr><th>Type</th><th>Réel (min)</th><th>% global</th></tr></thead>
+                <tbody>
+                  ${byType.map((row) => `
+                    <tr>
+                      <td>${getStepTypeLabel(row.type)}</td>
+                      <td>${row.real.toFixed(1)}</td>
+                      <td>${row.percent.toFixed(1)}%</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+            <div class="kpi-card">
+              <strong>Répartition SMED par opérateur</strong>
+              <table>
+                <thead><tr><th>Opérateur</th><th>Réel (min)</th><th>% SMED</th></tr></thead>
+                <tbody>
+                  ${byOperator.map((row) => `
+                    <tr>
+                      <td>${row.name}</td>
+                      <td>${row.real.toFixed(1)}</td>
+                      <td>${row.percent.toFixed(1)}%</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="section">
+            <strong>Top 5 étapes par écart</strong>
+            <table>
+              <thead><tr><th>Étape</th><th>Opérateur</th><th>Type</th><th>Écart (min)</th></tr></thead>
+              <tbody>
+                ${topSteps.map((step) => `
+                  <tr>
+                    <td>${step.name}</td>
+                    <td>${step.operator}</td>
+                    <td>${getStepTypeLabel(step.type)}</td>
+                    <td>${step.gap.toFixed(1)}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+          <h2>Détail étapes SMED</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Ordre</th>
+                <th>Nom</th>
+                <th>Opérateur</th>
+                <th>Type</th>
+                <th>Cible (min)</th>
+                <th>Réel (min)</th>
+                <th>Écart (min)</th>
+                <th>Justification</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${smedSteps.map((step) => `
+                <tr>
+                  <td>${step.order}</td>
+                  <td>${step.name}</td>
+                  <td>${step.operator}</td>
+                  <td>${getStepTypeLabel(step.type)}</td>
+                  <td>${step.targetMin.toFixed(1)}</td>
+                  <td>${step.realMin.toFixed(1)}</td>
+                  <td>${(step.realMin - step.targetMin).toFixed(1)}</td>
+                  <td>${step.justification || ""}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+          <h2>Étapes Externes (hors SMED)</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Ordre</th>
+                <th>Nom</th>
+                <th>Opérateur</th>
+                <th>Type</th>
+                <th>Cible (min)</th>
+                <th>Réel (min)</th>
+                <th>Écart (min)</th>
+                <th>Justification</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${steps.filter((step) => step.type === "external").map((step) => `
+                <tr>
+                  <td>${step.order}</td>
+                  <td>${step.name}</td>
+                  <td>${step.operator}</td>
+                  <td>${getStepTypeLabel(step.type)}</td>
+                  <td>${step.targetMin.toFixed(1)}</td>
+                  <td>${step.realMin.toFixed(1)}</td>
+                  <td>${(step.realMin - step.targetMin).toFixed(1)}</td>
+                  <td>${step.justification || ""}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+          <h2>Actions décidées</h2>
+          <div class="actions-line"></div>
+          <div class="actions-line"></div>
+          <div class="actions-line"></div>
+        </body>
+        </html>
+      `;
+      const timestamp = getExportTimestamp();
+      const filename = `SMED_RAPPORT_${getSafeFileSegment(line, "LIGNE")}_${getSafeFileSegment(po, "PO")}_${timestamp.date}_${timestamp.time}.html`;
+      exportFile(reportHtml, filename, "text/html;charset=utf-8");
+    };
+
+    if (exportCsvButton) {
+      exportCsvButton.addEventListener("click", () => {
+        renderAnalysis();
+        exportCsv();
+      });
+    }
+
+    if (exportJsonButton) {
+      exportJsonButton.addEventListener("click", () => {
+        renderAnalysis();
+        exportJson();
+      });
+    }
+
+    if (exportReportButton) {
+      exportReportButton.addEventListener("click", () => {
+        renderAnalysis();
+        exportReport();
       });
     }
 
@@ -1939,10 +3667,12 @@
 
     updateDateTime();
     setInterval(updateDateTime, 1000);
-    syncSettingsForm();
+    renderSettingsForm();
+    updateChronoLabels();
     updateSmedStarted();
     initializeReasons();
     renderOperators();
+    renderAnalysis();
   </script>
 </body>
 </html>
