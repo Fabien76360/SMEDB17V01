@@ -2260,12 +2260,15 @@
     const persistApply = (snap) => {
       if (!snap || typeof snap !== "object") return;
       if (snap.settings) settings = snap.settings;
+      if (!Array.isArray(settings.standardSteps) || !settings.standardSteps.length) {
+        settings.standardSteps = createDefaultStandardSteps(settings.operatorsCount || 3);
+      }
       if (Array.isArray(snap.operators)) operators = snap.operators;
       isSmedStarted = Boolean(snap.isSmedStarted);
       wasSmedStarted = Boolean(snap.wasSmedStarted);
       isSmedFinished = Boolean(snap.isSmedFinished);
       firstIpcTimestamp = typeof snap.firstIpcTimestamp === "number" ? snap.firstIpcTimestamp : null;
-      targetSeconds = typeof snap.targetSeconds === "number" ? snap.targetSeconds : targetSeconds;
+      targetSeconds = getTargetSecondsFromStandard(settings.standardSteps);
       alertSeconds = typeof snap.alertSeconds === "number" ? snap.alertSeconds : alertSeconds;
       sessionEvents = Array.isArray(snap.sessionEvents) ? snap.sessionEvents : sessionEvents;
       if (snap.state && typeof snap.state === "object") {
@@ -3098,13 +3101,7 @@ html += `
     };
 
     const getDurationTargetMin = () => {
-      const dataset = getAnalysisDataset();
-      return dataset.steps.reduce((sum, entry) => {
-        if (entry.step.type === "internal") {
-          return sum + entry.step.targetSeconds / 60;
-        }
-        return sum;
-      }, 0);
+      return targetSeconds / 60;
     };
 
     const buildTimelineItems = (dataset, allNotes) => {
@@ -3659,7 +3656,7 @@ html += `
         alertThresholdDisplay.textContent = String(draftAlertMinutes);
       }
       if (targetSmedDisplay) {
-        targetSmedDisplay.textContent = formatMinutes(getTargetSecondsFromStandard(draftStandardSteps) / 60);
+        targetSmedDisplay.textContent = formatMinutes(targetSeconds / 60);
       }
       renderStandardSteps();
       renderConsistency();
@@ -3698,6 +3695,9 @@ html += `
       resetOperators();
       stopChrono(true);
       updateChronoDisplay();
+      if (typeof renderAnalysis === "function") {
+        renderAnalysis();
+      }
       // Persist parameters "en dur"
       persistSaveSettings();
       setActiveTab("smed");
@@ -4471,7 +4471,7 @@ html += `
       const product = productInput?.value.trim() || "";
 
       const durationTargetMin = getDurationTargetMin();
-      const targetParallelMin = targetSeconds / 60;
+      const targetParallelMin = durationTargetMin;
       const durationRealMin = isSmedFinished && lastIpc && firstIpc ? (firstIpc.getTime() - lastIpc.getTime()) / 60000 : null;
       const deltaMin = durationRealMin === null ? null : durationRealMin - durationTargetMin;
 
