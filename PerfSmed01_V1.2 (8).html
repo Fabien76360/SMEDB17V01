@@ -4022,15 +4022,30 @@ html += `
             return;
           }
           const lastDone = operator.steps[lastDoneIndex];
-          lastDone.status = "todo";
-          lastDone.elapsedSeconds = 0;
+          operator.steps.forEach((step, index) => {
+            if (index > lastDoneIndex && step.status === "running") {
+              step.status = "todo";
+              step.startTime = null;
+              step.endTime = null;
+              step.elapsedSeconds = 0;
+              if ("justification" in step) {
+                step.justification = "";
+              }
+              if ("justificationComment" in step) {
+                step.justificationComment = "";
+              }
+            }
+          });
+          lastDone.status = "running";
+          const resumedElapsedSeconds = Number.isFinite(lastDone.elapsedSeconds) ? lastDone.elapsedSeconds : 0;
+          lastDone.elapsedSeconds = resumedElapsedSeconds;
+          lastDone.startTime = Date.now() - (resumedElapsedSeconds * 1000);
           lastDone.endTime = null;
-          lastDone.startTime = null;
-          lastDone.justification = "";
-          lastDone.justificationComment = "";
-          if (isSmedStarted && operator.steps.every((step) => step.status !== "running")) {
-            lastDone.status = "running";
-            lastDone.startTime = Date.now();
+          if ("justification" in lastDone) {
+            lastDone.justification = "";
+          }
+          if ("justificationComment" in lastDone) {
+            lastDone.justificationComment = "";
           }
           sessionEvents.push({
             type: "undo",
